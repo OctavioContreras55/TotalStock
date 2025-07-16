@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "nombre": "Cadena 428H",
+    "categoria": "Cadenas",
+    "stock": 12,
+    "precio": 150
+  },
+  {
+    "id": 2,
+    "nombre": "Piñón 14T",
+    "categoria": "Refacciones",
+    "stock": 30,
+    "precio": 75
+  }
+]
