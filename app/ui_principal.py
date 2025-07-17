@@ -1,5 +1,9 @@
 import flet as ft
 from datetime import datetime
+from app.ui_tabla_productos import mostrar_tabla_productos
+from app.ui_inventario import vista_inventario as vista_inventario_modular
+
+
 
 def principal_view(page: ft.Page):
     page.controls.clear()  # Limpia los controles de la página
@@ -12,6 +16,14 @@ def principal_view(page: ft.Page):
     
     # Contenido de la derecha
     contenido = ft.Container(expand=True, padding=20)
+    
+    # Diccionario de ejemplo
+    productos_ejemplo = [
+        {"id": 1, "nombre": "Manzana", "precio": 10.5, "cantidad": 50},
+        {"id": 2, "nombre": "Plátano", "precio": 8.0, "cantidad": 30},
+        {"id": 3, "nombre": "Naranja", "precio": 12.0, "cantidad": 20},
+        {"id": 4, "nombre": "Pera", "precio": 15.0, "cantidad": 40},
+    ]
     
     def vista_inicio(nombre_seccion):
         contenido.content = ft.Column(
@@ -91,34 +103,7 @@ def principal_view(page: ft.Page):
     
     # Función para cambiar la vista al hacer clic en el menú
     def vista_inventario(nombre_seccion):
-        contenido.content = ft.Column(
-            controls=[
-                ft.Row(
-                    controls=[
-                      ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                    height= 50,
-                  ),
-                ft.Container(height=10),  # Espacio vertical
-                ft.Row(
-                    controls=[
-                      ft.Container(height=10),  # Espacio vertical
-                      ft.Button(text= "Buscar producto", icon=ft.Icon(ft.Icons.SEARCH), on_click=lambda e: print("Buscar producto")),
-                      ft.Container(width=10),  # Espacio entre botones
-                      ft.Button(text="Agregar producto", icon=ft.Icon(ft.Icons.ADD))
-                    ],
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                    expand=True
-                    
-                  )
-                
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
-        )
+        vista_inventario_modular(nombre_seccion, contenido, productos_ejemplo)
         page.update()
     
     def vista_categorias(nombre_seccion):

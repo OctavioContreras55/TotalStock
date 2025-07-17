@@ -23,6 +23,16 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
       animate_opacity=300,  # Animación de opacidad al mostrar/ocultar
     )
     
+    #Quitar si se quiere tener fondo blanco en el logo
+    """def logo_con_borde():
+        return ft.Container(
+        content=ft.Image(src="assets/logo.png", width=150, height=150),
+        bgcolor=ft.Colors.WHITE,
+        border_radius=10,
+        padding=10,
+        alignment=ft.alignment.center
+    )"""
+    
     #Función para validar datos de inicio de sesión
     def validar_login(e):
         usuario = usuario_input.value
@@ -31,15 +41,18 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         #TEMPORAL: Validación simple de usuario y contraseña
         if usuario == "admin" and contrasena == "admin":
             mensaje_error.visible = False
+            vista_tarjeta.height = 430  # Ajusta la altura de la tarjeta al iniciar sesión correctamente
             on_login_success() # Llama a la función de éxito al iniciar sesión
         else:
             # Acceder al texto dentro del Row del Container
             mensaje_error.content.controls[1].value = "Usuario o contraseña incorrectos"
             mensaje_error.visible = True
             mensaje_error.opacity = 1 # Muestra el mensaje de error
+            vista_tarjeta.height = 480  # Ajusta la altura de la tarjeta al mostrar el mensaje de error
             usuario_input.focus()
             contrasena_input.value = ""
             page.update() # Actualiza la página para mostrar los cambios
+            
     #Boton de inicio de sesión
     boton_login = ft.Container(
       content=ft.ElevatedButton(text="Iniciar sesión",on_click=validar_login),
@@ -52,7 +65,11 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
     vista_tarjeta = ft.Container(
         content=ft.Column(
             controls=[
-                ft.Text("Ingrese sus credenciales", style=ft.TextThemeStyle.HEADLINE_MEDIUM, text_align=ft.TextAlign.CENTER),
+                ft.Container(
+                    content=ft.Text("Ingrese sus credenciales", style=ft.TextThemeStyle.HEADLINE_MEDIUM, text_align=ft.TextAlign.CENTER),
+                    padding=ft.padding.only(bottom=20, top=10),
+                    alignment=ft.alignment.center,
+                ),
                 usuario_input,
                 contrasena_input,
                 mensaje_error,
@@ -62,7 +79,6 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             spacing=30
         ),
         padding=30,
-        height=400,
         width=370,
         border_radius=15,
         bgcolor=ft.Colors.GREY_900 + "CC",
