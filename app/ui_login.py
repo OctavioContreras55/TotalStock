@@ -43,6 +43,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             mensaje_error.visible = False
             vista_tarjeta.height = 430  # Ajusta la altura de la tarjeta al iniciar sesión correctamente
             on_login_success() # Llama a la función de éxito al iniciar sesión
+            page.update()
         else:
             # Acceder al texto dentro del Row del Container
             mensaje_error.content.controls[1].value = "Usuario o contraseña incorrectos"

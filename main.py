@@ -10,7 +10,9 @@ def main(page: ft.Page):
 
     #Función a ejecutar al iniciar sesión correctamente
     def cargar_pantalla_principal():
-        principal_view(page) # Carga la vista principal al iniciar sesión correctamente
+        page.controls.clear()               # <-- limpiar la pantalla
+        principal_view(page)                # <-- mostrar vista principal
+        page.update()
         
     #Mostrar la vista de login
     login_view(page, on_login_success=cargar_pantalla_principal)
