@@ -1,15 +1,22 @@
 import flet as ft
-from app.ui_tabla_productos import mostrar_tabla_productos
+from app.tablas.ui_tabla_productos import mostrar_tabla_productos
 
 def vista_inventario(nombre_seccion, contenido, productos_ejemplo):
     contenido.content = ft.Column(
         controls=[
-            ft.Row(
-                controls=[
-                    ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.START
+            ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.START
+                ),
+                width=600,
+                bgcolor=ft.Colors.GREY_900,
+                padding=20,
+                alignment=ft.alignment.center,
+                border_radius=10,
             ),
             ft.Row(
                 controls=[

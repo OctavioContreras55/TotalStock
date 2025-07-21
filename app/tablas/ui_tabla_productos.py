@@ -3,6 +3,7 @@ import flet as ft
 def mostrar_tabla_productos(productos):
     # Crear una tabla para mostrar los productos
     tabla = ft.DataTable(
+        border=ft.border.all(1, "black"),
         sort_column_index=0, # Columna por defecto para ordenar
         border_radius=10, # Bordes redondeados
         sort_ascending=True, # Orden ascendente por defecto

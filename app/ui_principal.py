@@ -1,9 +1,10 @@
 import flet as ft
 from datetime import datetime
-from app.ui_tabla_productos import mostrar_tabla_productos
+from app.tablas.ui_tabla_productos import mostrar_tabla_productos
 from app.ui_inventario import vista_inventario as vista_inventario_modular
 from app.ui_inicio import vista_inicio as vista_inicio_modular
 from app.funciones.sesiones import cerrar_sesion
+from app.ui_usuarios import vista_usuarios as vista_usuarios_modular
 
 
 
@@ -14,7 +15,7 @@ def principal_view(page: ft.Page):
     page.window_resizable = True
     page.window_minimizable = False
     page.title = "TotalStock: Sistema de Inventario"
-    fecha_actual = datetime.now().strftime("%d/%m/%Y")
+    fecha_actual = datetime.now().strftime("%d/%m/%Y") #Obtiene la fecha actual en formato dd/mm/yyyy
     
     # Contenido de la derecha
     contenido = ft.Container(expand=True, padding=20)
@@ -85,15 +86,7 @@ def principal_view(page: ft.Page):
         page.update()
     
     def vista_usuarios(nombre_seccion):
-        contenido.content = ft.Column(
-            controls=[
-                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                ft.Text("Aquí puedes gestionar los usuarios del sistema.", size=16)
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
-        )
+        vista_usuarios_modular(nombre_seccion, contenido)
         page.update()
             
     def vista_configuracion(nombre_seccion):
@@ -110,7 +103,8 @@ def principal_view(page: ft.Page):
         
     def on_cerrar_sesion(e):
         cerrar_sesion(page)
-              
+        
+    # Contenedor del menú lateral          
     menu_lateral = ft.Container(
         width=250,
         bgcolor=ft.Colors.GREY_900,
@@ -134,7 +128,12 @@ def principal_view(page: ft.Page):
                         alignment=ft.MainAxisAlignment.START,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER
                     ),
-                    padding=ft.padding.only(bottom=20, left=4, right=4)
+                    padding=ft.padding.only(bottom=10, left=4, right=4)
+                ),
+                ft.Container(
+                    height=2,
+                    bgcolor=ft.Colors.WHITE70,
+                    margin=ft.margin.only(bottom=20, top=5)
                 ),
                 ft.ListTile(
                     leading=ft.Icon(ft.Icons.HOME),
@@ -200,7 +199,7 @@ def principal_view(page: ft.Page):
         ),
     )
 
-
+    # Contenido inicial de la página
     page.add(
         ft.Row(
             controls=[
