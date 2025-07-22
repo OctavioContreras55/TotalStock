@@ -1,11 +1,11 @@
 import flet as ft
 from datetime import datetime
-from app.tablas.ui_tabla_productos import mostrar_tabla_productos
 from app.ui_inventario import vista_inventario as vista_inventario_modular
 from app.ui_inicio import vista_inicio as vista_inicio_modular
 from app.funciones.sesiones import cerrar_sesion
 from app.ui_usuarios import vista_usuarios as vista_usuarios_modular
 from app.ui_categorias import categorias_mostrar
+from conexiones.firebase import db
 
 
 
@@ -111,11 +111,12 @@ def principal_view(page: ft.Page):
                             ft.Column(
                                 controls=[
                                     ft.Text("Octavio", size=18, weight=ft.FontWeight.BOLD),
-                                    ft.Text("Administrador", size=12, color=ft.Colors.GREY_400)
+                                    ft.Text("Administrador", size=12, color=ft.Colors.GREY_400),
                                 ],
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 horizontal_alignment=ft.CrossAxisAlignment.START,
-                                spacing=2
+                                spacing=2,
+                                
                             )
                         ],
                         alignment=ft.MainAxisAlignment.START,

@@ -1,6 +1,12 @@
 import flet as ft
+from app.crud_usuarios.delete_usuarios import mensaje_confirmacion
 
-def mostrar_tabla_usuarios(usuarios):
+def crear_boton_eliminar(page, uid, actualizar_tabla=None):
+    return ft.IconButton(
+        ft.Icons.DELETE,
+        on_click=lambda e: mensaje_confirmacion(page, uid, actualizar_tabla)
+    )
+def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
     # Crear una tabla para mostrar los usuarios
     tabla = ft.DataTable(
         border=ft.border.all(1, "black"),
@@ -29,7 +35,7 @@ def mostrar_tabla_usuarios(usuarios):
                         ft.Row(
                             controls=[
                                 ft.IconButton(ft.Icons.EDIT, on_click=lambda e, uid=usuario.get('firebase_id', ''): print(f"Editar {uid}")),
-                                ft.IconButton(ft.Icons.DELETE, on_click=lambda e, uid=usuario.get('firebase_id', ''): print(f"Eliminar {uid}"))
+                                crear_boton_eliminar(page, usuario.get('firebase_id', ''), actualizar_tabla),
                             ],
                             spacing=10
                         )

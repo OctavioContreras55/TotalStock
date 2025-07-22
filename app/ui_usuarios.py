@@ -13,7 +13,7 @@ def vista_usuarios(nombre_seccion, contenido, page=None):
     def actualizar_tabla(): # Función para actualizar la tabla con datos de Firebase
         try:
             usuarios = obtener_usuarios_firebase()
-            tabla_container.current.content = mostrar_tabla_usuarios(usuarios)
+            tabla_container.current.content = mostrar_tabla_usuarios(page,usuarios,actualizar_tabla)
             page.update()
         except Exception as e:
             print(f"Error al actualizar tabla: {e}")
@@ -43,7 +43,7 @@ def vista_usuarios(nombre_seccion, contenido, page=None):
                         ft.Column(
                             controls=[
                                 ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                                ft.Text("Gestión de los usuarios del sistema", size=16,)
+                                ft.Text("Gestión de los usuarios del sistema", size=16,),
                             ],
                             alignment=ft.MainAxisAlignment.START,
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -95,7 +95,7 @@ def vista_usuarios(nombre_seccion, contenido, page=None):
                 controls=[
                     ft.Container(
                         ref=tabla_container,
-                        content=mostrar_tabla_usuarios(usuarios_iniciales),
+                        content=mostrar_tabla_usuarios(page,usuarios_iniciales),
                         padding=ft.padding.symmetric(horizontal=5, vertical=20)
                     )
                 ],

@@ -6,7 +6,7 @@ def vista_inicio(nombre_seccion,contenido, fecha_actual):
             ft.Row(
                 controls=[
                     ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                    ft.Text(f"Fecha: {fecha_actual}", size=16)
+                    ft.Text(f"Fecha: {fecha_actual}", size=16),
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.START,

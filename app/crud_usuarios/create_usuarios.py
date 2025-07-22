@@ -1,13 +1,8 @@
-import sys
-import os
 import flet as ft
-import time
-import threading
-
-# Subir dos niveles desde el archivo actual
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.append(BASE_DIR)
-from conexiones.firebase_database import db  # Importar la conexión a Firestore
+import re #librería para expresiones regulares
+import time #librería para manejar tiempo
+import threading #librería para manejar hilos
+from conexiones.firebase import db  # Importar la conexión a Firestore
 
 def crear_usuario_firebase(nombre, contrasena, es_admin=False): # Función para crear un usuario en Firebase
     try: # try para manejar errores
@@ -83,10 +78,17 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
     mensaje_estado = ft.Text("", color=ft.Colors.RED_400, size=12)
     
     def crear_usuario_click(e):
-        print("Botón crear usuario presionado")  # Debug
+
         # Validar campos
         if not campo_nombre.value or not campo_contrasena.value:
             mensaje_estado.value = "Por favor, completa todos los campos"
+            mensaje_estado.color = ft.Colors.RED_400
+            page.update()
+            return
+        
+        if not re.fullmatch(r'[A-Za-z0-9]{6,}', campo_contrasena.value): # Valida que la contraseña tenga al menos 6 caracteres y solo letras y números
+            #La r es para indicar que es una expresión regular o sea que se toman literalmente los caracteres
+            mensaje_estado.value = "La contraseña debe tener al menos 6 caracteres y solo letras y números"
             mensaje_estado.color = ft.Colors.RED_400
             page.update()
             return
