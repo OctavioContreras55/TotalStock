@@ -16,27 +16,27 @@ def mostrar_tabla_usuarios(usuarios):
         columns=[
             ft.DataColumn(ft.Text("ID"), on_sort=lambda e: print(f"{e.column_index}, {e.ascending}")),
             ft.DataColumn(ft.Text("Nombre")),
-            ft.DataColumn(ft.Text("Rol")),
+            ft.DataColumn(ft.Text("Tipo de Usuario")),
             ft.DataColumn(ft.Text("Opciones")),
         ],
         rows=[
             ft.DataRow(
                 cells=[
-                    ft.DataCell(ft.Text(str(usuario['id']))),
-                    ft.DataCell(ft.Text(usuario['nombre'])),
-                    ft.DataCell(ft.Text(usuario['rol'])),
+                    ft.DataCell(ft.Text(str(usuario.get('id', 'N/A')))),
+                    ft.DataCell(ft.Text(usuario.get('nombre', 'Sin nombre'))),
+                    ft.DataCell(ft.Text("Administrador" if usuario.get('es_admin', False) else "Usuario")),
                     ft.DataCell(
                         ft.Row(
                             controls=[
-                                ft.IconButton(ft.Icons.EDIT, on_click=lambda e: print(f"Editar {usuario['id']}")),
-                                ft.IconButton(ft.Icons.DELETE, on_click=lambda e: print(f"Eliminar {usuario['id']}"))
+                                ft.IconButton(ft.Icons.EDIT, on_click=lambda e, uid=usuario.get('firebase_id', ''): print(f"Editar {uid}")),
+                                ft.IconButton(ft.Icons.DELETE, on_click=lambda e, uid=usuario.get('firebase_id', ''): print(f"Eliminar {uid}"))
                             ],
                             spacing=10
                         )
                     ),
                 ],
                 selected=False,
-                on_select_changed=lambda e: print(f"row select changed: {e.data}"),
+                on_select_changed=lambda e: print(f"Fila seleccionada: {e.data}"),
             )   for usuario in usuarios
         ],
         width=1000,

@@ -29,7 +29,7 @@ def mostrar_tabla_productos(productos):
                     
                 ],
                 selected=False,
-                on_select_changed=lambda e: print(f"row select changed: {e.data}"),
+                on_select_changed=lambda e: print(f"Fila seleccionada: {e.data}"),
             ) for producto in productos
         ],
         width=800,

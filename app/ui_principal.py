@@ -5,6 +5,7 @@ from app.ui_inventario import vista_inventario as vista_inventario_modular
 from app.ui_inicio import vista_inicio as vista_inicio_modular
 from app.funciones.sesiones import cerrar_sesion
 from app.ui_usuarios import vista_usuarios as vista_usuarios_modular
+from app.ui_categorias import categorias_mostrar
 
 
 
@@ -38,15 +39,7 @@ def principal_view(page: ft.Page):
         page.update()
     
     def vista_categorias(nombre_seccion):
-        contenido.content = ft.Column(
-            controls=[
-                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                ft.Text("Aquí puedes gestionar las categorías de tus productos.", size=16)
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
-        )
+        categorias_mostrar(nombre_seccion, contenido)
         page.update()
         
     def vista_ubicaciones(nombre_seccion):
@@ -86,7 +79,7 @@ def principal_view(page: ft.Page):
         page.update()
     
     def vista_usuarios(nombre_seccion):
-        vista_usuarios_modular(nombre_seccion, contenido)
+        vista_usuarios_modular(nombre_seccion, contenido, page)
         page.update()
             
     def vista_configuracion(nombre_seccion):
