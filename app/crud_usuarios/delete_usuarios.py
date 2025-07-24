@@ -1,5 +1,8 @@
 import flet as ft
 from conexiones.firebase import db
+import asyncio
+
+
 
 
 def eliminar_usuario_firebase(id_usuario):
@@ -13,24 +16,24 @@ def eliminar_usuario_firebase(id_usuario):
         return False
     
     
-def on_eliminar_click(e, page, id_usuario, actualizar_tabla=None):
+async def on_eliminar_click(e, page, id_usuario, actualizar_tabla):
     if eliminar_usuario_firebase(id_usuario):
         print("Usuario eliminado exitosamente.")
         if actualizar_tabla:
-            actualizar_tabla()
+            await actualizar_tabla()
         page.open(ft.SnackBar(ft.Text("Usuario eliminado exitosamente."), duration=2000))  # milisegundos, opcional
         page.update()
     else:
         print("Error al eliminar usuario.")
 
 
-def mensaje_confirmacion(page, id_usuario, actualizar_tabla=None):
+def mensaje_confirmacion(page, id_usuario, actualizar_tabla):
     print(f"Se llamó a mensaje_confirmacion para ID: {id_usuario}")
 
     def confirmar(e):
         page.close(dialog)
         page.update()
-        on_eliminar_click(e, page, id_usuario, actualizar_tabla)
+        asyncio.run(on_eliminar_click(e, page, id_usuario, actualizar_tabla))
 
     def cerrar_dialogo(page):
         page.close(dialog)

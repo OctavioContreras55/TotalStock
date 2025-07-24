@@ -1,8 +1,8 @@
 import flet as ft
 import re #librería para expresiones regulares
-import time #librería para manejar tiempo
 import threading #librería para manejar hilos
 from conexiones.firebase import db  # Importar la conexión a Firestore
+import asyncio
 
 def crear_usuario_firebase(nombre, contrasena, es_admin=False): # Función para crear un usuario en Firebase
     try: # try para manejar errores
@@ -25,7 +25,7 @@ def crear_usuario_firebase(nombre, contrasena, es_admin=False): # Función para 
         print(f"Error al crear usuario: {str(e)}")
         return False, str(e)
 
-def obtener_usuarios_firebase(): # Función para obtener todos los usuarios de Firebase
+async def obtener_usuarios_firebase(): # Función para obtener todos los usuarios de Firebase
     try:
         referencia_usuarios = db.collection('usuarios')
         usuarios = referencia_usuarios.stream() #stream para obtener los documentos
@@ -106,17 +106,16 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
             page.update()
             
             # Esperar un momento y restaurar la vista
-            def restaurar_vista():
-                time.sleep(1.5)
-                # Restaurar contenido original
+            async def restaurar_vista(): # Función para restaurar la vista original
+                await asyncio.sleep(2)
                 page.controls.clear()
                 page.controls.extend(contenido_original)
                 page.update()
                 # Actualizar la tabla si se proporciona el callback
                 if callback_actualizar_tabla:
-                    callback_actualizar_tabla()
-            
-            threading.Thread(target=restaurar_vista, daemon=True).start()
+                    await(callback_actualizar_tabla())
+
+            asyncio.run(restaurar_vista())
         else:
             mensaje_estado.value = f"Error: {resultado}"
             mensaje_estado.color = ft.Colors.RED_400

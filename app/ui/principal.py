@@ -6,10 +6,10 @@ from app.funciones.sesiones import cerrar_sesion
 from app.ui_usuarios import vista_usuarios as vista_usuarios_modular
 from app.ui_categorias import categorias_mostrar
 from conexiones.firebase import db
+import asyncio
 
 
-
-def principal_view(page: ft.Page):
+async def principal_view(page: ft.Page):
     page.controls.clear()  # Limpia los controles de la página
     # Configuración de la página principal
     page.window_maximized = True
@@ -34,8 +34,8 @@ def principal_view(page: ft.Page):
         page.update()
     
     # Función para cambiar la vista al hacer clic en el menú
-    def vista_inventario(nombre_seccion):
-        vista_inventario_modular(nombre_seccion, contenido, productos_ejemplo)
+    async def vista_inventario(nombre_seccion):
+        await vista_inventario_modular(nombre_seccion, contenido, productos_ejemplo, page)
         page.update()
     
     def vista_categorias(nombre_seccion):
@@ -78,8 +78,8 @@ def principal_view(page: ft.Page):
         )
         page.update()
     
-    def vista_usuarios(nombre_seccion):
-        vista_usuarios_modular(nombre_seccion, contenido, page)
+    async def vista_usuarios(nombre_seccion):
+        await vista_usuarios_modular(nombre_seccion, contenido, page)
         page.update()
             
     def vista_configuracion(nombre_seccion):
@@ -138,7 +138,7 @@ def principal_view(page: ft.Page):
                 ft.ListTile(
                     leading=ft.Icon(ft.Icons.INVENTORY_2),
                     title=ft.Text("Inventario"),
-                    on_click=lambda e: vista_inventario("Inventario"),
+                    on_click=lambda e: asyncio.run(vista_inventario("Inventario")),
                     dense=True
                 ),
                 ft.ListTile(
@@ -171,7 +171,7 @@ def principal_view(page: ft.Page):
                 ft.ListTile(
                     leading=ft.Icon(ft.Icons.SUPERVISED_USER_CIRCLE),
                     title=ft.Text("Usuarios"),
-                    on_click=lambda e: vista_usuarios("Usuarios"),
+                    on_click=lambda e: asyncio.run(vista_usuarios("Usuarios")),
                     dense=True
                 ),
                 

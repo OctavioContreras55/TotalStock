@@ -1,7 +1,12 @@
 import flet as ft
 from app.tablas.ui_tabla_productos import mostrar_tabla_productos
+from app.ui.barra_carga import vista_carga
+import asyncio
 
-def vista_inventario(nombre_seccion, contenido, productos_ejemplo):
+async def vista_inventario(nombre_seccion, contenido, productos_ejemplo, page):
+    contenido.content = vista_carga()  # Mostrar barra de carga mientras se carga la vista
+    page.update()  # Actualizar la página para mostrar la barra de carga
+    await asyncio.sleep(2)  # Simular tiempo de carga
     contenido.content = ft.Column(
         controls=[
             ft.Container(

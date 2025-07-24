@@ -12,3 +12,5 @@ def cerrar_sesion(page: ft.Page):
 
     login_view(page, on_login_success=cargar_pantalla_principal)
     page.update()
+    
+    
