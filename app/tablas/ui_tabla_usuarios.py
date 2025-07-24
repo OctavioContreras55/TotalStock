@@ -45,9 +45,10 @@ def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
                 on_select_changed=lambda e: print(f"Fila seleccionada: {e.data}"),
             )   for usuario in usuarios
         ],
-        width=1000,
-        
-        expand=True,
+        height=800,
+        width=1200,
     )
     
-    return tabla
+    scroll_vertical = ft.Column([tabla], scroll=True, expand=True)
+    scroll_horizontal = ft.Row([scroll_vertical], scroll=True, expand=1, vertical_alignment=ft.MainAxisAlignment.START)
+    return scroll_horizontal

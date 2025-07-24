@@ -5,7 +5,7 @@ import asyncio
 
 
 
-def eliminar_usuario_firebase(id_usuario):
+def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_eliminar_click
     try:
         referencia_usuarios = db.collection('usuarios')
         referencia_usuarios.document(id_usuario).delete()
@@ -16,7 +16,7 @@ def eliminar_usuario_firebase(id_usuario):
         return False
     
     
-async def on_eliminar_click(e, page, id_usuario, actualizar_tabla):
+async def on_eliminar_click(e, page, id_usuario, actualizar_tabla): #Se manda a llamar desde el botón de eliminar en la tabla de usuarios
     if eliminar_usuario_firebase(id_usuario):
         print("Usuario eliminado exitosamente.")
         if actualizar_tabla:
@@ -27,7 +27,7 @@ async def on_eliminar_click(e, page, id_usuario, actualizar_tabla):
         print("Error al eliminar usuario.")
 
 
-def mensaje_confirmacion(page, id_usuario, actualizar_tabla):
+def mensaje_confirmacion(page, id_usuario, actualizar_tabla): # Se manda a llamar desde el botón de eliminar en la tabla de usuarios
     print(f"Se llamó a mensaje_confirmacion para ID: {id_usuario}")
 
     def confirmar(e):

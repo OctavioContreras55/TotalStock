@@ -27,8 +27,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
             page.update()
         except Exception as e:
             print(f"Error al actualizar tabla: {e}")
-            # Si hay error, mostrar tabla vacía
-            tabla_container.current.content = mostrar_tabla_usuarios([])
+            contenido.content = construir_vista_usuario([])  # Muestra la vista con tabla vacía
             page.update()
     
     def abrir_ventana_crear_usuario(e): # Función para abrir la ventana de crear usuario
@@ -104,16 +103,11 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                 ),
                 ft.Row(
                     controls=[
-                        ft.Column(
-                            controls=[
-                                ft.Container(
-                                    ref=tabla_container,
-                                    content=mostrar_tabla_usuarios(page,usuarios, actualizar_tabla),
-                                    padding=ft.padding.symmetric(horizontal=5, vertical=20),
-                                ),
-                                
-                            ],
-                            scroll=ft.ScrollMode.AUTO,
+                        ft.Container(
+                            ref=tabla_container,
+                            content=mostrar_tabla_usuarios(page, usuarios, actualizar_tabla),
+                            padding=ft.padding.symmetric(horizontal=5, vertical=20),
+                            height=800,  # Altura fija para activar el scroll interno de la tabla
                         )
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
