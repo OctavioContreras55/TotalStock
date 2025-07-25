@@ -40,7 +40,7 @@ def mensaje_confirmacion(page, id_usuario, actualizar_tabla): # Se manda a llama
         page.update()
         
     dialog = ft.AlertDialog(
-        modal=True,
+        modal=True, 
         title=ft.Text("Confirmación de eliminación"),
         content=ft.Text("¿Estás seguro de eliminar el usuario?"),
         actions=[

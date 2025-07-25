@@ -2,11 +2,20 @@ import flet as ft
 from app.tablas.ui_tabla_productos import mostrar_tabla_productos
 from app.ui.barra_carga import vista_carga
 import asyncio
+from app.funciones.carga_archivos import on_click_importar_archivo
+from app.funciones.carga_archivos import obtener_productos_de_firebase
 
 async def vista_inventario(nombre_seccion, contenido, productos_ejemplo, page):
+    productos = await obtener_productos_de_firebase()
     contenido.content = vista_carga()  # Mostrar barra de carga mientras se carga la vista
     page.update()  # Actualizar la página para mostrar la barra de carga
     await asyncio.sleep(2)  # Simular tiempo de carga
+    
+    def actualizar_tabla_productos(productos):
+        #Actualizar la tabla de productos con los nuevos datos
+        contenido.content.controls[-1].content = mostrar_tabla_productos(productos)
+        contenido.content.update()
+    
     contenido.content = ft.Column(
         controls=[
             ft.Container(
@@ -56,7 +65,8 @@ async def vista_inventario(nombre_seccion, contenido, productos_ejemplo, page):
                                     content=ft.Row([
                                         ft.Icon(ft.Icons.FILE_UPLOAD),
                                         ft.Text("Importar productos")
-                                    ])
+                                    ]),
+                                    on_click=lambda e: on_click_importar_archivo(page , actualizar_tabla_productos),
                                 ),
                                 width=200,
                                 padding=ft.padding.symmetric(horizontal=5, vertical=20)

@@ -1,10 +1,16 @@
 import flet as ft
 
 def login_view(page: ft.Page, on_login_success): #Función para la vista del login. Argumentos: page = pagina de Flet, on_login_success = función a ejecutar al iniciar sesión correctamente
-    
+
     #Campos de entrada para el usuario y la contraseña
     usuario_input = ft.TextField(label="Usuario", autofocus=True)
     contrasena_input = ft.TextField(label="Contraseña", password=True, can_reveal_password=True)
+    
+
+    min_width = max(510, int(page.window.width * 0.45))
+    min_height = max(800, int(page.window.height * 1))
+    page.window.min_width = min_width
+    page.window.min_height = min_height
     
     #Texto de error en caso de campos vacíos
     mensaje_error = ft.Container(
@@ -118,6 +124,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             expand=True,
             spacing=20,
+            scroll=ft.ScrollMode.AUTO,
         )
 
 

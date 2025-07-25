@@ -15,6 +15,10 @@ async def principal_view(page: ft.Page):
     page.window_maximized = True
     page.window_resizable = True
     page.window_minimizable = False
+    min_width = max(1020, int(page.window.width * 0.8))
+    min_height = max(800, int(page.window.height * 0.8))
+    page.window.min_width = min_width
+    page.window.min_height = min_height
     page.title = "TotalStock: Sistema de Inventario"
     fecha_actual = datetime.now().strftime("%d/%m/%Y") #Obtiene la fecha actual en formato dd/mm/yyyy
     
