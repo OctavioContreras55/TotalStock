@@ -7,6 +7,10 @@ def crear_boton_eliminar(page, uid, actualizar_tabla=None):
         on_click=lambda e: mensaje_confirmacion(page, uid, actualizar_tabla)
     )
 def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
+    # Calcular altura responsiva basada en el tamaño de pantalla
+    # Reservamos espacio para header, botones y padding (aproximadamente 300px)
+    altura_tabla = max(300, (page.window.height or 800) - 350)
+    
     # Crear una tabla para mostrar los usuarios
     tabla = ft.DataTable(
         border=ft.border.all(1, "black"),
@@ -45,10 +49,9 @@ def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
                 on_select_changed=lambda e: print(f"Fila seleccionada: {e.data}"),
             )   for usuario in usuarios
         ],
-        height=800,
         width=1200,
     )
     
-    scroll_vertical = ft.Column([tabla], scroll=True, expand=True)
-    scroll_horizontal = ft.Row([scroll_vertical], scroll=True, expand=1, vertical_alignment=ft.MainAxisAlignment.START)
+    scroll_vertical = ft.Column([tabla], scroll=True, height=altura_tabla)  # Altura responsiva
+    scroll_horizontal = ft.Row([scroll_vertical], scroll=True,vertical_alignment=ft.MainAxisAlignment.START)
     return scroll_horizontal
