@@ -3,101 +3,142 @@ from app.tablas.ui_tabla_productos import mostrar_tabla_productos
 from app.ui.barra_carga import vista_carga
 import asyncio
 from app.funciones.carga_archivos import on_click_importar_archivo
-from app.funciones.carga_archivos import obtener_productos_de_firebase
+from app.crud_productos.create_producto import obtener_productos_firebase
 
-async def vista_inventario(nombre_seccion, contenido, productos_ejemplo, page):
-    productos = await obtener_productos_de_firebase()
+async def vista_inventario(nombre_seccion, contenido, page):
+    #productos = await obtener_productos_firebase()
     contenido.content = vista_carga()  # Mostrar barra de carga mientras se carga la vista
+    await obtener_productos_firebase()  # Cargar productos desde Firebase
     page.update()  # Actualizar la página para mostrar la barra de carga
-    await asyncio.sleep(2)  # Simular tiempo de carga
+    if page is None:
+        page = contenido.page
     
-    def actualizar_tabla_productos(productos):
-        #Actualizar la tabla de productos con los nuevos datos
-        contenido.content.controls[-1].content = mostrar_tabla_productos(productos)
-        contenido.content.update()
+    productos_actuales = []
+
+    # Obtener productos iniciales
+    try:
+        productos_iniciales = await obtener_productos_firebase()
+        productos_actuales = productos_iniciales  # Inicializar productos actuales
+    except Exception as e:
+        print(f"Error al obtener productos iniciales: {e}")
+        productos_iniciales = []
+        productos_actuales = []
+
+    async def actualizar_tabla_productos():
+        nonlocal productos_actuales
+        try:
+            print("Actualizando tabla productos")
+            contenido.content = vista_carga()
+            page.update()
+            productos_actuales = await obtener_productos_firebase()  # Aquí deberías llamar a la función que obtiene los productos de Firebase
+            contenido.content = construir_vista_inventario(productos_actuales)
+            page.update()
+        except Exception as e:
+            print(f"Error al actualizar tabla: {e}")
+            productos_actuales = []
+            contenido.content = construir_vista_inventario([])
+            page.update()
     
-    contenido.content = ft.Column(
-        controls=[
-            ft.Container(
-                content=ft.Row(
-                    controls=[
-                        ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    vertical_alignment=ft.CrossAxisAlignment.START
-                ),
-                width=600,
-                bgcolor=ft.Colors.GREY_900,
-                padding=20,
-                alignment=ft.alignment.center,
-                border_radius=10,
-            ),
-            ft.Row(
+    def abrir_ventana_crear_producto(e):
+        try:
+            # Aquí deberías implementar la lógica para abrir la ventana de crear producto
+            print("Ventana de crear producto llamada exitosamente")  # Debug
+        except Exception as error:
+            print(f"Error al abrir ventana: {error}")
+    
+            
+    def construir_vista_inventario(productos):
+        return ft.Container(
+            content=ft.Column(
                 controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Container(
-                                content=ft.ElevatedButton(
-                                    content=ft.Row([
-                                        ft.Icon(ft.Icons.SEARCH),
-                                        ft.Text("Buscar producto")
-                                    ])
-                                ),
-                                width=200,
-                                padding=ft.padding.symmetric(horizontal=5, vertical=20)
-                            ),
-                            ft.Container(
-                                content=ft.ElevatedButton(
-                                    content=ft.Row([
-                                        ft.Icon(ft.Icons.ADD),
-                                        ft.Text("Agregar producto")
-                                    ])
-                                ),
-                                width=200,
-                                padding=ft.padding.symmetric(horizontal=5, vertical=20)
-                            ),
-                        ]
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            vertical_alignment=ft.CrossAxisAlignment.START
+                        ),
+                        width=600,
+                        bgcolor=ft.Colors.GREY_900,
+                        padding=20,
+                        alignment=ft.alignment.center,
+                        border_radius=10,
                     ),
                     ft.Row(
                         controls=[
-                            ft.Container(
-                                content=ft.ElevatedButton(
-                                    content=ft.Row([
-                                        ft.Icon(ft.Icons.FILE_UPLOAD),
-                                        ft.Text("Importar productos")
-                                    ]),
-                                    on_click=lambda e: on_click_importar_archivo(page , actualizar_tabla_productos),
+                            ft.Row(
+                                controls=[
+                                                                ft.Container(
+                                    content=ft.ElevatedButton(
+                                        content=ft.Row([
+                                            ft.Icon(ft.Icons.SEARCH),
+                                            ft.Text("Buscar producto")
+                                        ])
+                                    ),
+                                    width=200,
+                                    padding=ft.padding.symmetric(horizontal=5, vertical=20)
                                 ),
-                                width=200,
-                                padding=ft.padding.symmetric(horizontal=5, vertical=20)
-                            ),
-                            ft.Container(
-                                content=ft.ElevatedButton(
-                                    content=ft.Row([
-                                        ft.Icon(ft.Icons.FILE_DOWNLOAD),
-                                        ft.Text("Exportar productos")
-                                    ])
+                                ft.Container(
+                                    content=ft.ElevatedButton(
+                                        content=ft.Row([
+                                            ft.Icon(ft.Icons.ADD),
+                                            ft.Text("Agregar producto")
+                                        ])
+                                    ),
+                                    width=200,
+                                    padding=ft.padding.symmetric(horizontal=5, vertical=20)
                                 ),
-                                width=200,
-                                padding=ft.padding.symmetric(horizontal=5, vertical=20)
+                                ],
                             ),
-                        ]
-                    )
+                            ft.Row(
+                                controls=[
+                                    ft.Container(
+                                        content=ft.ElevatedButton(
+                                            content=ft.Row([
+                                                ft.Icon(ft.Icons.FILE_UPLOAD),
+                                                ft.Text("Importar productos")
+                                            ]),
+                                            on_click=lambda e: on_click_importar_archivo(page),
+                                        ),
+                                        width=200,
+                                        padding=ft.padding.symmetric(horizontal=5, vertical=20)
+                                    ),
+                                    ft.Container(
+                                        content=ft.ElevatedButton(
+                                            content=ft.Row([
+                                                ft.Icon(ft.Icons.FILE_DOWNLOAD),
+                                                ft.Text("Exportar productos")
+                                            ])
+                                        ),
+                                        width=200,
+                                        padding=ft.padding.symmetric(horizontal=5, vertical=20)
+                                    ),
+                                ],
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    ft.Container(
+                                        content=mostrar_tabla_productos(page, productos, actualizar_tabla_productos),
+                                        padding=ft.padding.symmetric(horizontal=5, vertical=20),
+                                    ),
+                                ],
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.START
+                    )     
                 ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER
+                alignment=ft.MainAxisAlignment.START,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            ft.Row(
-                controls=[
-                    ft.Container(
-                        content=mostrar_tabla_productos(productos_ejemplo),
-                        expand=True,
-                        padding=ft.padding.all(10)
-                        )
-                    ],
-                )     
-            ],
-            alignment=ft.MainAxisAlignment.START,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
+            padding=ft.padding.only(bottom=40),
         )
+    contenido.content = construir_vista_inventario(productos_actuales)
+    page.update()  # Actualizar la página para mostrar el contenido inicial

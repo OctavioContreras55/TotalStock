@@ -8,18 +8,22 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
     contenido.content = vista_carga()  # Mostrar barra de carga mientras se carga la vista
     await obtener_usuarios_firebase()  # Cargar usuarios desde Firebase
     page.update()  # Actualizar la página para mostrar la barra de carga
-
-
     # Si no se pasa la página, intentar obtenerla del contenido
     if page is None:
         page = contenido.page
     
-    # Variable para almacenar la tabla actual
-    tabla_container = ft.Ref[ft.Container]()
     usuarios_actuales = []  # Variable para mantener los usuarios actuales
-
+    # Obtener usuarios iniciales
+    try:
+        usuarios_iniciales = await obtener_usuarios_firebase()
+        usuarios_actuales = usuarios_iniciales  # Inicializar usuarios actuales
+    except Exception as e:
+        print(f"Error al obtener usuarios iniciales: {e}")
+        usuarios_iniciales = []
+        usuarios_actuales = []
+    
     async def actualizar_tabla(): # Función para actualizar la tabla con datos de Firebase
-        nonlocal usuarios_actuales
+        nonlocal usuarios_actuales # Esto es para que podamos modificar la variable usuarios_actuales
         try:
             print("Actualizando tabla usuarios")
             contenido.content = vista_carga()
@@ -39,27 +43,6 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
             print("Ventana de crear usuario llamada exitosamente")  # Debug
         except Exception as error:
             print(f"Error al abrir ventana: {error}")  # Debug
-    
-    def on_window_resize(e):
-        """Actualizar la tabla cuando cambie el tamaño de la ventana"""
-        try:
-            if tabla_container.current:
-                tabla_container.current.content = mostrar_tabla_usuarios(page, usuarios_actuales, actualizar_tabla)
-                page.update()
-        except Exception as error:
-            print(f"Error al redimensionar: {error}")
-    
-    # Configurar el evento de redimensionamiento
-    page.on_resized = on_window_resize
-    
-    # Obtener usuarios iniciales
-    try:
-        usuarios_iniciales = await obtener_usuarios_firebase()
-        usuarios_actuales = usuarios_iniciales  # Inicializar usuarios actuales
-    except Exception as e:
-        print(f"Error al obtener usuarios iniciales: {e}")
-        usuarios_iniciales = []
-        usuarios_actuales = []
     
     def construir_vista_usuario(usuarios):
         return ft.Container(
@@ -122,7 +105,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                   ft.Row(
                       controls=[
                           ft.Container(
-                              ref=tabla_container,
+                              
                               content=mostrar_tabla_usuarios(page, usuarios, actualizar_tabla),
                               padding=ft.padding.symmetric(horizontal=5, vertical=20),
                           )

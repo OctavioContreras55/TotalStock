@@ -1,25 +1,74 @@
-import pandas as pd
+import polars as pd
 import flet as ft
+from conexiones.firebase import db
 
 def cargar_archivo_excel(ruta_archivo):
     archivo = pd.read_excel(ruta_archivo)
     productos = []
-    for _, row in archivo.iterrows():
+    for row in archivo.iter_rows(named=True):
         producto = {
-            "id": row["ID"],
+            "modelo": row["Modelo"],
+            "tipo": row["Tipo"],
             "nombre": row["Nombre"],
             "precio": row["Precio"],
             "cantidad": row["Cantidad"]
         }
         productos.append(producto)
-    print(producto)
     return productos
 
-def guardar_productos_en_firebase(productos):
-    # Aquí va la lógica para guardar cada producto en Firebase
-    pass
+def guardar_productos_en_firebase(productos, page):
+    
+    mensaje_cargando = ft.AlertDialog(
+        title=ft.Text("Aviso"),
+        content= ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Text("Importando productos..."),
+                    ft.ProgressRing(width=14, height=14, stroke_width=2, color=ft.Colors.BLUE_300)
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=10,
+            ),
+            padding=ft.Padding(20, 20, 10, 20),
+        ),
+        modal=True,
+        
+    )
+    page.open(mensaje_cargando)
+    page.update()
+    
+    mensaje_exito = ft.AlertDialog(
+        title=ft.Text("Productos importados correctamente"),
+        actions=[ft.TextButton("Aceptar", on_click=lambda e: page.close(mensaje_exito))],
+        modal=True,
+    )
+    
+    try:
+        referencia_productos = db.collection("productos")
+        for producto in productos:
+            try:
+                id_documento = f"{producto['modelo']}"
+                doc_ref = referencia_productos.document(id_documento)
+                doc_snapshot = doc_ref.get()
+                if not all(key in producto for key in ["modelo", "tipo", "nombre", "precio", "cantidad"]):
+                    print(f"Producto {producto} no tiene todos los campos requeridos.")
+                    continue
+                if doc_snapshot.exists:
+                    print(f"El producto con ID: {id_documento} ya existe en Firebase. Se actualizará.")
+                    doc_ref.set(producto)
+                else:
+                    doc_ref.set(producto)
 
-def on_click_importar_archivo(page, actualizar_tabla_productos):
+            except Exception as e:
+                print(f"Error al guardar el producto {producto['modelo']}: {e}")
+        page.close(mensaje_cargando)
+        page.open(mensaje_exito)
+    except Exception as e:
+        print(f"Error al conectar con Firebase: {e}")
+        return False
+
+def on_click_importar_archivo(page):
 
     productos_importados = []
     def picked_file(e: ft.FilePickerResultEvent):
@@ -62,7 +111,7 @@ def on_click_importar_archivo(page, actualizar_tabla_productos):
                             controls=[
                                 ft.ElevatedButton(
                                     "Importar",
-                                    on_click=lambda e: [page.close(ventana), guardar_productos_en_firebase(productos_importados)],
+                                    on_click=lambda e: [page.close(ventana), guardar_productos_en_firebase(productos_importados, page)],
                                     width=100,
                                     height=40,
                                 ),

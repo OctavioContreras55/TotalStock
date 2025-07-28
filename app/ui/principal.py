@@ -25,13 +25,6 @@ async def principal_view(page: ft.Page):
     # Contenido de la derecha
     contenido = ft.Container(expand=True, padding=20)
     
-    # Diccionario de ejemplo
-    productos_ejemplo = [
-        {"id": 1, "nombre": "Manzana", "precio": 10.5, "cantidad": 50},
-        {"id": 2, "nombre": "Plátano", "precio": 8.0, "cantidad": 30},
-        {"id": 3, "nombre": "Naranja", "precio": 12.0, "cantidad": 20},
-        {"id": 4, "nombre": "Pera", "precio": 15.0, "cantidad": 40},
-    ]
     
     def vista_inicio(nombre_seccion):
         vista_inicio_modular(nombre_seccion, contenido, fecha_actual)
@@ -39,7 +32,7 @@ async def principal_view(page: ft.Page):
     
     # Función para cambiar la vista al hacer clic en el menú
     async def vista_inventario(nombre_seccion):
-        await vista_inventario_modular(nombre_seccion, contenido, productos_ejemplo, page)
+        await vista_inventario_modular(nombre_seccion, contenido, page)
         page.update()
     
     def vista_categorias(nombre_seccion):
