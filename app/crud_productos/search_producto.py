@@ -1,30 +1,43 @@
 import flet as ft
 from conexiones.firebase import db
+from app.utils.temas import GestorTemas
 import asyncio
 
 def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
+    tema = GestorTemas.obtener_tema()
     campo_buscar = ft.TextField(
       label="Buscar Producto por modelo",
       width=300,
       autofocus=True,
+      bgcolor=tema.INPUT_BG,
+      color=tema.TEXT_COLOR,
+      border_color=tema.INPUT_BORDER,
+      focused_border_color=tema.PRIMARY_COLOR,
+      label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
     )
     async def validar_busqueda(e):
         if not campo_buscar.value.strip():
           page.open(ft.SnackBar(
-          content=ft.Text("Por favor, ingrese un modelo para buscar."),
-          bgcolor=ft.Colors.RED_400
+          content=ft.Text("Por favor, ingrese un modelo para buscar.", color=tema.TEXT_COLOR),
+          bgcolor=tema.ERROR_COLOR
       ))
         else:
             await buscar_en_firebase(page, campo_buscar.value, mostrar_productos_filtrados, dialogo_busqueda)
 
     dialogo_busqueda = ft.AlertDialog(
-        title=ft.Text("Buscar Producto"),
+        title=ft.Text("Buscar Producto", color=tema.TEXT_COLOR),
+        bgcolor=tema.CARD_COLOR,
         content=ft.Container(
           content=ft.Row(
               controls=[
                   campo_buscar,
                   ft.ElevatedButton(
                       text="Buscar",
+                      style=ft.ButtonStyle(
+                          bgcolor=tema.BUTTON_PRIMARY_BG,
+                          color=tema.BUTTON_TEXT,
+                          shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                      ),
                       on_click=validar_busqueda
                   )
               ]
@@ -33,7 +46,9 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
           height=100,
         ),
         actions=[
-            ft.TextButton("Cerrar", on_click=lambda e: page.close(dialogo_busqueda)),
+            ft.TextButton("Cerrar", 
+                         style=ft.ButtonStyle(color=tema.TEXT_SECONDARY),
+                         on_click=lambda e: page.close(dialogo_busqueda)),
         ]
     )
 
@@ -41,6 +56,7 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
     page.update()
 
 async def buscar_en_firebase(page, busqueda, actualizar_tabla=None, dialogo_busqueda=None):
+    tema = GestorTemas.obtener_tema()
     try:
         referencia_productos = db.collection('productos')
         query = referencia_productos.where('modelo', '==', busqueda)
@@ -55,22 +71,22 @@ async def buscar_en_firebase(page, busqueda, actualizar_tabla=None, dialogo_busq
         if productos_encontrados:
           page.close(dialogo_busqueda)  # Cerrar el dialog
           page.open(ft.SnackBar(
-              content=ft.Text(f"Se encontraron {len(productos_encontrados)} productos"),
-              bgcolor=ft.Colors.GREEN_400
+              content=ft.Text(f"Se encontraron {len(productos_encontrados)} productos", color=tema.TEXT_COLOR),
+              bgcolor=tema.SUCCESS_COLOR
           ))
           if actualizar_tabla:
               await actualizar_tabla(productos_encontrados)
         else:
             page.open(ft.SnackBar(
-                content=ft.Text("No se encontraron productos con ese modelo."),
-                bgcolor=ft.Colors.RED_400
+                content=ft.Text("No se encontraron productos con ese modelo.", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
             ))
 
     except Exception as e:
         print(f"Error al buscar productos: {str(e)}")
         page.open(ft.SnackBar(
-            content=ft.Text("Error al buscar productos."),
-            bgcolor=ft.Colors.RED_400
+            content=ft.Text("Error al buscar productos.", color=tema.TEXT_COLOR),
+            bgcolor=tema.ERROR_COLOR
         ))
         page.update()
         

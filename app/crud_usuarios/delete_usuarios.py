@@ -1,5 +1,6 @@
 import flet as ft
 from conexiones.firebase import db
+from app.utils.temas import GestorTemas
 import asyncio
 
 
@@ -28,6 +29,7 @@ async def on_eliminar_click(e, page, id_usuario, actualizar_tabla): #Se manda a 
 
 
 def mensaje_confirmacion(page, id_usuario, actualizar_tabla): # Se manda a llamar desde el botón de eliminar en la tabla de usuarios
+    tema = GestorTemas.obtener_tema()
     print(f"Se llamó a mensaje_confirmacion para ID: {id_usuario}")
 
     def confirmar(e):
@@ -41,11 +43,16 @@ def mensaje_confirmacion(page, id_usuario, actualizar_tabla): # Se manda a llama
         
     dialog = ft.AlertDialog(
         modal=True, 
-        title=ft.Text("Confirmación de eliminación"),
-        content=ft.Text("¿Estás seguro de eliminar el usuario?"),
+        title=ft.Text("Confirmación de eliminación", color=tema.TEXT_COLOR),
+        content=ft.Text("¿Estás seguro de eliminar el usuario?", color=tema.TEXT_SECONDARY),
+        bgcolor=tema.CARD_COLOR,
         actions=[
-            ft.TextButton("Cancelar", on_click=lambda e: cerrar_dialogo(page)),
-            ft.TextButton("Eliminar", on_click=confirmar),
+            ft.TextButton("Cancelar", 
+                         style=ft.ButtonStyle(color=tema.TEXT_SECONDARY),
+                         on_click=lambda e: cerrar_dialogo(page)),
+            ft.TextButton("Eliminar", 
+                         style=ft.ButtonStyle(color=tema.ERROR_COLOR),
+                         on_click=confirmar),
         ],
         actions_alignment=ft.MainAxisAlignment.END,
     )

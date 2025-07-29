@@ -5,12 +5,16 @@ from app.ui_inicio import vista_inicio as vista_inicio_modular
 from app.funciones.sesiones import cerrar_sesion
 from app.ui_usuarios import vista_usuarios as vista_usuarios_modular
 from app.ui_categorias import categorias_mostrar
+from app.utils.temas import GestorTemas
 from conexiones.firebase import db
 import asyncio
 
 
 async def principal_view(page: ft.Page):
+    tema = GestorTemas.obtener_tema()
     page.controls.clear()  # Limpia los controles de la página
+    page.bgcolor = tema.BG_COLOR  # Establecer el color de fondo
+    
     # Configuración de la página principal
     page.window_maximized = True
     page.window_resizable = True
@@ -23,7 +27,7 @@ async def principal_view(page: ft.Page):
     fecha_actual = datetime.now().strftime("%d/%m/%Y") #Obtiene la fecha actual en formato dd/mm/yyyy
     
     # Contenido de la derecha
-    contenido = ft.Container(expand=True, padding=20)
+    contenido = ft.Container(expand=True, padding=20, bgcolor=tema.BG_COLOR)
     
     
     def vista_inicio(nombre_seccion):
@@ -42,8 +46,8 @@ async def principal_view(page: ft.Page):
     def vista_ubicaciones(nombre_seccion):
         contenido.content = ft.Column(
             controls=[
-                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                ft.Text("Aquí puedes gestionar las ubicaciones de tus productos.", size=16)
+                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24, color=tema.TEXT_COLOR),
+                ft.Text("Aquí puedes gestionar las ubicaciones de tus productos.", size=16, color=tema.TEXT_SECONDARY)
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -54,8 +58,8 @@ async def principal_view(page: ft.Page):
     def vista_movimientos(nombre_seccion):
         contenido.content = ft.Column(
             controls=[
-                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                ft.Text("Aquí puedes gestionar los movimientos de inventario.", size=16)
+                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24, color=tema.TEXT_COLOR),
+                ft.Text("Aquí puedes gestionar los movimientos de inventario.", size=16, color=tema.TEXT_SECONDARY)
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -66,8 +70,8 @@ async def principal_view(page: ft.Page):
     def vista_reportes(nombre_seccion):
         contenido.content = ft.Column(
             controls=[
-                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                ft.Text("Aquí puedes generar reportes de inventario.", size=16)
+                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24, color=tema.TEXT_COLOR),
+                ft.Text("Aquí puedes generar reportes de inventario.", size=16, color=tema.TEXT_SECONDARY)
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -80,15 +84,8 @@ async def principal_view(page: ft.Page):
         page.update()
             
     def vista_configuracion(nombre_seccion):
-        contenido.content = ft.Column(
-            controls=[
-                ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                ft.Text("Aquí puedes configurar el sistema.", size=16)
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
-        )
+        from app.ui_configuracion import vista_configuracion as vista_configuracion_modular
+        vista_configuracion_modular(nombre_seccion, contenido, page)
         page.update()
         
     def on_cerrar_sesion(e):
@@ -97,18 +94,18 @@ async def principal_view(page: ft.Page):
     # Contenedor del menú lateral          
     menu_lateral = ft.Container(
         width=250,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=tema.SIDEBAR_COLOR,
         padding=20,
         content=ft.Column(
             controls=[
                 ft.Container(
                     content=ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=48, color=ft.Colors.BLUE_200),
+                            ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=48, color=tema.PRIMARY_COLOR),
                             ft.Column(
                                 controls=[
-                                    ft.Text("Octavio", size=18, weight=ft.FontWeight.BOLD),
-                                    ft.Text("Administrador", size=12, color=ft.Colors.GREY_400),
+                                    ft.Text("Octavio", size=18, weight=ft.FontWeight.BOLD, color=tema.SIDEBAR_TEXT_COLOR),
+                                    ft.Text("Administrador", size=12, color=tema.SIDEBAR_TEXT_SECONDARY),
                                 ],
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 horizontal_alignment=ft.CrossAxisAlignment.START,
@@ -123,42 +120,42 @@ async def principal_view(page: ft.Page):
                 ),
                 ft.Container(
                     height=2,
-                    bgcolor=ft.Colors.WHITE70,
+                    bgcolor=tema.DIVIDER_COLOR,
                     margin=ft.margin.only(bottom=20, top=5)
                 ),
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.HOME),
-                    title=ft.Text("Inicio"),
+                    leading=ft.Icon(ft.Icons.HOME, color=tema.SIDEBAR_ICON_COLOR),
+                    title=ft.Text("Inicio", color=tema.SIDEBAR_TEXT_COLOR),
                     on_click=lambda e: vista_inicio("Inicio"),
                     dense=True
                 ),
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.INVENTORY_2),
-                    title=ft.Text("Inventario"),
+                    leading=ft.Icon(ft.Icons.INVENTORY_2, color=tema.SIDEBAR_ICON_COLOR),
+                    title=ft.Text("Inventario", color=tema.SIDEBAR_TEXT_COLOR),
                     on_click=lambda e: asyncio.run(vista_inventario("Inventario")),
                     dense=True
                 ),
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.LABEL),
-                    title=ft.Text("Categorías"),
+                    leading=ft.Icon(ft.Icons.LABEL, color=tema.SIDEBAR_ICON_COLOR),
+                    title=ft.Text("Categorías", color=tema.SIDEBAR_TEXT_COLOR),
                     on_click=lambda e: vista_categorias("Categorías"),
                     dense=True
                 ),
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.LOCATION_ON),
-                    title=ft.Text("Ubicaciones"),
+                    leading=ft.Icon(ft.Icons.LOCATION_ON, color=tema.SIDEBAR_ICON_COLOR),
+                    title=ft.Text("Ubicaciones", color=tema.SIDEBAR_TEXT_COLOR),
                     on_click=lambda e: vista_ubicaciones("Ubicaciones"),
                     dense=True
                 ),
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.SWAP_HORIZ),
-                    title=ft.Text("Movimientos"),
+                    leading=ft.Icon(ft.Icons.SWAP_HORIZ, color=tema.SIDEBAR_ICON_COLOR),
+                    title=ft.Text("Movimientos", color=tema.SIDEBAR_TEXT_COLOR),
                     on_click=lambda e: vista_movimientos("Movimientos"),
                     dense=True
                 ),
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.INSERT_CHART),
-                    title=ft.Text("Reportes"),
+                    leading=ft.Icon(ft.Icons.INSERT_CHART, color=tema.SIDEBAR_ICON_COLOR),
+                    title=ft.Text("Reportes", color=tema.SIDEBAR_TEXT_COLOR),
                     on_click=lambda e: vista_reportes("Reportes"),
                     dense=True
                 ),
@@ -166,21 +163,21 @@ async def principal_view(page: ft.Page):
                 ft.Container(expand=True),
                 
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.SUPERVISED_USER_CIRCLE),
-                    title=ft.Text("Usuarios"),
+                    leading=ft.Icon(ft.Icons.SUPERVISED_USER_CIRCLE, color=tema.SIDEBAR_ICON_COLOR),
+                    title=ft.Text("Usuarios", color=tema.SIDEBAR_TEXT_COLOR),
                     on_click=lambda e: asyncio.run(vista_usuarios("Usuarios")),
                     dense=True
                 ),
                 
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.SETTINGS),
-                    title=ft.Text("Configuración"),
+                    leading=ft.Icon(ft.Icons.SETTINGS, color=tema.SIDEBAR_ICON_COLOR),
+                    title=ft.Text("Configuración", color=tema.SIDEBAR_TEXT_COLOR),
                     on_click=lambda e: vista_configuracion("Configuración"),
                     dense=True
                 ),
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.LOGOUT, color=ft.Colors.RED_400),
-                    title=ft.Text("Cerrar sesión", style=ft.TextStyle(color=ft.Colors.RED_400)),
+                    leading=ft.Icon(ft.Icons.LOGOUT, color=tema.ERROR_COLOR),
+                    title=ft.Text("Cerrar sesión", style=ft.TextStyle(color=tema.ERROR_COLOR)),
                     on_click=on_cerrar_sesion,
                     dense=True
                 ),

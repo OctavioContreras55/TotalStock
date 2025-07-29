@@ -1,5 +1,6 @@
 import flet as ft
 from app.ui.login import login_view
+import asyncio
 
 def cerrar_sesion(page: ft.Page):
     # Limpiar controles actuales
@@ -8,7 +9,7 @@ def cerrar_sesion(page: ft.Page):
     # Volver a mostrar login
     def cargar_pantalla_principal():
         from app.ui.principal import principal_view
-        principal_view(page)
+        asyncio.run(principal_view(page))
 
     login_view(page, on_login_success=cargar_pantalla_principal)
     page.update()

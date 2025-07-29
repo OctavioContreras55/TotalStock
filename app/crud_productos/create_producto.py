@@ -1,14 +1,54 @@
 import flet as ft
 from conexiones.firebase import db
+from app.utils.temas import GestorTemas
 import asyncio
 
 async def vista_crear_producto(page, callback_actualizar_tabla=None):
+    tema = GestorTemas.obtener_tema()
     # Campos del formulario
-    campo_modelo = ft.TextField(label="Modelo", autofocus=True)
-    campo_tipo = ft.TextField(label="Tipo")
-    campo_nombre = ft.TextField(label="Nombre")
-    campo_precio = ft.TextField(label="Precio", keyboard_type=ft.KeyboardType.NUMBER)
-    campo_cantidad = ft.TextField(label="Cantidad", keyboard_type=ft.KeyboardType.NUMBER)
+    campo_modelo = ft.TextField(
+        label="Modelo", 
+        autofocus=True,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+    )
+    campo_tipo = ft.TextField(
+        label="Tipo",
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+    )
+    campo_nombre = ft.TextField(
+        label="Nombre",
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+    )
+    campo_precio = ft.TextField(
+        label="Precio", 
+        keyboard_type=ft.KeyboardType.NUMBER,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+    )
+    campo_cantidad = ft.TextField(
+        label="Cantidad", 
+        keyboard_type=ft.KeyboardType.NUMBER,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+    )
 
     def validar_campos():
         return all([
@@ -22,8 +62,8 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
     async def crear_producto(e):
         if not validar_campos():
             page.open(ft.SnackBar(
-                content=ft.Text("Por favor, complete todos los campos correctamente."),
-                bgcolor=ft.Colors.RED_400
+                content=ft.Text("Por favor, complete todos los campos correctamente.", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
             ))
             return
 
@@ -36,19 +76,20 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
         try:
             firebase_id = await crear_producto_firebase(modelo, tipo, nombre, precio, cantidad)
             page.open(ft.SnackBar(
-                content=ft.Text(f"Producto '{nombre}' creado exitosamente con ID: {firebase_id}"),
-                bgcolor=ft.Colors.GREEN_400
+                content=ft.Text(f"Producto '{nombre}' creado exitosamente con ID: {firebase_id}", color=tema.TEXT_COLOR),
+                bgcolor=tema.SUCCESS_COLOR
             ))
             if callback_actualizar_tabla:
                 await callback_actualizar_tabla()
         except Exception as e:
             page.open(ft.SnackBar(
-                content=ft.Text(f"Error al crear producto: {str(e)}"),
-                bgcolor=ft.Colors.RED_400
+                content=ft.Text(f"Error al crear producto: {str(e)}", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
             ))
 
     dialogo_crear_producto = ft.AlertDialog(
-        title=ft.Text("Crear Producto"),
+        title=ft.Text("Crear Producto", color=tema.TEXT_COLOR),
+        bgcolor=tema.CARD_COLOR,
         content=ft.Container(
             content=ft.Column(controls=[
                 campo_modelo,
@@ -56,13 +97,23 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
                 campo_nombre,
                 campo_precio,
                 campo_cantidad,
-                ft.ElevatedButton(text="Crear Producto", on_click=crear_producto)
+                ft.ElevatedButton(
+                    text="Crear Producto", 
+                    on_click=crear_producto,
+                    style=ft.ButtonStyle(
+                        bgcolor=tema.BUTTON_PRIMARY_BG,
+                        color=tema.BUTTON_TEXT,
+                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                    )
+                )
             ]),
             width=400,
             height=300,
         ),
         actions=[
-            ft.TextButton("Cerrar", on_click=lambda e: page.close(dialogo_crear_producto)),
+            ft.TextButton("Cerrar", 
+                         style=ft.ButtonStyle(color=tema.TEXT_SECONDARY),
+                         on_click=lambda e: page.close(dialogo_crear_producto)),
         ]
     )
 

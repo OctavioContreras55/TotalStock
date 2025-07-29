@@ -1,6 +1,7 @@
 import polars as pd
 import flet as ft
 from conexiones.firebase import db
+from app.utils.temas import GestorTemas
 
 def cargar_archivo_excel(ruta_archivo):
     archivo = pd.read_excel(ruta_archivo)
@@ -17,14 +18,16 @@ def cargar_archivo_excel(ruta_archivo):
     return productos
 
 def guardar_productos_en_firebase(productos, page):
+    tema = GestorTemas.obtener_tema()
     
     mensaje_cargando = ft.AlertDialog(
-        title=ft.Text("Aviso"),
+        title=ft.Text("Aviso", color=tema.TEXT_COLOR),
+        bgcolor=tema.CARD_COLOR,
         content= ft.Container(
             content=ft.Row(
                 controls=[
-                    ft.Text("Importando productos..."),
-                    ft.ProgressRing(width=14, height=14, stroke_width=2, color=ft.Colors.BLUE_300)
+                    ft.Text("Importando productos...", color=tema.TEXT_COLOR),
+                    ft.ProgressRing(width=14, height=14, stroke_width=2, color=tema.PRIMARY_COLOR)
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -39,8 +42,11 @@ def guardar_productos_en_firebase(productos, page):
     page.update()
     
     mensaje_exito = ft.AlertDialog(
-        title=ft.Text("Productos importados correctamente"),
-        actions=[ft.TextButton("Aceptar", on_click=lambda e: page.close(mensaje_exito))],
+        title=ft.Text("Productos importados correctamente", color=tema.TEXT_COLOR),
+        bgcolor=tema.CARD_COLOR,
+        actions=[ft.TextButton("Aceptar", 
+                               style=ft.ButtonStyle(color=tema.PRIMARY_COLOR),
+                               on_click=lambda e: page.close(mensaje_exito))],
         modal=True,
     )
     
@@ -69,6 +75,7 @@ def guardar_productos_en_firebase(productos, page):
         return False
 
 def on_click_importar_archivo(page):
+    tema = GestorTemas.obtener_tema()
 
     productos_importados = []
     def picked_file(e: ft.FilePickerResultEvent):
@@ -85,10 +92,19 @@ def on_click_importar_archivo(page):
         selected_file.update()
         
     pick_files_window = ft.FilePicker(on_result=picked_file)
-    selected_file = ft.TextField(label="Archivo seleccionado", width=250, read_only=True)
+    selected_file = ft.TextField(
+        label="Archivo seleccionado", 
+        width=250, 
+        read_only=True,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+    )
     page.overlay.append(pick_files_window)
     
     ventana = ft.AlertDialog(
+        bgcolor=tema.CARD_COLOR,
         content=ft.Column(
             controls=[
                 ft.Container(
@@ -96,7 +112,12 @@ def on_click_importar_archivo(page):
                         controls=[
                             ft.ElevatedButton(
                                 "Seleccionar archivo",
-                                icon=ft.Icons.FOLDER_OPEN,
+                                icon=ft.Icon(ft.Icons.FOLDER_OPEN, color=tema.PRIMARY_COLOR),
+                                style=ft.ButtonStyle(
+                                    bgcolor=tema.BUTTON_BG,
+                                    color=tema.BUTTON_TEXT,
+                                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                ),
                                 on_click=lambda e: pick_files_window.pick_files(allow_multiple=False),
                             ),
                             selected_file,
@@ -111,12 +132,22 @@ def on_click_importar_archivo(page):
                             controls=[
                                 ft.ElevatedButton(
                                     "Importar",
+                                    style=ft.ButtonStyle(
+                                        bgcolor=tema.BUTTON_SUCCESS_BG,
+                                        color=tema.BUTTON_TEXT,
+                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                    ),
                                     on_click=lambda e: [page.close(ventana), guardar_productos_en_firebase(productos_importados, page)],
                                     width=100,
                                     height=40,
                                 ),
                                 ft.ElevatedButton(
                                     "Cancelar",
+                                    style=ft.ButtonStyle(
+                                        bgcolor=tema.BUTTON_BG,
+                                        color=tema.BUTTON_TEXT,
+                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                    ),
                                     on_click=lambda e: page.close(ventana),
                                     width=100,
                                     height=40,
@@ -133,7 +164,7 @@ def on_click_importar_archivo(page):
             height=150,
         ),
         modal=True, 
-        title=ft.Text("Importar Productos"), 
+        title=ft.Text("Importar Productos", color=tema.TEXT_COLOR), 
         actions_alignment=ft.MainAxisAlignment.END, 
     )
 

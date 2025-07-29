@@ -2,6 +2,7 @@ import flet as ft
 import re #librería para expresiones regulares
 import threading #librería para manejar hilos
 from conexiones.firebase import db  # Importar la conexión a Firestore
+from app.utils.temas import GestorTemas
 import asyncio
 
 def crear_usuario_firebase(nombre, contrasena, es_admin=False): # Función para crear un usuario en Firebase
@@ -50,7 +51,7 @@ async def obtener_usuarios_firebase(): # Función para obtener todos los usuario
         return []
 
 def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Función para mostrar la ventana flotante de crear usuario
-
+    tema = GestorTemas.obtener_tema()
     
     # Guardar el contenido actual de la página
     contenido_original = page.controls.copy()
@@ -59,7 +60,11 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
     campo_nombre = ft.TextField(
         label="Nombre de usuario",
         width=300,
-        border_color=ft.Colors.BLUE_400
+        border_color=tema.INPUT_BORDER,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
     )
     
     campo_contrasena = ft.TextField(
@@ -67,29 +72,35 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
         width=300,
         password=True,
         can_reveal_password=True,
-        border_color=ft.Colors.BLUE_400
+        border_color=tema.INPUT_BORDER,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
     )
     
     campo_es_admin = ft.Checkbox(
         label="Es administrador",
-        value=False
+        value=False,
+        check_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_COLOR)
     )
     
-    mensaje_estado = ft.Text("", color=ft.Colors.RED_400, size=12)
+    mensaje_estado = ft.Text("", color=tema.ERROR_COLOR, size=12)
     
     def crear_usuario_click(e):
 
         # Validar campos
         if not campo_nombre.value or not campo_contrasena.value:
             mensaje_estado.value = "Por favor, completa todos los campos"
-            mensaje_estado.color = ft.Colors.RED_400
+            mensaje_estado.color = tema.ERROR_COLOR
             page.update()
             return
         
         if not re.fullmatch(r'[A-Za-z0-9]{6,}', campo_contrasena.value): # Valida que la contraseña tenga al menos 6 caracteres y solo letras y números
             #La r es para indicar que es una expresión regular o sea que se toman literalmente los caracteres
             mensaje_estado.value = "La contraseña debe tener al menos 6 caracteres y solo letras y números"
-            mensaje_estado.color = ft.Colors.RED_400
+            mensaje_estado.color = tema.ERROR_COLOR
             page.update()
             return
             
@@ -102,7 +113,7 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
         
         if exito:
             mensaje_estado.value = "Usuario creado exitosamente"
-            mensaje_estado.color = ft.Colors.GREEN_400
+            mensaje_estado.color = tema.SUCCESS_COLOR
             page.update()
             
             # Esperar un momento y restaurar la vista
@@ -118,7 +129,7 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
             asyncio.run(restaurar_vista())
         else:
             mensaje_estado.value = f"Error: {resultado}"
-            mensaje_estado.color = ft.Colors.RED_400
+            mensaje_estado.color = tema.ERROR_COLOR
             page.update()
     
     def cancelar_click(e):
@@ -148,11 +159,11 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                                                 ft.Text("Crear Nuevo Usuario", 
                                                         size=24, 
                                                         weight=ft.FontWeight.BOLD,
-                                                        color=ft.Colors.WHITE)
+                                                        color=tema.TEXT_COLOR)
                                             ],
                                             alignment=ft.MainAxisAlignment.CENTER
                                         ),
-                                        ft.Divider(color=ft.Colors.BLUE_400),
+                                        ft.Divider(color=tema.PRIMARY_COLOR),
                                         campo_nombre,
                                         campo_contrasena,
                                         campo_es_admin,
@@ -163,15 +174,21 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                                                 ft.ElevatedButton(
                                                     "Cancelar",
                                                     on_click=cancelar_click,
-                                                    bgcolor=ft.Colors.GREY_600,
-                                                    color=ft.Colors.WHITE,
+                                                    style=ft.ButtonStyle(
+                                                        bgcolor=tema.BUTTON_BG,
+                                                        color=tema.BUTTON_TEXT,
+                                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                                    ),
                                                     width=120
                                                 ),
                                                 ft.ElevatedButton(
                                                     "Crear Usuario",
                                                     on_click=crear_usuario_click,
-                                                    bgcolor=ft.Colors.BLUE_600,
-                                                    color=ft.Colors.WHITE,
+                                                    style=ft.ButtonStyle(
+                                                        bgcolor=tema.BUTTON_PRIMARY_BG,
+                                                        color=tema.BUTTON_TEXT,
+                                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                                    ),
                                                     width=140
                                                 )
                                             ],
@@ -182,11 +199,11 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                                     spacing=20,
                                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
                                 ),
-                                bgcolor=ft.Colors.GREY_900,
+                                bgcolor=tema.CARD_COLOR,
                                 padding=ft.padding.all(30),
-                                border_radius=15,
+                                border_radius=tema.BORDER_RADIUS,
                                 width=450,
-                                border=ft.border.all(2, ft.Colors.BLUE_400),
+                                border=ft.border.all(2, tema.PRIMARY_COLOR),
                                 shadow=ft.BoxShadow(
                                     spread_radius=1,
                                     blur_radius=15,
@@ -202,7 +219,8 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
             ],
             expand=True
         ),
-        expand=True
+        expand=True,
+        bgcolor=tema.BG_COLOR
     )
     
     # Reemplazar todo el contenido de la página

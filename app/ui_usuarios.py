@@ -1,10 +1,12 @@
 import flet as ft
 from app.tablas.ui_tabla_usuarios import mostrar_tabla_usuarios
 from app.crud_usuarios.create_usuarios import mostrar_ventana_crear_usuario, obtener_usuarios_firebase
+from app.utils.temas import GestorTemas
 import asyncio
 from app.ui.barra_carga import vista_carga
 
 async def vista_usuarios(nombre_seccion, contenido, page=None):
+    tema = GestorTemas.obtener_tema()
     contenido.content = vista_carga()  # Mostrar barra de carga mientras se carga la vista
     await obtener_usuarios_firebase()  # Cargar usuarios desde Firebase
     page.update()  # Actualizar la página para mostrar la barra de carga
@@ -53,8 +55,8 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                           controls=[
                               ft.Column(
                                   controls=[
-                                      ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24),
-                                      ft.Text("Gestión de los usuarios del sistema", size=16,),
+                                      ft.Text(f"Bienvenido a la vista de {nombre_seccion}", size=24, color=tema.TEXT_COLOR),
+                                      ft.Text("Gestión de los usuarios del sistema", size=16, color=tema.TEXT_SECONDARY),
                                   ],
                                   alignment=ft.MainAxisAlignment.START,
                                   horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -65,14 +67,14 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                           vertical_alignment=ft.CrossAxisAlignment.START
                       ),
                       width=600,
-                      bgcolor=ft.Colors.GREY_900,
+                      bgcolor=tema.CARD_COLOR,
                       padding=20,
                       alignment=ft.alignment.center,
-                      border_radius=10,
+                      border_radius=tema.BORDER_RADIUS,
                   ),
                   ft.Container(
                       height=3,
-                      bgcolor=ft.Colors.WHITE70,
+                      bgcolor=tema.DIVIDER_COLOR,
                       margin=ft.margin.only(bottom=20, top=5),
                   ),
                   ft.Row(
@@ -80,9 +82,14 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                           ft.Container(
                               content=ft.ElevatedButton(
                                   content=ft.Row([
-                                      ft.Icon(ft.Icons.ADD),
-                                      ft.Text("Agregar Usuario")
+                                      ft.Icon(ft.Icons.ADD, color=tema.PRIMARY_COLOR),
+                                      ft.Text("Agregar Usuario", color=tema.BUTTON_TEXT)
                                   ]),
+                                  style=ft.ButtonStyle(
+                                      bgcolor=tema.BUTTON_BG,
+                                      color=tema.BUTTON_TEXT,
+                                      shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                  ),
                                   on_click=abrir_ventana_crear_usuario
                               ),
                               width=200,
@@ -91,9 +98,14 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                           ft.Container(
                               content=ft.ElevatedButton(
                                   content=ft.Row([
-                                      ft.Icon(ft.Icons.SEARCH),
-                                      ft.Text("Buscar Usuario")
-                                  ])
+                                      ft.Icon(ft.Icons.SEARCH, color=tema.PRIMARY_COLOR),
+                                      ft.Text("Buscar Usuario", color=tema.BUTTON_TEXT)
+                                  ]),
+                                  style=ft.ButtonStyle(
+                                      bgcolor=tema.BUTTON_BG,
+                                      color=tema.BUTTON_TEXT,
+                                      shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                  )
                               ),
                               width=200,
                               padding=ft.padding.symmetric(horizontal=5, vertical=20)
@@ -118,6 +130,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
               horizontal_alignment=ft.CrossAxisAlignment.CENTER,
           ),
           padding=ft.padding.only(bottom=40),  # Espacio abajo
+          bgcolor=tema.BG_COLOR,
         )
 
     contenido.content = construir_vista_usuario(usuarios_iniciales)

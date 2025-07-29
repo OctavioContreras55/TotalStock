@@ -1,10 +1,29 @@
 import flet as ft
+from app.utils.temas import GestorTemas
 
 def login_view(page: ft.Page, on_login_success): #Función para la vista del login. Argumentos: page = pagina de Flet, on_login_success = función a ejecutar al iniciar sesión correctamente
-
+    tema = GestorTemas.obtener_tema()
+    
     #Campos de entrada para el usuario y la contraseña
-    usuario_input = ft.TextField(label="Usuario", autofocus=True)
-    contrasena_input = ft.TextField(label="Contraseña", password=True, can_reveal_password=True)
+    usuario_input = ft.TextField(
+        label="Usuario", 
+        autofocus=True,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+    )
+    contrasena_input = ft.TextField(
+        label="Contraseña", 
+        password=True, 
+        can_reveal_password=True,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+    )
     
 
     min_width = max(510, int(page.window.width * 0.45))
@@ -16,8 +35,8 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
     mensaje_error = ft.Container(
       content=ft.Row(
           controls=[
-              ft.Icon(name=ft.Icons.WARNING_ROUNDED, color=ft.Colors.RED_400, size=20),
-              ft.Text("Usuario o contraseña incorrectos", color=ft.Colors.RED_400),
+              ft.Icon(name=ft.Icons.WARNING_ROUNDED, color=tema.ERROR_COLOR, size=20),
+              ft.Text("Usuario o contraseña incorrectos", color=tema.ERROR_COLOR),
           ],
           alignment=ft.MainAxisAlignment.CENTER,
           spacing=10,
@@ -62,7 +81,15 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             
     #Boton de inicio de sesión
     boton_login = ft.Container(
-      content=ft.ElevatedButton(text="Iniciar sesión",on_click=validar_login),
+      content=ft.ElevatedButton(
+          text="Iniciar sesión",
+          on_click=validar_login,
+          style=ft.ButtonStyle(
+              bgcolor=tema.BUTTON_PRIMARY_BG,
+              color=tema.BUTTON_TEXT,
+              shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+          )
+      ),
       padding=ft.padding.only(top=20, bottom=10),
       width=200,
       height=80,
@@ -73,7 +100,12 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         content=ft.Column(
             controls=[
                 ft.Container(
-                    content=ft.Text("Ingrese sus credenciales", style=ft.TextThemeStyle.HEADLINE_MEDIUM, text_align=ft.TextAlign.CENTER),
+                    content=ft.Text(
+                        "Ingrese sus credenciales", 
+                        style=ft.TextThemeStyle.HEADLINE_MEDIUM, 
+                        text_align=ft.TextAlign.CENTER,
+                        color=tema.TEXT_COLOR
+                    ),
                     padding=ft.padding.only(bottom=20, top=10),
                     alignment=ft.alignment.center,
                 ),
@@ -87,8 +119,8 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         ),
         padding=30,
         width=370,
-        border_radius=15,
-        bgcolor=ft.Colors.GREY_900 + "CC",
+        border_radius=tema.BORDER_RADIUS,
+        bgcolor=tema.CARD_COLOR,
         shadow=ft.BoxShadow(
             color=ft.Colors.BLACK54,
             blur_radius=15,
@@ -101,7 +133,12 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             controls=[
                 ft.Container(
                   content=
-                    ft.Text("Bienvenido a TotalStock", style=ft.TextThemeStyle.HEADLINE_LARGE, text_align=ft.TextAlign.CENTER),
+                    ft.Text(
+                        "Bienvenido a TotalStock", 
+                        style=ft.TextThemeStyle.HEADLINE_LARGE, 
+                        text_align=ft.TextAlign.CENTER,
+                        color=tema.TEXT_COLOR
+                    ),
                   alignment=ft.alignment.top_center,
                   padding= ft.padding.only(top=40),
                 ),
@@ -128,7 +165,8 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         )
 
 
-    
+    # Configurar el fondo de la página
+    page.bgcolor = tema.BG_COLOR
     #Limpia la página y agrega la vista de login
     page.controls.clear()# Limpia los controles de la página
     page.add(vista_login)
