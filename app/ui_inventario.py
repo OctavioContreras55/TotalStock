@@ -3,7 +3,8 @@ from app.tablas.ui_tabla_productos import mostrar_tabla_productos
 from app.ui.barra_carga import vista_carga
 import asyncio
 from app.funciones.carga_archivos import on_click_importar_archivo
-from app.crud_productos.create_producto import obtener_productos_firebase
+from app.crud_productos.create_producto import obtener_productos_firebase, vista_crear_producto
+from app.crud_productos.search_producto import mostrar_dialogo_busqueda
 
 async def vista_inventario(nombre_seccion, contenido, page):
     #productos = await obtener_productos_firebase()
@@ -38,11 +39,24 @@ async def vista_inventario(nombre_seccion, contenido, page):
             productos_actuales = []
             contenido.content = construir_vista_inventario([])
             page.update()
-    
-    def abrir_ventana_crear_producto(e):
+
+    async def mostrar_productos_filtrados(productos_filtrados):
+        nonlocal productos_actuales
         try:
-            # Aquí deberías implementar la lógica para abrir la ventana de crear producto
-            print("Ventana de crear producto llamada exitosamente")  # Debug
+            print("Mostrando productos filtrados")
+            contenido.content = vista_carga()
+            page.update()
+            productos_actuales = productos_filtrados
+            contenido.content = construir_vista_inventario(productos_actuales)
+            page.update()
+        except Exception as e:
+            print(f"Error al mostrar productos filtrados: {e}")
+            page.update()
+
+    async def vista_crear_producto_llamada(e):
+        try:
+            print("Ventana de crear producto llamada exitosamente")
+            await vista_crear_producto(page, actualizar_tabla_productos)
         except Exception as error:
             print(f"Error al abrir ventana: {error}")
     
@@ -74,7 +88,8 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                         content=ft.Row([
                                             ft.Icon(ft.Icons.SEARCH),
                                             ft.Text("Buscar producto")
-                                        ])
+                                        ]),
+                                        on_click=lambda e: mostrar_dialogo_busqueda(page, mostrar_productos_filtrados)
                                     ),
                                     width=200,
                                     padding=ft.padding.symmetric(horizontal=5, vertical=20)
@@ -84,7 +99,8 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                         content=ft.Row([
                                             ft.Icon(ft.Icons.ADD),
                                             ft.Text("Agregar producto")
-                                        ])
+                                        ]),
+                                        on_click=vista_crear_producto_llamada
                                     ),
                                     width=200,
                                     padding=ft.padding.symmetric(horizontal=5, vertical=20)
