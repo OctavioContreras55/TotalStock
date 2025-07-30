@@ -5,9 +5,14 @@ import asyncio
 
 def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
     tema = GestorTemas.obtener_tema()
+    
+    # Dimensiones responsivas para el dialog
+    ancho_ventana = page.window.width or 1200
+    ancho_dialog = min(400, ancho_ventana * 0.8)    # Máximo 400px o 80% del ancho
+    
     campo_buscar = ft.TextField(
       label="Buscar Producto por modelo",
-      width=300,
+      width=min(300, ancho_dialog * 0.7),  # Campo responsivo
       autofocus=True,
       bgcolor=tema.INPUT_BG,
       color=tema.TEXT_COLOR,
@@ -42,7 +47,7 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
                   )
               ]
           ),
-          width=400,
+          width=ancho_dialog,   # Ancho responsivo
           height=100,
         ),
         actions=[

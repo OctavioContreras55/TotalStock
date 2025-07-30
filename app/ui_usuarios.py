@@ -47,6 +47,11 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
             print(f"Error al abrir ventana: {error}")  # Debug
     
     def construir_vista_usuario(usuarios):
+        # Dimensiones responsivas
+        ancho_ventana = page.window.width or 1200
+        ancho_header = min(700, ancho_ventana * 0.7)    # Header responsivo
+        ancho_boton = min(200, ancho_ventana * 0.15)    # Botones responsivos
+        
         return ft.Container(
           content=ft.Column(
               controls=[
@@ -66,7 +71,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                           alignment=ft.MainAxisAlignment.CENTER,
                           vertical_alignment=ft.CrossAxisAlignment.START
                       ),
-                      width=600,
+                      width=ancho_header,  # Ancho responsivo
                       bgcolor=tema.CARD_COLOR,
                       padding=20,
                       alignment=ft.alignment.center,
@@ -82,7 +87,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                           ft.Container(
                               content=ft.ElevatedButton(
                                   content=ft.Row([
-                                      ft.Icon(ft.Icons.ADD, color=tema.PRIMARY_COLOR),
+                                      ft.Icon(ft.Icons.ADD, color=tema.ICON_BTN_COLOR),
                                       ft.Text("Agregar Usuario", color=tema.BUTTON_TEXT)
                                   ]),
                                   style=ft.ButtonStyle(
@@ -92,13 +97,13 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                                   ),
                                   on_click=abrir_ventana_crear_usuario
                               ),
-                              width=200,
+                              width=ancho_boton,  # Ancho responsivo
                               padding=ft.padding.symmetric(horizontal=5, vertical=20)
                           ),
                           ft.Container(
                               content=ft.ElevatedButton(
                                   content=ft.Row([
-                                      ft.Icon(ft.Icons.SEARCH, color=tema.PRIMARY_COLOR),
+                                      ft.Icon(ft.Icons.SEARCH, color=tema.ICON_BTN_COLOR),
                                       ft.Text("Buscar Usuario", color=tema.BUTTON_TEXT)
                                   ]),
                                   style=ft.ButtonStyle(
@@ -107,7 +112,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                                       shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                   )
                               ),
-                              width=200,
+                              width=ancho_boton,  # Ancho responsivo
                               padding=ft.padding.symmetric(horizontal=5, vertical=20)
                           ),
                       ],

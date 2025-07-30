@@ -15,6 +15,7 @@ class TemaOscuro:
     SUCCESS_COLOR = "#4CBB17"  # Verde un poco más vibrante pero suave
     ERROR_COLOR = "#F55757"  # Rojo un poco más suave
     WARNING_COLOR = "#FFA726"  # Naranja más suave
+    ICON_BTN_COLOR = "#7B8FDB" # Azul para iconos de botones
     
     # Texto
     TEXT_COLOR = "#F5F5F5"  # Blanco ligeramente más suave
@@ -51,7 +52,7 @@ class TemaOscuro:
 
 class TemaAzul:
     # Colores principales basados en el diseño exacto de la imagen
-    BG_COLOR = "#E8F6FA"  # Fondo azul muy claro como en la imagen
+    BG_COLOR = "#BBE1D9"  # Fondo azul muy claro como en la imagen
     CARD_COLOR = "#FFFFFF"  # Tarjetas blancas
     SIDEBAR_COLOR = "#1B4B5A"  # Azul oscuro exacto del sidebar de la imagen
     
@@ -66,6 +67,7 @@ class TemaAzul:
     SUCCESS_COLOR = "#27AE60"  # Verde equilibrado
     ERROR_COLOR = "#E74C3C"  # Rojo estándar
     WARNING_COLOR = "#F39C12"  # Naranja equilibrado
+    ICON_BTN_COLOR = "#010D12"  # Azul para iconos de botones
     
     # Texto - Mejorado para legibilidad
     TEXT_COLOR = "#1B365D"  # Azul oscuro para texto principal
@@ -102,10 +104,18 @@ class TemaAzul:
 
 # Clase para manejar el tema actual
 class GestorTemas:
-    _tema_actual = "oscuro"  # Tema por defecto
+    _tema_actual = None  # Se cargará desde configuración
+    
+    @classmethod
+    def _cargar_tema_inicial(cls):
+        """Carga el tema desde la configuración persistente"""
+        if cls._tema_actual is None:
+            from app.utils.configuracion import GestorConfiguracion
+            cls._tema_actual = GestorConfiguracion.obtener_tema()
     
     @classmethod
     def obtener_tema(cls):
+        cls._cargar_tema_inicial()
         if cls._tema_actual == "azul":
             return TemaAzul()
         else:
@@ -113,8 +123,12 @@ class GestorTemas:
     
     @classmethod
     def cambiar_tema(cls, nuevo_tema):
+        """Cambia el tema y lo guarda en la configuración persistente"""
+        from app.utils.configuracion import GestorConfiguracion
         cls._tema_actual = nuevo_tema
+        GestorConfiguracion.cambiar_tema(nuevo_tema)
     
     @classmethod
     def obtener_tema_actual(cls):
+        cls._cargar_tema_inicial()
         return cls._tema_actual

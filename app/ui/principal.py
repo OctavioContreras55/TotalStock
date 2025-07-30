@@ -15,12 +15,27 @@ async def principal_view(page: ft.Page):
     page.controls.clear()  # Limpia los controles de la página
     page.bgcolor = tema.BG_COLOR  # Establecer el color de fondo
     
-    # Configuración de la página principal
+    # Estado para el menú seleccionado
+    seccion_actual = ft.Ref[str]()
+    seccion_actual.current = "Inicio"  # Sección por defecto
+    
+    # Configuración responsiva de la página principal
+    ancho_ventana = page.window.width or 1200
+    alto_ventana = page.window.height or 800
+    
+    # Ancho del menú lateral adaptativo
+    if ancho_ventana < 1200:      # Laptops
+        ancho_menu = 220
+    elif ancho_ventana < 1600:    # Monitores medianos
+        ancho_menu = 250  
+    else:                         # Monitores grandes
+        ancho_menu = 280
+    
     page.window_maximized = True
     page.window_resizable = True
     page.window_minimizable = False
-    min_width = max(1020, int(page.window.width * 0.8))
-    min_height = max(800, int(page.window.height * 0.8))
+    min_width = max(900, int(ancho_ventana * 0.7))   # Más flexible para laptops
+    min_height = max(650, int(alto_ventana * 0.75))  # Más flexible para laptops
     page.window.min_width = min_width
     page.window.min_height = min_height
     page.title = "TotalStock: Sistema de Inventario"
@@ -28,6 +43,46 @@ async def principal_view(page: ft.Page):
     
     # Contenido de la derecha
     contenido = ft.Container(expand=True, padding=20, bgcolor=tema.BG_COLOR)
+    
+    # Función para crear ListTile con estado de selección
+    def crear_menu_item(icono, texto, seccion, on_click_func, es_async=False, es_especial=False, color_especial=None):
+        es_seleccionado = seccion_actual.current == seccion
+        
+        # Función de clic que maneja tanto sync como async
+        def manejar_clic(e):
+            if es_async:
+                asyncio.run(cambiar_seccion_async(seccion, on_click_func))
+            else:
+                cambiar_seccion_sync(seccion, on_click_func)
+        
+        return ft.ListTile(
+            leading=ft.Icon(icono, color=color_especial if es_especial else tema.SIDEBAR_ICON_COLOR),
+            title=ft.Text(texto, color=color_especial if es_especial else tema.SIDEBAR_TEXT_COLOR),
+            dense=True,
+            selected=es_seleccionado,  # Propiedad nativa de selección
+            on_click=manejar_clic,
+            style=ft.ListTileStyle.LIST if es_seleccionado else None,
+            bgcolor=ft.Colors.with_opacity(0.2, tema.PRIMARY_COLOR) if es_seleccionado else None,
+            hover_color=ft.Colors.with_opacity(0.1, tema.PRIMARY_COLOR),
+            shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS) if es_seleccionado else None
+        )
+    
+    # Función para cambiar sección y actualizar estado visual
+    async def cambiar_seccion_async(nueva_seccion, funcion_vista):
+        seccion_actual.current = nueva_seccion
+        await funcion_vista()
+        actualizar_menu()
+    
+    def cambiar_seccion_sync(nueva_seccion, funcion_vista):
+        seccion_actual.current = nueva_seccion
+        funcion_vista()
+        actualizar_menu()
+    
+    # Función para actualizar la apariencia del menú
+    def actualizar_menu():
+        # Recrear el menú con el estado actualizado
+        menu_lateral.content = crear_contenido_menu()
+        page.update()
     
     
     def vista_inicio(nombre_seccion):
@@ -90,13 +145,10 @@ async def principal_view(page: ft.Page):
         
     def on_cerrar_sesion(e):
         cerrar_sesion(page)
-        
-    # Contenedor del menú lateral          
-    menu_lateral = ft.Container(
-        width=250,
-        bgcolor=tema.SIDEBAR_COLOR,
-        padding=20,
-        content=ft.Column(
+    
+    # Función para crear el contenido del menú con estado
+    def crear_contenido_menu():
+        return ft.Column(
             controls=[
                 ft.Container(
                     content=ft.Row(
@@ -123,68 +175,35 @@ async def principal_view(page: ft.Page):
                     bgcolor=tema.DIVIDER_COLOR,
                     margin=ft.margin.only(bottom=20, top=5)
                 ),
-                ft.ListTile(
-                    leading=ft.Icon(ft.Icons.HOME, color=tema.SIDEBAR_ICON_COLOR),
-                    title=ft.Text("Inicio", color=tema.SIDEBAR_TEXT_COLOR),
-                    on_click=lambda e: vista_inicio("Inicio"),
-                    dense=True
-                ),
-                ft.ListTile(
-                    leading=ft.Icon(ft.Icons.INVENTORY_2, color=tema.SIDEBAR_ICON_COLOR),
-                    title=ft.Text("Inventario", color=tema.SIDEBAR_TEXT_COLOR),
-                    on_click=lambda e: asyncio.run(vista_inventario("Inventario")),
-                    dense=True
-                ),
-                ft.ListTile(
-                    leading=ft.Icon(ft.Icons.LABEL, color=tema.SIDEBAR_ICON_COLOR),
-                    title=ft.Text("Categorías", color=tema.SIDEBAR_TEXT_COLOR),
-                    on_click=lambda e: vista_categorias("Categorías"),
-                    dense=True
-                ),
-                ft.ListTile(
-                    leading=ft.Icon(ft.Icons.LOCATION_ON, color=tema.SIDEBAR_ICON_COLOR),
-                    title=ft.Text("Ubicaciones", color=tema.SIDEBAR_TEXT_COLOR),
-                    on_click=lambda e: vista_ubicaciones("Ubicaciones"),
-                    dense=True
-                ),
-                ft.ListTile(
-                    leading=ft.Icon(ft.Icons.SWAP_HORIZ, color=tema.SIDEBAR_ICON_COLOR),
-                    title=ft.Text("Movimientos", color=tema.SIDEBAR_TEXT_COLOR),
-                    on_click=lambda e: vista_movimientos("Movimientos"),
-                    dense=True
-                ),
-                ft.ListTile(
-                    leading=ft.Icon(ft.Icons.INSERT_CHART, color=tema.SIDEBAR_ICON_COLOR),
-                    title=ft.Text("Reportes", color=tema.SIDEBAR_TEXT_COLOR),
-                    on_click=lambda e: vista_reportes("Reportes"),
-                    dense=True
-                ),
+                crear_menu_item(ft.Icons.HOME, "Inicio", "Inicio", lambda: vista_inicio("Inicio")),
+                crear_menu_item(ft.Icons.INVENTORY_2, "Inventario", "Inventario", lambda: vista_inventario("Inventario"), es_async=True),
+                crear_menu_item(ft.Icons.LABEL, "Categorías", "Categorías", lambda: vista_categorias("Categorías")),
+                crear_menu_item(ft.Icons.LOCATION_ON, "Ubicaciones", "Ubicaciones", lambda: vista_ubicaciones("Ubicaciones")),
+                crear_menu_item(ft.Icons.SWAP_HORIZ, "Movimientos", "Movimientos", lambda: vista_movimientos("Movimientos")),
+                crear_menu_item(ft.Icons.INSERT_CHART, "Reportes", "Reportes", lambda: vista_reportes("Reportes")),
 
                 ft.Container(expand=True),
                 
-                ft.ListTile(
-                    leading=ft.Icon(ft.Icons.SUPERVISED_USER_CIRCLE, color=tema.SIDEBAR_ICON_COLOR),
-                    title=ft.Text("Usuarios", color=tema.SIDEBAR_TEXT_COLOR),
-                    on_click=lambda e: asyncio.run(vista_usuarios("Usuarios")),
-                    dense=True
-                ),
-                
-                ft.ListTile(
-                    leading=ft.Icon(ft.Icons.SETTINGS, color=tema.SIDEBAR_ICON_COLOR),
-                    title=ft.Text("Configuración", color=tema.SIDEBAR_TEXT_COLOR),
-                    on_click=lambda e: vista_configuracion("Configuración"),
-                    dense=True
-                ),
+                crear_menu_item(ft.Icons.SUPERVISED_USER_CIRCLE, "Usuarios", "Usuarios", lambda: vista_usuarios("Usuarios"), es_async=True),
+                crear_menu_item(ft.Icons.SETTINGS, "Configuración", "Configuración", lambda: vista_configuracion("Configuración")),
                 ft.ListTile(
                     leading=ft.Icon(ft.Icons.LOGOUT, color=tema.ERROR_COLOR),
                     title=ft.Text("Cerrar sesión", style=ft.TextStyle(color=tema.ERROR_COLOR)),
+                    dense=True,
                     on_click=on_cerrar_sesion,
-                    dense=True
+                    hover_color=ft.Colors.with_opacity(0.1, tema.ERROR_COLOR)
                 ),
                 
             ],
             expand=True,
-        ),
+        )
+        
+    # Contenedor del menú lateral - Responsivo         
+    menu_lateral = ft.Container(
+        width=ancho_menu,  # Ancho adaptativo
+        bgcolor=tema.SIDEBAR_COLOR,
+        padding=20,
+        content=crear_contenido_menu()
     )
 
     # Contenido inicial de la página

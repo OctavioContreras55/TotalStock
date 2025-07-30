@@ -1,18 +1,33 @@
 import flet as ft
 from app.utils.temas import GestorTemas
+from app.utils.configuracion import GestorConfiguracion
 import asyncio
 
 def vista_configuracion(nombre_seccion, contenido, page):
     tema = GestorTemas.obtener_tema()
     
+    def mostrar_mensaje_guardado():
+        """Muestra un mensaje temporal de que se guardó la configuración"""
+        snack = ft.SnackBar(
+            content=ft.Text("✅ Tema guardado correctamente", color="#FFFFFF"),
+            bgcolor=tema.SUCCESS_COLOR,
+            duration=2000
+        )
+        page.overlay.append(snack)
+        snack.open = True
+        page.update()
+    
     def cambiar_tema_handler(e):
         # Obtener el tema seleccionado
         nuevo_tema = e.control.value
         
-        # Cambiar el tema globalmente
+        # Cambiar el tema globalmente y guardarlo
         GestorTemas.cambiar_tema(nuevo_tema)
         
-        # Reiniciar la vista principal para aplicar el nuevo tema sin mensaje
+        # Mostrar mensaje de confirmación
+        mostrar_mensaje_guardado()
+        
+        # Reiniciar la vista principal para aplicar el nuevo tema
         asyncio.run(recargar_vista_principal())
     
     async def recargar_vista_principal():
@@ -181,14 +196,14 @@ def vista_configuracion(nombre_seccion, contenido, page):
                 margin=ft.margin.only(bottom=20)
             ),
             
-            # Otras configuraciones (placeholder para futuras funcionalidades)
+            # Información de configuraciones guardadas
             ft.Container(
                 content=ft.Column(
                     controls=[
                         ft.Row(
                             controls=[
-                                ft.Icon(ft.Icons.SETTINGS, color=tema.PRIMARY_COLOR, size=24),
-                                ft.Text("Otras Configuraciones", 
+                                ft.Icon(ft.Icons.SAVE, color=tema.PRIMARY_COLOR, size=24),
+                                ft.Text("Estado de Configuración", 
                                        size=20, 
                                        color=tema.TEXT_COLOR,
                                        weight=ft.FontWeight.BOLD),
@@ -196,9 +211,58 @@ def vista_configuracion(nombre_seccion, contenido, page):
                             spacing=10
                         ),
                         ft.Container(height=10),
-                        ft.Text("Próximamente disponibles más opciones de configuración...", 
+                        ft.Text("✅ Las configuraciones se guardan automáticamente", 
+                               color=tema.SUCCESS_COLOR),
+                        ft.Text(f"📁 Archivo: data/configuracion.json", 
                                color=tema.TEXT_SECONDARY,
-                               style=ft.TextStyle(italic=True)),
+                               size=12),
+                        ft.Text(f"🎨 Tema actual: {GestorTemas.obtener_tema_actual().title()}", 
+                               color=tema.TEXT_SECONDARY),
+                        ft.Container(height=10),
+                        ft.ElevatedButton(
+                            content=ft.Row([
+                                ft.Icon(ft.Icons.REFRESH, color=tema.ICON_BTN_COLOR),
+                                ft.Text("Restablecer configuración", color=tema.BUTTON_TEXT)
+                            ]),
+                            style=ft.ButtonStyle(
+                                bgcolor=tema.WARNING_COLOR,
+                                color=tema.BUTTON_TEXT,
+                                shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                            ),
+                            on_click=lambda e: mostrar_dialogo_reset()
+                        )
+                    ]
+                ),
+                bgcolor=tema.CARD_COLOR,
+                padding=30,
+                border_radius=tema.BORDER_RADIUS,
+                width=600,
+                margin=ft.margin.only(bottom=20)
+            ),
+            
+            # Futuras configuraciones
+            ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.SETTINGS, color=tema.PRIMARY_COLOR, size=24),
+                                ft.Text("Próximas Funcionalidades", 
+                                       size=20, 
+                                       color=tema.TEXT_COLOR,
+                                       weight=ft.FontWeight.BOLD),
+                            ],
+                            spacing=10
+                        ),
+                        ft.Container(height=10),
+                        ft.Text("🔔 Configuración de notificaciones", 
+                               color=tema.TEXT_SECONDARY),
+                        ft.Text("🌐 Configuración de idioma", 
+                               color=tema.TEXT_SECONDARY),
+                        ft.Text("💾 Configuración de respaldos automáticos", 
+                               color=tema.TEXT_SECONDARY),
+                        ft.Text("🔧 Configuraciones avanzadas del sistema", 
+                               color=tema.TEXT_SECONDARY),
                     ]
                 ),
                 bgcolor=tema.CARD_COLOR,
@@ -212,3 +276,49 @@ def vista_configuracion(nombre_seccion, contenido, page):
         expand=True,
         spacing=0
     )
+    
+    def mostrar_dialogo_reset():
+        """Muestra un diálogo de confirmación para restablecer configuración"""
+        def confirmar_reset(e):
+            # Restablecer a configuración por defecto
+            GestorConfiguracion.actualizar_configuracion(
+                tema="oscuro",
+                notificaciones=True,
+                auto_backup=False
+            )
+            GestorTemas.cambiar_tema("oscuro")
+            
+            # Cerrar diálogo
+            dialog.open = False
+            page.update()
+            
+            # Mostrar mensaje y recargar
+            snack = ft.SnackBar(
+                content=ft.Text("🔄 Configuración restablecida", color="#FFFFFF"),
+                bgcolor=tema.WARNING_COLOR,
+                duration=2000
+            )
+            page.overlay.append(snack)
+            snack.open = True
+            page.update()
+            
+            asyncio.run(recargar_vista_principal())
+        
+        def cancelar_reset(e):
+            dialog.open = False
+            page.update()
+        
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Restablecer Configuración"),
+            content=ft.Text("¿Estás seguro de que quieres restablecer toda la configuración a los valores por defecto?"),
+            actions=[
+                ft.TextButton("Cancelar", on_click=cancelar_reset),
+                ft.TextButton("Restablecer", on_click=confirmar_reset, style=ft.ButtonStyle(color=tema.WARNING_COLOR)),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        
+        page.overlay.append(dialog)
+        dialog.open = True
+        page.update()

@@ -4,6 +4,14 @@ from app.utils.temas import GestorTemas
 def login_view(page: ft.Page, on_login_success): #Función para la vista del login. Argumentos: page = pagina de Flet, on_login_success = función a ejecutar al iniciar sesión correctamente
     tema = GestorTemas.obtener_tema()
     
+    # Dimensiones responsivas basadas en el tamaño de pantalla
+    ancho_ventana = page.window.width or 1200
+    alto_ventana = page.window.height or 800
+    
+    # Cálculos responsivos para diferentes elementos
+    ancho_tarjeta = min(400, ancho_ventana * 0.85)  # Máximo 400px o 85% del ancho
+    ancho_boton = min(200, ancho_tarjeta * 0.6)     # Proporcionalmente al ancho de la tarjeta
+    
     #Campos de entrada para el usuario y la contraseña
     usuario_input = ft.TextField(
         label="Usuario", 
@@ -24,10 +32,10 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         focused_border_color=tema.PRIMARY_COLOR,
         label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
     )
-    
 
-    min_width = max(510, int(page.window.width * 0.45))
-    min_height = max(800, int(page.window.height * 1))
+    # Configuración responsiva de ventana mínima
+    min_width = max(450, int(ancho_ventana * 0.4))   # Más flexible para laptops
+    min_height = max(600, int(alto_ventana * 0.8))   # Más flexible para laptops
     page.window.min_width = min_width
     page.window.min_height = min_height
     
@@ -79,7 +87,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             contrasena_input.value = ""
             page.update() # Actualiza la página para mostrar los cambios
             
-    #Boton de inicio de sesión
+    #Boton de inicio de sesión - Responsivo
     boton_login = ft.Container(
       content=ft.ElevatedButton(
           text="Iniciar sesión",
@@ -91,11 +99,11 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
           )
       ),
       padding=ft.padding.only(top=20, bottom=10),
-      width=200,
+      width=ancho_boton,  # Ancho responsivo
       height=80,
     )
     
-    #Diseño de la vista de login
+    #Diseño de la vista de login - Responsivo
     vista_tarjeta = ft.Container(
         content=ft.Column(
             controls=[
@@ -118,7 +126,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             spacing=30
         ),
         padding=30,
-        width=370,
+        width=ancho_tarjeta,  # Ancho responsivo
         border_radius=tema.BORDER_RADIUS,
         bgcolor=tema.CARD_COLOR,
         shadow=ft.BoxShadow(

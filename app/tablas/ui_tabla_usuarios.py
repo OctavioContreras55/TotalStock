@@ -15,6 +15,7 @@ def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
     # Calcular altura responsiva basada en el tamaño de pantalla
     # Reservamos espacio para header, botones y padding (aproximadamente 300px)
     altura_tabla = max(300, (page.window.height or 800) - 350)
+    ancho_tabla = max(800, (page.window.width or 1200) - 400)
     
     # Crear una tabla para mostrar los usuarios
     tabla = ft.DataTable(
@@ -23,11 +24,11 @@ def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
         border_radius=tema.BORDER_RADIUS,  # Bordes redondeados
         sort_ascending=True,  # Orden ascendente por defecto
         heading_row_color=tema.TABLE_HEADER_BG,  # Color de la fila de encabezado
-        heading_row_height=100,  # Altura de la fila de encabezado
+        heading_row_height=50,  # Altura de la fila de encabezado
         data_row_color={ft.ControlState.HOVERED: tema.TABLE_HOVER},  # Color de la fila al pasar el mouse
         show_checkbox_column=True,  # Mostrar columna de checkbox
         divider_thickness=0,  # Grosor del divisor
-        column_spacing=200,  # Espaciado entre columnas
+        column_spacing=50,  # Espaciado entre columnas
         columns=[
             ft.DataColumn(ft.Text("ID", color=tema.TEXT_COLOR), on_sort=lambda e: print(f"{e.column_index}, {e.ascending}")),
             ft.DataColumn(ft.Text("Nombre", color=tema.TEXT_COLOR)),
@@ -54,13 +55,13 @@ def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
                 on_select_changed=lambda e: print(f"Fila seleccionada: {e.data}"),
             )   for usuario in usuarios
         ],
-        width=1200,
+        width=ancho_tabla,  # Ancho responsivo
     )
     
     scroll_vertical = ft.Column([tabla], scroll=True, height=altura_tabla)  # Altura responsiva
-    scroll_horizontal = ft.Row([scroll_vertical], scroll=True, vertical_alignment=ft.MainAxisAlignment.START)
     return ft.Container(
-        content=scroll_horizontal,
+        content=scroll_vertical,
+        alignment=ft.alignment.center,
         bgcolor=tema.CARD_COLOR,
         border_radius=tema.BORDER_RADIUS,
         padding=10,

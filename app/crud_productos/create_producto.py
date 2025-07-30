@@ -5,6 +5,13 @@ import asyncio
 
 async def vista_crear_producto(page, callback_actualizar_tabla=None):
     tema = GestorTemas.obtener_tema()
+    
+    # Dimensiones responsivas para el dialog
+    ancho_ventana = page.window.width or 1200
+    alto_ventana = page.window.height or 800
+    ancho_dialog = min(450, ancho_ventana * 0.85)   # Máximo 450px o 85% del ancho
+    alto_dialog = min(400, alto_ventana * 0.6)      # Máximo 400px o 60% del alto
+    
     # Campos del formulario
     campo_modelo = ft.TextField(
         label="Modelo", 
@@ -107,8 +114,8 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
                     )
                 )
             ]),
-            width=400,
-            height=300,
+            width=ancho_dialog,   # Ancho responsivo
+            height=alto_dialog,   # Alto responsivo
         ),
         actions=[
             ft.TextButton("Cerrar", 

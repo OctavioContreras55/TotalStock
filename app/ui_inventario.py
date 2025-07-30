@@ -64,6 +64,12 @@ async def vista_inventario(nombre_seccion, contenido, page):
             
     def construir_vista_inventario(productos):
         tema = GestorTemas.obtener_tema()
+        
+        # Dimensiones responsivas
+        ancho_ventana = page.window.width or 1200
+        ancho_header = min(700, ancho_ventana * 0.7)    # Header responsivo
+        ancho_boton = min(200, ancho_ventana * 0.15)    # Botones responsivos
+        
         return ft.Container(
             content=ft.Column(
                 controls=[
@@ -75,7 +81,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
                             alignment=ft.MainAxisAlignment.CENTER,
                             vertical_alignment=ft.CrossAxisAlignment.CENTER
                         ),
-                        width=600,
+                        width=ancho_header,  # Ancho responsivo
                         bgcolor=tema.CARD_COLOR,
                         margin=ft.margin.only(top=20, bottom=20),
                         padding=ft.padding.only(top=20, bottom=20, left=10, right=10),
@@ -89,7 +95,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                     ft.Container(
                                         content=ft.ElevatedButton(
                                             content=ft.Row([
-                                                ft.Icon(ft.Icons.SEARCH, color=tema.PRIMARY_COLOR),
+                                                ft.Icon(ft.Icons.SEARCH, color=tema.ICON_BTN_COLOR),
                                                 ft.Text("Buscar producto", color=tema.BUTTON_TEXT)
                                             ]),
                                             style=ft.ButtonStyle(
@@ -99,13 +105,13 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                             ),
                                             on_click=lambda e: mostrar_dialogo_busqueda(page, mostrar_productos_filtrados)
                                         ),
-                                        width=200,
+                                        width=ancho_boton,  # Ancho responsivo
                                         padding=ft.padding.symmetric(horizontal=5, vertical=20)
                                     ),
                                     ft.Container(
                                         content=ft.ElevatedButton(
                                             content=ft.Row([
-                                                ft.Icon(ft.Icons.ADD, color=tema.PRIMARY_COLOR),
+                                                ft.Icon(ft.Icons.ADD, color=tema.ICON_BTN_COLOR),
                                                 ft.Text("Agregar producto", color=tema.BUTTON_TEXT)
                                             ]),
                                             style=ft.ButtonStyle(
@@ -115,7 +121,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                             ),
                                             on_click=vista_crear_producto_llamada
                                         ),
-                                        width=200,
+                                        width=ancho_boton,  # Ancho responsivo
                                         padding=ft.padding.symmetric(horizontal=5, vertical=20)
                                     ),
                                 ],
@@ -125,7 +131,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                     ft.Container(
                                         content=ft.ElevatedButton(
                                             content=ft.Row([
-                                                ft.Icon(ft.Icons.FILE_UPLOAD, color=tema.PRIMARY_COLOR),
+                                                ft.Icon(ft.Icons.FILE_UPLOAD, color=tema.ICON_BTN_COLOR),
                                                 ft.Text("Importar productos", color=tema.BUTTON_TEXT)
                                             ]),
                                             style=ft.ButtonStyle(
@@ -135,13 +141,13 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                             ),
                                             on_click=lambda e: on_click_importar_archivo(page),
                                         ),
-                                        width=200,
+                                        width=ancho_boton,  # Ancho responsivo
                                         padding=ft.padding.symmetric(horizontal=5, vertical=20)
                                     ),
                                     ft.Container(
                                         content=ft.ElevatedButton(
                                             content=ft.Row([
-                                                ft.Icon(ft.Icons.FILE_DOWNLOAD, color=tema.PRIMARY_COLOR),
+                                                ft.Icon(ft.Icons.FILE_DOWNLOAD, color=tema.ICON_BTN_COLOR),
                                                 ft.Text("Exportar productos", color=tema.BUTTON_TEXT)
                                             ]),
                                             style=ft.ButtonStyle(
@@ -150,7 +156,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                                 shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                             ),
                                         ),
-                                        width=200,
+                                        width=ancho_boton,  # Ancho responsivo
                                         padding=ft.padding.symmetric(horizontal=5, vertical=20)
                                     ),
                                 ],
