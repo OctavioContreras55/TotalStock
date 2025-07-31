@@ -25,8 +25,16 @@ class SesionManager:
         _usuario_actual = None
 
 async def cerrar_sesion(page: ft.Page):  # <-- CAMBIAR: Hacer función asíncrona
+    # Obtener el tema actual antes de limpiar la sesión
+    from app.utils.temas import GestorTemas
+    tema_actual = GestorTemas.obtener_tema_actual()
+    
     # Limpiar la sesión
     SesionManager.limpiar_sesion()
+    
+    # Limpiar cache de tema y establecer el tema actual como tema del login
+    GestorTemas.limpiar_cache()
+    GestorTemas.cambiar_tema_login(tema_actual)
     
     # Limpiar controles actuales
     page.controls.clear()

@@ -1,6 +1,7 @@
 import flet as ft
 from app.utils.temas import GestorTemas
-from app.utils.configuracion import GestorConfiguracion
+from app.utils.configuracion import GestorConfiguracionUsuario
+from app.funciones.sesiones import SesionManager
 import asyncio
 
 def vista_configuracion(nombre_seccion, contenido, page):
@@ -9,7 +10,7 @@ def vista_configuracion(nombre_seccion, contenido, page):
     def mostrar_mensaje_guardado():
         """Muestra un mensaje temporal de que se guardó la configuración"""
         snack = ft.SnackBar(
-            content=ft.Text("✅ Tema guardado correctamente", color="#FFFFFF"),
+            content=ft.Text("✅ Tema guardado correctamente para tu usuario", color="#FFFFFF"),
             bgcolor=tema.SUCCESS_COLOR,
             duration=2000
         )
@@ -21,7 +22,7 @@ def vista_configuracion(nombre_seccion, contenido, page):
         # Obtener el tema seleccionado
         nuevo_tema = e.control.value
         
-        # Cambiar el tema globalmente y guardarlo
+        # Cambiar el tema para el usuario actual y guardarlo
         GestorTemas.cambiar_tema(nuevo_tema)
         
         # Mostrar mensaje de confirmación
@@ -281,12 +282,17 @@ def vista_configuracion(nombre_seccion, contenido, page):
     def mostrar_dialogo_reset():
         """Muestra un diálogo de confirmación para restablecer configuración"""
         def confirmar_reset(e):
-            # Restablecer a configuración por defecto
-            GestorConfiguracion.actualizar_configuracion(
-                tema="oscuro",
-                notificaciones=True,
-                auto_backup=False
-            )
+            # Restablecer a configuración por defecto para el usuario actual
+            usuario_actual = SesionManager.obtener_usuario_actual()
+            if usuario_actual and usuario_actual.get('firebase_id'):
+                usuario_id = usuario_actual.get('firebase_id')
+                GestorConfiguracionUsuario.actualizar_configuracion_usuario(
+                    usuario_id,
+                    tema="oscuro",
+                    notificaciones=True,
+                    mostrar_ayuda=True,
+                    vista_compacta=False
+                )
             GestorTemas.cambiar_tema("oscuro")
             
             # Cerrar diálogo

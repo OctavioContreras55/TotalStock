@@ -1,10 +1,9 @@
 import flet as ft
 from app.ui.login import login_view
 from app.ui.principal import principal_view
-from conexiones.firebase import db
 from app.utils.temas import GestorTemas
 
-async def main(page: ft.Page):  # <-- CAMBIAR: Hacer main asíncrono
+async def main(page: ft.Page):
     tema = GestorTemas.obtener_tema()
     
     # Configuración del tema
@@ -15,9 +14,9 @@ async def main(page: ft.Page):  # <-- CAMBIAR: Hacer main asíncrono
     page.title = "TotalStock: Sistema de Inventario"
 
     # Función a ejecutar al iniciar sesión correctamente
-    async def cargar_pantalla_principal():  # <-- CAMBIAR: Hacer función asíncrona
+    async def cargar_pantalla_principal():
         page.controls.clear()
-        await principal_view(page)  # <-- CAMBIAR: Con await
+        await principal_view(page)
         page.update()
 
     # Mostrar la vista de login

@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "tipo_reporte": "rotacion",
+    "nombre_reporte": "Rotación de Inventario",
+    "fecha_generacion": "2025-07-31T12:33:54.605235",
+    "fecha_inicio": "2025-07-01",
+    "fecha_fin": "2025-07-31",
+    "usuario_filtro": "todos",
+    "total_registros": 2
+  },
+  "datos": [
+    {
+      "modelo": "LAP001",
+      "nombre": "Laptop Dell Inspiron",
+      "categoria": "Equipos de Cómputo",
+      "entradas_mes": 15,
+      "salidas_mes": 12,
+      "rotacion_mensual": 0.52,
+      "dias_inventario": 30,
+      "frecuencia_movimientos": 8,
+      "tendencia": "ESTABLE",
+      "valor_rotado": 180000.0,
+      "clasificacion": "ROTACIÓN NORMAL"
+    },
+    {
+      "modelo": "MOU002",
+      "nombre": "Mouse Logitech MX",
+      "categoria": "Periféricos",
+      "entradas_mes": 50,
+      "salidas_mes": 45,
+      "rotacion_mensual": 0.6,
+      "dias_inventario": 25,
+      "frecuencia_movimientos": 12,
+      "tendencia": "ALTA ROTACIÓN",
+      "valor_rotado": 42500.0,
+      "clasificacion": "PRODUCTO ESTRELLA"
+    }
+  ]
+}

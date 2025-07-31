@@ -20,8 +20,11 @@ class TemaOscuro:
     # Texto
     TEXT_COLOR = "#F5F5F5"  # Blanco ligeramente más suave
     TEXT_SECONDARY = "#B9BBBE"
-    SECONDARY_TEXT_COLOR = "#B9BBBE"  # Alias para compatibilidad
     TEXT_MUTED = "#72767D"
+    TEXT_DISABLED = "#5A5D61"  # Gris oscuro para elementos deshabilitados
+    
+    # Alias para compatibilidad con código existente
+    SECONDARY_TEXT_COLOR = TEXT_SECONDARY
     
     # Texto específico para sidebar
     SIDEBAR_TEXT_COLOR = "#FFFFFF"  # Blanco para texto en sidebar
@@ -54,7 +57,7 @@ class TemaOscuro:
 class TemaAzul:
     # Colores principales basados en el diseño exacto de la imagen
     BG_COLOR = "#BBE1D9"  # Fondo azul muy claro como en la imagen
-    CARD_COLOR = "#FFFFFF"  # Tarjetas blancas
+    CARD_COLOR = "#F0F8FC"  # Tarjetas con tinte azul muy sutil y más visible
     SIDEBAR_COLOR = "#1B4B5A"  # Azul oscuro exacto del sidebar de la imagen
     
     # Tabla
@@ -68,13 +71,16 @@ class TemaAzul:
     SUCCESS_COLOR = "#27AE60"  # Verde equilibrado
     ERROR_COLOR = "#E74C3C"  # Rojo estándar
     WARNING_COLOR = "#F39C12"  # Naranja equilibrado
-    ICON_BTN_COLOR = "#010D12"  # Azul para iconos de botones
+    ICON_BTN_COLOR = "#2E86AB"  # Azul principal para iconos de botones
     
     # Texto - Mejorado para legibilidad
     TEXT_COLOR = "#1B365D"  # Azul oscuro para texto principal
     TEXT_SECONDARY = "#34495E"  # Gris azulado para texto secundario
-    SECONDARY_TEXT_COLOR = "#34495E"  # Alias para compatibilidad
     TEXT_MUTED = "#7F8C8D"  # Gris para texto deshabilitado
+    TEXT_DISABLED = "#A5B1B8"  # Gris claro para elementos deshabilitados
+    
+    # Alias para compatibilidad con código existente
+    SECONDARY_TEXT_COLOR = TEXT_SECONDARY
     
     # Texto específico para sidebar (contraste con fondo oscuro)
     SIDEBAR_TEXT_COLOR = "#FFFFFF"  # Blanco para texto en sidebar oscuro
@@ -106,14 +112,23 @@ class TemaAzul:
 
 # Clase para manejar el tema actual
 class GestorTemas:
-    _tema_actual = None  # Se cargará desde configuración
+    _tema_actual = None  # Se cargará desde configuración por usuario
     
     @classmethod
     def _cargar_tema_inicial(cls):
-        """Carga el tema desde la configuración persistente"""
+        """Carga el tema desde la configuración del usuario actual"""
         if cls._tema_actual is None:
-            from app.utils.configuracion import GestorConfiguracion
-            cls._tema_actual = GestorConfiguracion.obtener_tema()
+            from app.funciones.sesiones import SesionManager
+            from app.utils.configuracion import GestorConfiguracionUsuario, GestorConfiguracion
+            
+            usuario_actual = SesionManager.obtener_usuario_actual()
+            if usuario_actual and usuario_actual.get('firebase_id'):
+                # Usuario logueado: usar su tema personal
+                usuario_id = usuario_actual.get('firebase_id')
+                cls._tema_actual = GestorConfiguracionUsuario.obtener_tema_usuario(usuario_id)
+            else:
+                # Sin usuario (login): usar tema global de la PC
+                cls._tema_actual = GestorConfiguracion.obtener_tema()
     
     @classmethod
     def obtener_tema(cls):
@@ -125,7 +140,24 @@ class GestorTemas:
     
     @classmethod
     def cambiar_tema(cls, nuevo_tema):
-        """Cambia el tema y lo guarda en la configuración persistente"""
+        """Cambia el tema y lo guarda en la configuración del usuario actual"""
+        from app.funciones.sesiones import SesionManager
+        from app.utils.configuracion import GestorConfiguracionUsuario, GestorConfiguracion
+        
+        usuario_actual = SesionManager.obtener_usuario_actual()
+        if usuario_actual and usuario_actual.get('firebase_id'):
+            # Usuario logueado: guardar en su configuración personal
+            usuario_id = usuario_actual.get('firebase_id')
+            cls._tema_actual = nuevo_tema
+            GestorConfiguracionUsuario.cambiar_tema_usuario(usuario_id, nuevo_tema)
+        else:
+            # Sin usuario (login): guardar en configuración global de la PC
+            cls._tema_actual = nuevo_tema
+            GestorConfiguracion.cambiar_tema(nuevo_tema)
+    
+    @classmethod
+    def cambiar_tema_login(cls, nuevo_tema):
+        """Cambia específicamente el tema del login (configuración global de la PC)"""
         from app.utils.configuracion import GestorConfiguracion
         cls._tema_actual = nuevo_tema
         GestorConfiguracion.cambiar_tema(nuevo_tema)
@@ -134,3 +166,8 @@ class GestorTemas:
     def obtener_tema_actual(cls):
         cls._cargar_tema_inicial()
         return cls._tema_actual
+    
+    @classmethod
+    def limpiar_cache(cls):
+        """Limpia el cache del tema para recargar en el próximo acceso"""
+        cls._tema_actual = None

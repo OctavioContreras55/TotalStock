@@ -7,6 +7,13 @@ import asyncio
 def login_view(page: ft.Page, on_login_success): #Función para la vista del login. Argumentos: page = pagina de Flet, on_login_success = función a ejecutar al iniciar sesión correctamente
     tema = GestorTemas.obtener_tema()
     
+    # Función para cambiar tema en el login
+    def cambiar_tema_login(e):
+        nuevo_tema = "azul" if e.control.value else "oscuro"
+        GestorTemas.cambiar_tema_login(nuevo_tema)
+        # Recargar la vista de login con el nuevo tema
+        login_view(page, on_login_success)
+    
     # Dimensiones responsivas basadas en el tamaño de pantalla
     ancho_ventana = page.window.width or 1200
     alto_ventana = page.window.height or 800
@@ -85,9 +92,10 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             return
         
         try:
-            # Realizar la consulta a la base de datos para verificar las credenciales del usuario
+            # Realizar la consulta a la base de datos para verificar las credenciales del usuario  
+            from google.cloud.firestore_v1.base_query import FieldFilter
             referencia_usuarios = db.collection('usuarios')
-            query = referencia_usuarios.where('nombre', '==', usuario).where('contrasena', '==', contrasena).limit(1).get()
+            query = referencia_usuarios.where(filter=FieldFilter('nombre', '==', usuario)).where(filter=FieldFilter('contrasena', '==', contrasena)).limit(1).get()
             
             if query:
                 # Login exitoso - obtener datos del usuario
@@ -167,9 +175,38 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             offset=ft.Offset(4, 4)
         )
     )
+    # Selector de tema para el login
+    selector_tema = ft.Container(
+        content=ft.Row([
+            ft.Icon(ft.Icons.DARK_MODE, color=tema.TEXT_SECONDARY, size=16),
+            ft.Switch(
+                value=GestorTemas.obtener_tema_actual() == "azul",
+                on_change=cambiar_tema_login,
+                active_color=tema.PRIMARY_COLOR,
+                inactive_track_color=tema.TEXT_DISABLED,
+                width=40,
+                height=20
+            ),
+            ft.Icon(ft.Icons.LIGHT_MODE, color=tema.TEXT_SECONDARY, size=16),
+        ], 
+        spacing=8,
+        alignment=ft.MainAxisAlignment.CENTER
+        ),
+        padding=10,
+        border_radius=tema.BORDER_RADIUS,
+        bgcolor=ft.Colors.with_opacity(0.1, tema.TEXT_COLOR),
+        tooltip="Cambiar tema de la aplicación"
+    )
+
     #Contenedor principal de la vista de login
     vista_login = ft.Column(
             controls=[
+                # Selector de tema en la parte superior
+                ft.Container(
+                    content=selector_tema,
+                    alignment=ft.alignment.top_right,
+                    padding=ft.padding.only(right=20, top=10)
+                ),
                 ft.Container(
                   content=
                     ft.Text(
@@ -179,7 +216,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                         color=tema.TEXT_COLOR
                     ),
                   alignment=ft.alignment.top_center,
-                  padding= ft.padding.only(top=40),
+                  padding= ft.padding.only(top=20),
                 ),
                 ft.Container(
                   content=ft.Image("assets/logo.png",

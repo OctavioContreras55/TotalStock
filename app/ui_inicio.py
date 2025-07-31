@@ -22,7 +22,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
     # Función para obtener estadísticas del día
     async def obtener_estadisticas():
         try:
-            stats = await gestor_historial.obtener_estadisticas_hoy()
+            stats = await GestorHistorial.obtener_estadisticas_hoy()  # Usar método estático
             
             # Obtener totales
             productos_ref = db.collection('productos')
@@ -80,16 +80,71 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
     # Función para obtener actividades recientes
     async def obtener_actividades_recientes():
         try:
-            actividades = await gestor_historial.obtener_actividades_recientes(5)
+            actividades = await GestorHistorial.obtener_actividades_recientes(5)  # Usar método estático
             return actividades
         except Exception as e:
             print(f"Error al obtener actividades: {e}")
             return []
     
+    # Función para crear elementos de historial dinámicamente
+    def crear_elementos_historial(actividades):
+        if not actividades:
+            return [ft.Text("No hay actividades recientes", size=11, color=tema.TEXT_SECONDARY)]
+        
+        elementos = []
+        for actividad in actividades:
+            # Determinar icono y color basado en el tipo de actividad
+            if actividad.get('tipo') == 'crear_producto':
+                icono = ft.Icons.ADD_CIRCLE
+                color_icono = tema.SUCCESS_COLOR
+            elif actividad.get('tipo') == 'eliminar_producto':
+                icono = ft.Icons.DELETE
+                color_icono = tema.ERROR_COLOR
+            elif actividad.get('tipo') == 'editar_producto':
+                icono = ft.Icons.EDIT
+                color_icono = tema.WARNING_COLOR
+            elif actividad.get('tipo') == 'crear_usuario':
+                icono = ft.Icons.PERSON_ADD
+                color_icono = tema.SUCCESS_COLOR
+            elif actividad.get('tipo') == 'eliminar_usuario':
+                icono = ft.Icons.PERSON_REMOVE
+                color_icono = tema.ERROR_COLOR
+            else:
+                icono = ft.Icons.INFO
+                color_icono = tema.PRIMARY_COLOR
+            
+            # Formatear timestamp
+            timestamp = actividad.get('timestamp')
+            if timestamp:
+                try:
+                    if hasattr(timestamp, 'strftime'):
+                        fecha_str = timestamp.strftime("%H:%M")
+                    else:
+                        fecha_str = str(timestamp)[:5]  # Tomar solo primeros 5 caracteres
+                except:
+                    fecha_str = "Reciente"
+            else:
+                fecha_str = "Reciente"
+            
+            elementos.append(
+                ft.ListTile(
+                    leading=ft.Icon(icono, size=16, color=color_icono),
+                    title=ft.Text(actividad.get('descripcion', 'Actividad sin descripción'), size=11, color=tema.TEXT_COLOR),
+                    subtitle=ft.Text(f"{actividad.get('usuario', 'Usuario')} - {fecha_str}", size=9, color=tema.SECONDARY_TEXT_COLOR),
+                    dense=True
+                )
+            )
+        
+        return elementos
+    
     # Obtener datos
-    stats = await obtener_estadisticas()
-    productos_bajo_stock = await obtener_productos_bajo_stock()
-    actividades_recientes = await obtener_actividades_recientes()
+    # NOTA: Estos datos son GLOBALES - compartidos entre todos los usuarios
+    stats = await obtener_estadisticas()                    # Estadísticas globales del sistema
+    productos_bajo_stock = await obtener_productos_bajo_stock()  # Productos globales
+    actividades_recientes = await obtener_actividades_recientes()  # Historial global del sistema
+    
+    # NOTA: Los pendientes son INDIVIDUALES - específicos de cada usuario
+    # Se cargan y guardan en archivos separados por usuario_id
     
     # Crear gráfico de estadísticas
     def crear_grafico_estadisticas():
@@ -153,9 +208,54 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
             height=200
         )
     
-    # Panel de pendientes
-    lista_pendientes = []
+    # Panel de pendientes con persistencia por usuario
+    import json
+    import os
+    from pathlib import Path
+    
+    # Obtener usuario actual para pendientes individuales
+    usuario_actual = SesionManager.obtener_usuario_actual()
+    usuario_id = usuario_actual.get('firebase_id', 'usuario_desconocido') if usuario_actual else 'usuario_desconocido'
+    
+    # Archivo específico para cada usuario
+    pendientes_file = Path(f"data/pendientes_{usuario_id}.json")
+    
+    def cargar_pendientes():
+        """Cargar pendientes desde archivo JSON del usuario actual"""
+        try:
+            # Crear directorio si no existe
+            pendientes_file.parent.mkdir(exist_ok=True)
+            
+            if pendientes_file.exists():
+                with open(pendientes_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            else:
+                return []
+        except Exception as e:
+            print(f"Error al cargar pendientes para usuario {usuario_id}: {e}")
+            return []
+    
+    def guardar_pendientes():
+        """Guardar pendientes en archivo JSON del usuario actual"""
+        try:
+            # Crear directorio si no existe
+            pendientes_file.parent.mkdir(exist_ok=True)
+            
+            with open(pendientes_file, 'w', encoding='utf-8') as f:
+                json.dump(lista_pendientes, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Error al guardar pendientes para usuario {usuario_id}: {e}")
+    
+    # Cargar pendientes existentes del usuario actual
+    lista_pendientes = cargar_pendientes()
     pendientes_container = ft.Column()
+    
+    def limpiar_completados():
+        """Eliminar todos los pendientes completados"""
+        global lista_pendientes
+        lista_pendientes = [p for p in lista_pendientes if not p.get('completada', False)]
+        actualizar_pendientes()
+        guardar_pendientes()
     
     def actualizar_pendientes():
         items = []
@@ -192,6 +292,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
             if index < len(lista_pendientes):
                 lista_pendientes[index]['completada'] = not lista_pendientes[index].get('completada', False)
                 actualizar_pendientes()
+                guardar_pendientes()  # Guardar cambios
         except Exception as e:
             print(f"Error al toggle pendiente: {e}")
     
@@ -200,24 +301,34 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
             if index < len(lista_pendientes):
                 lista_pendientes.pop(index)
                 actualizar_pendientes()
+                guardar_pendientes()  # Guardar cambios
         except Exception as e:
             print(f"Error al eliminar pendiente: {e}")
     
     def agregar_pendiente(e):
         if campo_pendiente.value.strip():
-            lista_pendientes.append({
+            nuevo_pendiente = {
                 'texto': campo_pendiente.value.strip(),
                 'completada': False,
-                'fecha': datetime.now().strftime("%H:%M")
-            })
+                'fecha': datetime.now().strftime("%H:%M"),
+                'fecha_creacion': datetime.now().isoformat(),
+                'usuario_id': usuario_id,
+                'usuario_nombre': usuario_actual.get('nombre', 'Usuario') if usuario_actual else 'Usuario'
+            }
+            lista_pendientes.append(nuevo_pendiente)
             campo_pendiente.value = ""
             actualizar_pendientes()
+            guardar_pendientes()  # Guardar cambios
     
     campo_pendiente = ft.TextField(
-        hint_text="Agregar nuevo pendiente...",
+        hint_text=f"Agregar pendiente para {usuario_actual.get('nombre', 'mi lista') if usuario_actual else 'mi lista'}...",
         on_submit=agregar_pendiente,
-        expand=True
+        expand=True,
+        text_style=ft.TextStyle(color=tema.TEXT_COLOR)
     )
+    
+    # Cargar pendientes existentes al inicializar la vista
+    actualizar_pendientes()
     
     # Layout principal
     return ft.Column([
@@ -269,7 +380,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                                         border_radius=12,
                                         padding=ft.padding.symmetric(horizontal=8, vertical=4)
                                     ),
-                                    title=ft.Text(producto['nombre'], size=12),
+                                    title=ft.Text(producto['nombre'], size=12, color=tema.TEXT_COLOR),
                                     subtitle=ft.Text(
                                         "Stock crítico" if producto['stock'] < 10 else "Stock bajo" if producto['stock'] < 30 else "Stock normal", 
                                         size=10, 
@@ -282,8 +393,10 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                             ])
                         ]),
                         padding=16
-                    )
+                    ),
+                    color=tema.CARD_COLOR,
                 ),
+                
                 expand=1,
                 margin=ft.margin.only(right=8)
             ),
@@ -301,7 +414,8 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                                 content=ft.Row([
                                     ft.Container(
                                         content=crear_grafico_estadisticas(),
-                                        alignment=ft.alignment.center
+                                        alignment=ft.alignment.center,
+                                        padding=ft.padding.only(right=55)
                                     ),
                                     ft.Column([
                                         ft.Row([
@@ -329,11 +443,16 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                                             ft.Text(f"Importados hoy: {stats['importados_hoy']}", size=10, color=tema.TEXT_COLOR)
                                         ], spacing=8)
                                     ], spacing=4)
-                                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
-                            )
+                                ], 
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                
+                            ),
+
+                            ),
                         ]),
                         padding=16
-                    )
+                    ),
+                    color=tema.CARD_COLOR,
                 ),
                 expand=1,
                 margin=ft.margin.only(left=8)
@@ -350,7 +469,19 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                             content=ft.Column([
                                 ft.Row([
                                     ft.Icon(ft.Icons.TASK_ALT, color=tema.PRIMARY_COLOR),
-                                    ft.Text("Panel de Pendientes", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR)
+                                    ft.Column([
+                                        ft.Text("Mis Pendientes", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR),
+                                        ft.Text(f"Usuario: {usuario_actual.get('nombre', 'Usuario') if usuario_actual else 'Usuario'}", 
+                                               size=10, color=tema.TEXT_SECONDARY)
+                                    ], spacing=0),
+                                    ft.Container(expand=True),
+                                    ft.IconButton(
+                                        icon=ft.Icons.CLEAR_ALL,
+                                        icon_size=16,
+                                        icon_color=tema.WARNING_COLOR,
+                                        tooltip="Limpiar completados",
+                                        on_click=lambda e: limpiar_completados()
+                                    )
                                 ]),
                                 ft.Row([
                                     campo_pendiente,
@@ -367,7 +498,8 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                                 )
                             ]),
                             padding=16
-                        )
+                        ),
+                        color=tema.CARD_COLOR,
                     ),
                     expand=1,
                     margin=ft.margin.only(right=8)
@@ -384,29 +516,13 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                                     ft.Container(expand=True),
                                     ft.IconButton(icon=ft.Icons.REFRESH, icon_size=16, icon_color=tema.PRIMARY_COLOR)
                                 ]),
-                                ft.Column([
-                                    ft.ListTile(
-                                        leading=ft.Icon(ft.Icons.PERSON_REMOVE, size=16, color=tema.ERROR_COLOR),
-                                        title=ft.Text("Eliminó usuario 'd213ae'", size=11, color=tema.TEXT_COLOR),
-                                        subtitle=ft.Text("Octavio - 16:11", size=9, color=tema.SECONDARY_TEXT_COLOR),
-                                        dense=True
-                                    ),
-                                    ft.ListTile(
-                                        leading=ft.Icon(ft.Icons.ADD_CIRCLE, size=16, color=tema.SUCCESS_COLOR),
-                                        title=ft.Text("Creó producto 'prueba2'", size=11, color=tema.TEXT_COLOR),
-                                        subtitle=ft.Text("Octavio - 16:10", size=9, color=tema.SECONDARY_TEXT_COLOR),
-                                        dense=True
-                                    ),
-                                    ft.ListTile(
-                                        leading=ft.Icon(ft.Icons.DELETE, size=16, color=tema.ERROR_COLOR),
-                                        title=ft.Text("Eliminó producto 'Prueba'", size=11, color=tema.TEXT_COLOR),
-                                        subtitle=ft.Text("Octavio - 16:10", size=9, color=tema.SECONDARY_TEXT_COLOR),
-                                        dense=True
-                                    )
-                                ])
+                                ft.Column(
+                                    controls=crear_elementos_historial(actividades_recientes)
+                                )
                             ]),
                             padding=16
-                        )
+                        ),
+                        color=tema.CARD_COLOR,
                     ),
                     expand=1,
                     margin=ft.margin.only(left=8)

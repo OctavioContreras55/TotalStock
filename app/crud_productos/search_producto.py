@@ -63,8 +63,9 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
 async def buscar_en_firebase(page, busqueda, actualizar_tabla=None, dialogo_busqueda=None):
     tema = GestorTemas.obtener_tema()
     try:
+        from google.cloud.firestore_v1.base_query import FieldFilter
         referencia_productos = db.collection('productos')
-        query = referencia_productos.where('modelo', '==', busqueda)
+        query = referencia_productos.where(filter=FieldFilter('modelo', '==', busqueda))
         resultados = query.stream()
 
         productos_encontrados = []
