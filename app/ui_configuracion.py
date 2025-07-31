@@ -39,8 +39,8 @@ def vista_configuracion(nombre_seccion, contenido, page):
     # Crear el selector de tema
     selector_tema = ft.RadioGroup(
         content=ft.Column([
-            ft.Radio(value="oscuro", label="Tema Oscuro"),
-            ft.Radio(value="azul", label="Tema Azul Claro"),
+            ft.Radio(value="oscuro", label="Tema Oscuro", label_style=ft.TextStyle(color=tema.TEXT_COLOR)),
+            ft.Radio(value="azul", label="Tema Azul Claro", label_style=ft.TextStyle(color=tema.TEXT_COLOR)),
         ]),
         value=GestorTemas.obtener_tema_actual(),
         on_change=cambiar_tema_handler
@@ -101,7 +101,7 @@ def vista_configuracion(nombre_seccion, contenido, page):
                                     content=ft.Column(
                                         controls=[
                                             ft.Text("Tema Oscuro", 
-                                                   color="#FFFFFF", 
+                                                   color=tema.TEXT_COLOR, 
                                                    size=14,
                                                    text_align=ft.TextAlign.CENTER),
                                             ft.Container(
@@ -274,7 +274,8 @@ def vista_configuracion(nombre_seccion, contenido, page):
         alignment=ft.MainAxisAlignment.START,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         expand=True,
-        spacing=0
+        spacing=0,
+        scroll=True
     )
     
     def mostrar_dialogo_reset():

@@ -85,9 +85,18 @@ async def principal_view(page: ft.Page):
         page.update()
     
     
-    def vista_inicio(nombre_seccion):
-        vista_inicio_modular(nombre_seccion, contenido, fecha_actual)
-        page.update()
+    async def vista_inicio(nombre_seccion):
+        try:
+            dashboard_content = await vista_inicio_modular(page, nombre_seccion, contenido, fecha_actual)
+            contenido.content = dashboard_content
+            page.update()
+        except Exception as e:
+            print(f"Error al cargar vista inicio: {e}")
+            contenido.content = ft.Column([
+                ft.Text(f"Error al cargar {nombre_seccion}", size=24, color=tema.ERROR_COLOR),
+                ft.Text(f"Error: {str(e)}", size=16, color=tema.TEXT_SECONDARY)
+            ])
+            page.update()
     
     # Función para cambiar la vista al hacer clic en el menú
     async def vista_inventario(nombre_seccion):
@@ -143,9 +152,9 @@ async def principal_view(page: ft.Page):
         vista_configuracion_modular(nombre_seccion, contenido, page)
         page.update()
         
-    def on_cerrar_sesion(e):
-        cerrar_sesion(page)
-    
+    async def on_cerrar_sesion(e):
+        await cerrar_sesion(page)
+
     # Función para crear el contenido del menú con estado
     def crear_contenido_menu():
         return ft.Column(
@@ -175,7 +184,7 @@ async def principal_view(page: ft.Page):
                     bgcolor=tema.DIVIDER_COLOR,
                     margin=ft.margin.only(bottom=20, top=5)
                 ),
-                crear_menu_item(ft.Icons.HOME, "Inicio", "Inicio", lambda: vista_inicio("Inicio")),
+                crear_menu_item(ft.Icons.HOME, "Inicio", "Inicio", lambda: asyncio.create_task(vista_inicio("Inicio")), es_async=True),
                 crear_menu_item(ft.Icons.INVENTORY_2, "Inventario", "Inventario", lambda: vista_inventario("Inventario"), es_async=True),
                 crear_menu_item(ft.Icons.LABEL, "Categorías", "Categorías", lambda: vista_categorias("Categorías")),
                 crear_menu_item(ft.Icons.LOCATION_ON, "Ubicaciones", "Ubicaciones", lambda: vista_ubicaciones("Ubicaciones")),
@@ -217,5 +226,5 @@ async def principal_view(page: ft.Page):
         )
     )
     
-    vista_inicio("Inicio")  # Carga la vista de inicio por defecto
+    await vista_inicio("Inicio")  # Carga la vista de inicio por defecto
     page.update()  # Actualiza la página para mostrar los cambios iniciales

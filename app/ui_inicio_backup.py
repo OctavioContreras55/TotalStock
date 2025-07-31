@@ -72,10 +72,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
             
         except Exception as e:
             print(f"Error al obtener productos bajo stock: {e}")
-            return [
-                {'nombre': 'Rodillo', 'stock': 6},
-                {'nombre': 'Barra', 'stock': 32}
-            ]
+            return []
     
     # Función para obtener actividades recientes
     async def obtener_actividades_recientes():
@@ -167,11 +164,10 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                         on_change=lambda e, idx=i: toggle_pendiente(idx)
                     ),
                     ft.Text(
-                        ("✓ " if tarea.get('completada', False) else "") + tarea['texto'],
+                        tarea['texto'],
                         expand=True,
                         size=12,
-                        color=tema.SECONDARY_TEXT_COLOR if tarea.get('completada', False) else tema.TEXT_COLOR,
-                        italic=tarea.get('completada', False)
+                        decoration=ft.TextDecoration.LINE_THROUGH if tarea.get('completada', False) else ft.TextDecoration.NONE
                     ),
                     ft.IconButton(
                         icon=ft.Icons.DELETE,
@@ -182,26 +178,15 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
             )
         
         pendientes_container.controls = items
-        try:
-            page.update()
-        except:
-            pass
+        page.update()
     
     def toggle_pendiente(index):
-        try:
-            if index < len(lista_pendientes):
-                lista_pendientes[index]['completada'] = not lista_pendientes[index].get('completada', False)
-                actualizar_pendientes()
-        except Exception as e:
-            print(f"Error al toggle pendiente: {e}")
+        lista_pendientes[index]['completada'] = not lista_pendientes[index].get('completada', False)
+        actualizar_pendientes()
     
     def eliminar_pendiente(index):
-        try:
-            if index < len(lista_pendientes):
-                lista_pendientes.pop(index)
-                actualizar_pendientes()
-        except Exception as e:
-            print(f"Error al eliminar pendiente: {e}")
+        lista_pendientes.pop(index)
+        actualizar_pendientes()
     
     def agregar_pendiente(e):
         if campo_pendiente.value.strip():
@@ -258,27 +243,43 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                         content=ft.Column([
                             ft.Row([
                                 ft.Icon(ft.Icons.INVENTORY, color=tema.WARNING_COLOR),
-                                ft.Text("Productos con Menor Stock", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR)
+                                ft.Text("Productos con Menor Stock", weight=ft.FontWeight.BOLD, size=14)
                             ]),
-                            ft.Divider(color=tema.SECONDARY_TEXT_COLOR),
+                            ft.Divider(),
                             ft.Column([
                                 ft.ListTile(
                                     leading=ft.Container(
-                                        content=ft.Text(str(producto['stock']), color=ft.Colors.WHITE, size=12, weight=ft.FontWeight.BOLD),
-                                        bgcolor=tema.ERROR_COLOR if producto['stock'] < 10 else tema.WARNING_COLOR if producto['stock'] < 30 else tema.SUCCESS_COLOR,
+                                        content=ft.Text("2", color=ft.Colors.WHITE, size=12, weight=ft.FontWeight.BOLD),
+                                        bgcolor=tema.ERROR_COLOR,
                                         border_radius=12,
                                         padding=ft.padding.symmetric(horizontal=8, vertical=4)
                                     ),
-                                    title=ft.Text(producto['nombre'], size=12),
-                                    subtitle=ft.Text(
-                                        "Stock crítico" if producto['stock'] < 10 else "Stock bajo" if producto['stock'] < 30 else "Stock normal", 
-                                        size=10, 
-                                        color=tema.ERROR_COLOR if producto['stock'] < 10 else tema.WARNING_COLOR if producto['stock'] < 30 else tema.SUCCESS_COLOR
-                                    ),
+                                    title=ft.Text("Alambre", size=12),
+                                    subtitle=ft.Text("Stock crítico", size=10, color=tema.ERROR_COLOR),
                                     dense=True
-                                ) for producto in productos_bajo_stock
-                            ] if productos_bajo_stock else [
-                                ft.Text("No hay productos con stock bajo", size=12, color=ft.Colors.GREY_500, text_align=ft.TextAlign.CENTER)
+                                ),
+                                ft.ListTile(
+                                    leading=ft.Container(
+                                        content=ft.Text("6", color=ft.Colors.WHITE, size=12, weight=ft.FontWeight.BOLD),
+                                        bgcolor=tema.WARNING_COLOR,
+                                        border_radius=12,
+                                        padding=ft.padding.symmetric(horizontal=8, vertical=4)
+                                    ),
+                                    title=ft.Text("Rodillo", size=12),
+                                    subtitle=ft.Text("Stock bajo", size=10, color=tema.WARNING_COLOR),
+                                    dense=True
+                                ),
+                                ft.ListTile(
+                                    leading=ft.Container(
+                                        content=ft.Text("32", color=ft.Colors.WHITE, size=12, weight=ft.FontWeight.BOLD),
+                                        bgcolor=tema.SUCCESS_COLOR,
+                                        border_radius=12,
+                                        padding=ft.padding.symmetric(horizontal=8, vertical=4)
+                                    ),
+                                    title=ft.Text("Barra", size=12),
+                                    subtitle=ft.Text("Stock normal", size=10, color=tema.SUCCESS_COLOR),
+                                    dense=True
+                                )
                             ])
                         ]),
                         padding=16
@@ -295,7 +296,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                         content=ft.Column([
                             ft.Row([
                                 ft.Icon(ft.Icons.PIE_CHART, color=tema.PRIMARY_COLOR),
-                                ft.Text("Estadísticas de Hoy", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR)
+                                ft.Text("Estadísticas de Hoy", weight=ft.FontWeight.BOLD, size=14)
                             ]),
                             ft.Container(
                                 content=ft.Row([
@@ -306,27 +307,27 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                                     ft.Column([
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.PRIMARY_COLOR, border_radius=5),
-                                            ft.Text(f"Total Productos: {stats['total_productos']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Total Productos: {stats['total_productos']}", size=10)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.SECONDARY_TEXT_COLOR, border_radius=5),
-                                            ft.Text(f"Total Usuarios: {stats['total_usuarios']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Total Usuarios: {stats['total_usuarios']}", size=10)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.SUCCESS_COLOR, border_radius=5),
-                                            ft.Text(f"Creados hoy: {stats['creados_hoy']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Creados hoy: {stats['creados_hoy']}", size=10)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.WARNING_COLOR, border_radius=5),
-                                            ft.Text(f"Editados hoy: {stats['editados_hoy']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Editados hoy: {stats['editados_hoy']}", size=10)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.ERROR_COLOR, border_radius=5),
-                                            ft.Text(f"Eliminados hoy: {stats['eliminados_hoy']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Eliminados hoy: {stats['eliminados_hoy']}", size=10)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.PRIMARY_COLOR, border_radius=5),
-                                            ft.Text(f"Importados hoy: {stats['importados_hoy']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Importados hoy: {stats['importados_hoy']}", size=10)
                                         ], spacing=8)
                                     ], spacing=4)
                                 ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
@@ -350,7 +351,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                             content=ft.Column([
                                 ft.Row([
                                     ft.Icon(ft.Icons.TASK_ALT, color=tema.PRIMARY_COLOR),
-                                    ft.Text("Panel de Pendientes", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR)
+                                    ft.Text("Panel de Pendientes", weight=ft.FontWeight.BOLD, size=14)
                                 ]),
                                 ft.Row([
                                     campo_pendiente,
@@ -380,27 +381,27 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                             content=ft.Column([
                                 ft.Row([
                                     ft.Icon(ft.Icons.HISTORY, color=tema.SECONDARY_TEXT_COLOR),
-                                    ft.Text("Historial de Actividades", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR),
+                                    ft.Text("Historial de Actividades", weight=ft.FontWeight.BOLD, size=14),
                                     ft.Container(expand=True),
-                                    ft.IconButton(icon=ft.Icons.REFRESH, icon_size=16, icon_color=tema.PRIMARY_COLOR)
+                                    ft.IconButton(icon=ft.Icons.REFRESH, icon_size=16)
                                 ]),
                                 ft.Column([
                                     ft.ListTile(
-                                        leading=ft.Icon(ft.Icons.PERSON_REMOVE, size=16, color=tema.ERROR_COLOR),
-                                        title=ft.Text("Eliminó usuario 'd213ae'", size=11, color=tema.TEXT_COLOR),
-                                        subtitle=ft.Text("Octavio - 16:11", size=9, color=tema.SECONDARY_TEXT_COLOR),
+                                        leading=ft.Icon(ft.Icons.PERSON_REMOVE, size=16),
+                                        title=ft.Text("Eliminó usuario 'd213ae'", size=11),
+                                        subtitle=ft.Text("Octavio - 16:11", size=9),
                                         dense=True
                                     ),
                                     ft.ListTile(
-                                        leading=ft.Icon(ft.Icons.ADD_CIRCLE, size=16, color=tema.SUCCESS_COLOR),
-                                        title=ft.Text("Creó producto 'prueba2'", size=11, color=tema.TEXT_COLOR),
-                                        subtitle=ft.Text("Octavio - 16:10", size=9, color=tema.SECONDARY_TEXT_COLOR),
+                                        leading=ft.Icon(ft.Icons.ADD_CIRCLE, size=16),
+                                        title=ft.Text("Creó producto 'prueba2'", size=11),
+                                        subtitle=ft.Text("Octavio - 16:10", size=9),
                                         dense=True
                                     ),
                                     ft.ListTile(
-                                        leading=ft.Icon(ft.Icons.DELETE, size=16, color=tema.ERROR_COLOR),
-                                        title=ft.Text("Eliminó producto 'Prueba'", size=11, color=tema.TEXT_COLOR),
-                                        subtitle=ft.Text("Octavio - 16:10", size=9, color=tema.SECONDARY_TEXT_COLOR),
+                                        leading=ft.Icon(ft.Icons.DELETE, size=16),
+                                        title=ft.Text("Eliminó producto 'Prueba'", size=11),
+                                        subtitle=ft.Text("Octavio - 16:10", size=9),
                                         dense=True
                                     )
                                 ])

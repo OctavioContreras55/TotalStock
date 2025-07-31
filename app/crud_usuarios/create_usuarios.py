@@ -3,6 +3,8 @@ import re #librería para expresiones regulares
 import threading #librería para manejar hilos
 from conexiones.firebase import db  # Importar la conexión a Firestore
 from app.utils.temas import GestorTemas
+from app.utils.historial import GestorHistorial
+from app.funciones.sesiones import SesionManager
 import asyncio
 
 def crear_usuario_firebase(nombre, contrasena, es_admin=False): # Función para crear un usuario en Firebase
@@ -112,6 +114,16 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
         )
         
         if exito:
+            # Registrar actividad en el historial
+            gestor_historial = GestorHistorial()
+            usuario_actual = SesionManager.obtener_usuario_actual()
+            
+            asyncio.create_task(gestor_historial.agregar_actividad(
+                tipo="crear_usuario",
+                descripcion=f"Creó nuevo usuario '{campo_nombre.value}' (Admin: {'Sí' if campo_es_admin.value else 'No'})",
+                usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
+            ))
+            
             mensaje_estado.value = "Usuario creado exitosamente"
             mensaje_estado.color = tema.SUCCESS_COLOR
             page.update()
@@ -126,7 +138,7 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                 if callback_actualizar_tabla:
                     await(callback_actualizar_tabla())
 
-            asyncio.run(restaurar_vista())
+            asyncio.create_task(restaurar_vista())
         else:
             mensaje_estado.value = f"Error: {resultado}"
             mensaje_estado.color = tema.ERROR_COLOR

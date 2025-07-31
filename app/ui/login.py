@@ -1,5 +1,8 @@
 import flet as ft
 from app.utils.temas import GestorTemas
+from conexiones.firebase import db
+from app.funciones.sesiones import SesionManager
+import asyncio
 
 def login_view(page: ft.Page, on_login_success): #Función para la vista del login. Argumentos: page = pagina de Flet, on_login_success = función a ejecutar al iniciar sesión correctamente
     tema = GestorTemas.obtener_tema()
@@ -39,53 +42,82 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
     page.window.min_width = min_width
     page.window.min_height = min_height
     
-    #Texto de error en caso de campos vacíos
-    mensaje_error = ft.Container(
-      content=ft.Row(
-          controls=[
-              ft.Icon(name=ft.Icons.WARNING_ROUNDED, color=tema.ERROR_COLOR, size=20),
-              ft.Text("Usuario o contraseña incorrectos", color=tema.ERROR_COLOR),
-          ],
-          alignment=ft.MainAxisAlignment.CENTER,
-          spacing=10,
-
-      ),
-      visible=False,
-      height=30,
-      opacity=0,# Animación de opacidad al ocultar
-      animate_opacity=300,  # Animación de opacidad al mostrar/ocultar
-    )
     
-    #Quitar si se quiere tener fondo blanco en el logo
-    """def logo_con_borde():
-        return ft.Container(
-        content=ft.Image(src="assets/logo.png", width=150, height=150),
-        bgcolor=ft.Colors.WHITE,
-        border_radius=10,
-        padding=10,
-        alignment=ft.alignment.center
-    )"""
+    async def animar_error(campo):
+        """Anima el campo con shake y lo marca en rojo"""
+        campo.border_color = ft.Colors.RED
+        for offset in [-10, 10, -6, 6, 0]:
+            campo.offset = ft.Offset(offset, 0)
+            page.update()
+            await asyncio.sleep(0.05)
+        campo.offset = ft.Offset(0, 0)
+        page.update()
+    
+    async def resetear_campos():
+        """Resetea el color de los campos"""
+        usuario_input.border_color = tema.INPUT_BORDER
+        contrasena_input.border_color = tema.INPUT_BORDER
+        page.update()
     
     #Función para validar datos de inicio de sesión
-    def validar_login(e):
-        usuario = usuario_input.value
+    async def validar_login(e):
+        usuario = usuario_input.value.strip()  # Eliminar espacios
         contrasena = contrasena_input.value
         
-        #TEMPORAL: Validación simple de usuario y contraseña
-        if usuario == "admin" and contrasena == "admin":
-            mensaje_error.visible = False
-            vista_tarjeta.height = 430  # Ajusta la altura de la tarjeta al iniciar sesión correctamente
-            on_login_success() # Llama a la función de éxito al iniciar sesión
+        # Resetear colores de campos antes de validar
+        await resetear_campos()
+        
+        # Validar campos vacíos PRIMERO
+        campos_vacios = []
+        if not usuario:
+            campos_vacios.append(usuario_input)
+            await animar_error(usuario_input)
+        if not contrasena:
+            campos_vacios.append(contrasena_input)
+            await animar_error(contrasena_input)
+
+        if campos_vacios:
+            page.open(ft.SnackBar(
+                content=ft.Text("Por favor, complete todos los campos", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
+            ))
             page.update()
-        else:
-            # Acceder al texto dentro del Row del Container
-            mensaje_error.content.controls[1].value = "Usuario o contraseña incorrectos"
-            mensaje_error.visible = True
-            mensaje_error.opacity = 1 # Muestra el mensaje de error
-            vista_tarjeta.height = 480  # Ajusta la altura de la tarjeta al mostrar el mensaje de error
-            usuario_input.focus()
-            contrasena_input.value = ""
-            page.update() # Actualiza la página para mostrar los cambios
+            return
+        
+        try:
+            # Realizar la consulta a la base de datos para verificar las credenciales del usuario
+            referencia_usuarios = db.collection('usuarios')
+            query = referencia_usuarios.where('nombre', '==', usuario).where('contrasena', '==', contrasena).limit(1).get()
+            
+            if query:
+                # Login exitoso - obtener datos del usuario
+                usuario_doc = query[0]
+                usuario_data = usuario_doc.to_dict()
+                usuario_data['firebase_id'] = usuario_doc.id
+                usuario_data['username'] = usuario_data.get('nombre', usuario)
+                
+                # Establecer la sesión del usuario
+                SesionManager.establecer_usuario(usuario_data)
+                
+                print(f"Login exitoso para el usuario: {usuario}")
+                await on_login_success()
+            else:
+                # Credenciales incorrectas - animar ambos campos
+                await animar_error(usuario_input)
+                await animar_error(contrasena_input)
+                page.open(ft.SnackBar(
+                    content=ft.Text("Usuario o contraseña incorrectos", color=tema.TEXT_COLOR),
+                    bgcolor=tema.ERROR_COLOR
+                ))
+                page.update()
+                
+        except Exception as error:
+            print(f"Error al verificar las credenciales: {error}")
+            page.open(ft.SnackBar(
+                content=ft.Text("Error de conexión. Intente nuevamente.", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
+            ))
+            page.update()
             
     #Boton de inicio de sesión - Responsivo
     boton_login = ft.Container(
@@ -119,7 +151,6 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                 ),
                 usuario_input,
                 contrasena_input,
-                mensaje_error,
                 boton_login
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,

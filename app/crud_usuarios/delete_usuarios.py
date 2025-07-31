@@ -1,15 +1,37 @@
 import flet as ft
 from conexiones.firebase import db
 from app.utils.temas import GestorTemas
+from app.utils.historial import GestorHistorial
+from app.funciones.sesiones import SesionManager
 import asyncio
 
 
 
 
-def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_eliminar_click
+async def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_eliminar_click
     try:
-        referencia_usuarios = db.collection('usuarios')
-        referencia_usuarios.document(id_usuario).delete()
+        # Obtener datos del usuario antes de eliminarlo
+        doc_ref = db.collection('usuarios').document(id_usuario)
+        doc = doc_ref.get()
+        usuario_nombre = "usuario"
+        
+        if doc.exists:
+            usuario_data = doc.to_dict()
+            usuario_nombre = usuario_data.get('nombre', 'usuario')
+        
+        # Eliminar el usuario
+        doc_ref.delete()
+        
+        # Registrar actividad en el historial
+        gestor_historial = GestorHistorial()
+        usuario_actual = SesionManager.obtener_usuario_actual()
+        
+        await gestor_historial.agregar_actividad(
+            tipo="eliminar_usuario",
+            descripcion=f"Eliminó usuario '{usuario_nombre}' (ID: {id_usuario})",
+            usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
+        )
+        
         print(f"Usuario con ID {id_usuario} eliminado exitosamente.")
         return True
     except Exception as e:
@@ -18,7 +40,7 @@ def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_eliminar_cli
     
     
 async def on_eliminar_click(e, page, id_usuario, actualizar_tabla): #Se manda a llamar desde el botón de eliminar en la tabla de usuarios
-    if eliminar_usuario_firebase(id_usuario):
+    if await eliminar_usuario_firebase(id_usuario):
         print("Usuario eliminado exitosamente.")
         if actualizar_tabla:
             await actualizar_tabla()

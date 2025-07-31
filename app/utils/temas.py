@@ -20,6 +20,7 @@ class TemaOscuro:
     # Texto
     TEXT_COLOR = "#F5F5F5"  # Blanco ligeramente más suave
     TEXT_SECONDARY = "#B9BBBE"
+    SECONDARY_TEXT_COLOR = "#B9BBBE"  # Alias para compatibilidad
     TEXT_MUTED = "#72767D"
     
     # Texto específico para sidebar
@@ -72,6 +73,7 @@ class TemaAzul:
     # Texto - Mejorado para legibilidad
     TEXT_COLOR = "#1B365D"  # Azul oscuro para texto principal
     TEXT_SECONDARY = "#34495E"  # Gris azulado para texto secundario
+    SECONDARY_TEXT_COLOR = "#34495E"  # Alias para compatibilidad
     TEXT_MUTED = "#7F8C8D"  # Gris para texto deshabilitado
     
     # Texto específico para sidebar (contraste con fondo oscuro)

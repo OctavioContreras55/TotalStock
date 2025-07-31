@@ -1,6 +1,8 @@
 import flet as ft
 from conexiones.firebase import db
 from app.utils.temas import GestorTemas
+from app.utils.historial import GestorHistorial
+from app.funciones.sesiones import SesionManager
 import asyncio
 
 async def vista_crear_producto(page, callback_actualizar_tabla=None):
@@ -58,13 +60,23 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
     )
 
     def validar_campos():
-        return all([
-            campo_modelo.value.strip(),
-            campo_tipo.value.strip(),
-            campo_nombre.value.strip(),
-            campo_precio.value.strip().isdigit(),
-            campo_cantidad.value.strip().isdigit()
-        ])
+        # Verificar que los campos básicos no estén vacíos
+        if not all([
+            campo_modelo.value and campo_modelo.value.strip(),
+            campo_tipo.value and campo_tipo.value.strip(),
+            campo_nombre.value and campo_nombre.value.strip(),
+            campo_precio.value and campo_precio.value.strip(),
+            campo_cantidad.value and campo_cantidad.value.strip(),
+        ]):
+            return False
+        
+        # Verificar que precio y cantidad sean números válidos
+        try:
+            float(campo_precio.value.strip())
+            int(campo_cantidad.value.strip())
+            return True
+        except ValueError:
+            return False
 
     async def crear_producto(e):
         if not validar_campos():
@@ -82,6 +94,17 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
 
         try:
             firebase_id = await crear_producto_firebase(modelo, tipo, nombre, precio, cantidad)
+            
+            # Registrar actividad en el historial
+            gestor_historial = GestorHistorial()
+            usuario_actual = SesionManager.obtener_usuario_actual()
+            
+            await gestor_historial.agregar_actividad(
+                tipo="crear_producto",
+                descripcion=f"Creó producto '{nombre}' (Modelo: {modelo})",
+                usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
+            )
+            
             page.open(ft.SnackBar(
                 content=ft.Text(f"Producto '{nombre}' creado exitosamente con ID: {firebase_id}", color=tema.TEXT_COLOR),
                 bgcolor=tema.SUCCESS_COLOR

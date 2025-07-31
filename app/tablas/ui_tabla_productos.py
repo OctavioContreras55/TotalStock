@@ -2,6 +2,7 @@ import flet as ft
 from app.utils.temas import GestorTemas
 from app.crud_productos.delete_producto import on_eliminar_producto_click
 from app.crud_productos.edit_producto import on_click_editar_producto
+import asyncio
 
 def crear_boton_eliminar(producto_id, page, actualizar_tabla_productos):
     tema = GestorTemas.obtener_tema()
@@ -20,7 +21,7 @@ def crear_boton_editar(producto_id, page, actualizar_tabla_productos):
     return ft.IconButton(
         ft.Icons.EDIT,
         icon_color=tema.PRIMARY_COLOR,
-        on_click=lambda e: on_click_editar_producto(page, producto_id, actualizar_tabla_productos),
+        on_click=lambda e: asyncio.create_task(on_click_editar_producto(page, producto_id, actualizar_tabla_productos)),
         tooltip="Editar Producto",
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)

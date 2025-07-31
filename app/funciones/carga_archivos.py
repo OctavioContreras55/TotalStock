@@ -2,6 +2,9 @@ import polars as pd
 import flet as ft
 from conexiones.firebase import db
 from app.utils.temas import GestorTemas
+from app.utils.historial import GestorHistorial
+from app.funciones.sesiones import SesionManager
+import asyncio
 
 def cargar_archivo_excel(ruta_archivo):
     archivo = pd.read_excel(ruta_archivo)
@@ -17,7 +20,7 @@ def cargar_archivo_excel(ruta_archivo):
         productos.append(producto)
     return productos
 
-def guardar_productos_en_firebase(productos, page):
+async def guardar_productos_en_firebase(productos, page):
     tema = GestorTemas.obtener_tema()
     
     mensaje_cargando = ft.AlertDialog(
@@ -50,8 +53,11 @@ def guardar_productos_en_firebase(productos, page):
         modal=True,
     )
     
+    
     try:
         referencia_productos = db.collection("productos")
+        productos_importados_count = 0
+        
         for producto in productos:
             try:
                 id_documento = f"{producto['modelo']}"
@@ -65,9 +71,21 @@ def guardar_productos_en_firebase(productos, page):
                     doc_ref.set(producto)
                 else:
                     doc_ref.set(producto)
+                productos_importados_count += 1
 
             except Exception as e:
                 print(f"Error al guardar el producto {producto['modelo']}: {e}")
+        
+        # Registrar actividad en el historial
+        gestor_historial = GestorHistorial()
+        usuario_actual = SesionManager.obtener_usuario_actual()
+        
+        await gestor_historial.agregar_actividad(
+            tipo="importar_productos",
+            descripcion=f"Importó {productos_importados_count} productos desde archivo Excel",
+            usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
+        )
+        
         page.close(mensaje_cargando)
         page.open(mensaje_exito)
     except Exception as e:
@@ -137,7 +155,7 @@ def on_click_importar_archivo(page):
                                         color=tema.BUTTON_TEXT,
                                         shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                     ),
-                                    on_click=lambda e: [page.close(ventana), guardar_productos_en_firebase(productos_importados, page)],
+                                    on_click=lambda e: [page.close(ventana), asyncio.create_task(guardar_productos_en_firebase(productos_importados, page))],
                                     width=100,
                                     height=40,
                                 ),
