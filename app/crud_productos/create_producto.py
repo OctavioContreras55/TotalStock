@@ -105,6 +105,12 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
                 usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
             )
             
+            # Actualizar dashboard dinámicamente - TEMPORALMENTE DESHABILITADO
+            # from app.utils.actualizador_dashboard import actualizar_dashboard_sincrono
+            # actualizar_dashboard_sincrono()
+            
+            print("✅ Producto creado - actualización manual con botón refresh")
+            
             page.open(ft.SnackBar(
                 content=ft.Text(f"Producto '{nombre}' creado exitosamente con ID: {firebase_id}", color=tema.TEXT_COLOR),
                 bgcolor=tema.SUCCESS_COLOR

@@ -19,55 +19,233 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
     tema = GestorTemas.obtener_tema()
     gestor_historial = GestorHistorial()
     
+    # Referencias dinámicas para componentes actualizables
+    grafico_estadisticas_ref = ft.Ref[ft.PieChart]()
+    texto_total_productos_ref = ft.Ref[ft.Text]()
+    texto_total_usuarios_ref = ft.Ref[ft.Text]()
+    texto_creados_hoy_ref = ft.Ref[ft.Text]()
+    texto_editados_hoy_ref = ft.Ref[ft.Text]()
+    texto_eliminados_hoy_ref = ft.Ref[ft.Text]()
+    texto_importados_hoy_ref = ft.Ref[ft.Text]()
+    historial_column_ref = ft.Ref[ft.Column]()
+    
+    # Variables globales para mantener el estado actual
+    stats_actuales = {
+        'total_productos': 0,
+        'total_usuarios': 0,
+        'creados_hoy': 0,
+        'editados_hoy': 0,
+        'eliminados_hoy': 0,
+        'importados_hoy': 0
+    }
+    
+    # Función para actualizar estadísticas dinámicamente
+    async def actualizar_estadisticas_dinamicas():
+        """Actualiza las estadísticas y la gráfica en tiempo real"""
+        try:
+            print("🔄 Iniciando actualización de estadísticas...")
+            # Obtener nuevas estadísticas
+            nuevas_stats = await obtener_estadisticas()
+            stats_actuales.update(nuevas_stats)
+            
+            print(f"📊 Nuevas estadísticas: {stats_actuales}")
+            
+            # Actualizar textos de estadísticas
+            if texto_total_productos_ref.current:
+                texto_total_productos_ref.current.value = f"Total Productos: {stats_actuales['total_productos']}"
+            if texto_total_usuarios_ref.current:
+                texto_total_usuarios_ref.current.value = f"Total Usuarios: {stats_actuales['total_usuarios']}"
+            if texto_creados_hoy_ref.current:
+                texto_creados_hoy_ref.current.value = f"Creados hoy: {stats_actuales['creados_hoy']}"
+            if texto_editados_hoy_ref.current:
+                texto_editados_hoy_ref.current.value = f"Editados hoy: {stats_actuales['editados_hoy']}"
+            if texto_eliminados_hoy_ref.current:
+                texto_eliminados_hoy_ref.current.value = f"Eliminados hoy: {stats_actuales['eliminados_hoy']}"
+            if texto_importados_hoy_ref.current:
+                texto_importados_hoy_ref.current.value = f"Importados hoy: {stats_actuales['importados_hoy']}"
+            
+            # Actualizar gráfica - crear nuevas secciones y forzar actualización
+            if grafico_estadisticas_ref.current:
+                nueva_grafica = crear_grafico_estadisticas_dinamico(stats_actuales)
+                grafico_estadisticas_ref.current.sections = nueva_grafica.sections
+                grafico_estadisticas_ref.current.sections_space = nueva_grafica.sections_space
+                print("📈 Gráfica actualizada con nuevas secciones")
+            else:
+                print("⚠️ Referencia de gráfica no disponible")
+            
+            # Actualizar historial
+            await actualizar_historial_dinamico()
+            
+            print("✅ Actualizando página...")
+            page.update()
+            print("📊 Estadísticas actualizadas dinámicamente")
+            
+        except Exception as e:
+            print(f"❌ Error al actualizar estadísticas: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # Función para actualizar historial dinámicamente
+    async def actualizar_historial_dinamico():
+        """Actualiza el historial de actividades en tiempo real"""
+        try:
+            print("🔄 Actualizando historial...")
+            actividades_recientes = await obtener_actividades_recientes()
+            print(f"📋 Actividades obtenidas: {len(actividades_recientes)}")
+            if historial_column_ref.current:
+                historial_column_ref.current.controls = crear_elementos_historial(actividades_recientes)
+                print("📋 Historial actualizado dinámicamente")
+        except Exception as e:
+            print(f"❌ Error al actualizar historial: {e}")
+    
+    # Función para crear gráfica dinámica
+    def crear_grafico_estadisticas_dinamico(stats):
+        """Crea una gráfica de estadísticas que puede ser actualizada"""
+        data_sections = []
+        
+        print(f"🎨 Creando gráfica con datos: {stats}")
+        
+        # Solo agregar secciones si hay datos reales
+        if stats.get('creados_hoy', 0) > 0:
+            data_sections.append(
+                ft.PieChartSection(
+                    value=stats['creados_hoy'],
+                    color=tema.SUCCESS_COLOR,
+                    radius=60,
+                    title=str(stats['creados_hoy'])
+                )
+            )
+            print(f"✅ Agregada sección 'creados_hoy': {stats['creados_hoy']}")
+        
+        if stats.get('editados_hoy', 0) > 0:
+            data_sections.append(
+                ft.PieChartSection(
+                    value=stats['editados_hoy'],
+                    color=tema.WARNING_COLOR,
+                    radius=60,
+                    title=str(stats['editados_hoy'])
+                )
+            )
+            print(f"✅ Agregada sección 'editados_hoy': {stats['editados_hoy']}")
+        
+        if stats.get('eliminados_hoy', 0) > 0:
+            data_sections.append(
+                ft.PieChartSection(
+                    value=stats['eliminados_hoy'],
+                    color=tema.ERROR_COLOR,
+                    radius=60,
+                    title=str(stats['eliminados_hoy'])
+                )
+            )
+            print(f"✅ Agregada sección 'eliminados_hoy': {stats['eliminados_hoy']}")
+        
+        if stats.get('importados_hoy', 0) > 0:
+            data_sections.append(
+                ft.PieChartSection(
+                    value=stats['importados_hoy'],
+                    color=tema.PRIMARY_COLOR,
+                    radius=60,
+                    title=str(stats['importados_hoy'])
+                )
+            )
+            print(f"✅ Agregada sección 'importados_hoy': {stats['importados_hoy']}")
+        
+        # Si no hay datos reales, mostrar gráfica indicando "Sin actividad hoy"
+        if not data_sections:
+            data_sections.append(
+                ft.PieChartSection(
+                    value=1,
+                    color=tema.CARD_COLOR,
+                    radius=60,
+                    title="Sin actividad"
+                )
+            )
+            print("📊 Mostrando gráfica 'Sin actividad'")
+        
+        print(f"📈 Gráfica creada con {len(data_sections)} secciones")
+        
+        return ft.PieChart(
+            sections=data_sections,
+            sections_space=2,
+            center_space_radius=40,
+            width=200,
+            height=200
+        )
+    
+    # Función para actualización automática cada 30 segundos (opcional)
+    async def actualizar_automaticamente():
+        """Actualiza las estadísticas automáticamente cada 30 segundos"""
+        import asyncio
+        while True:
+            await asyncio.sleep(30)  # Esperar 30 segundos
+            try:
+                await actualizar_estadisticas_dinamicas()
+            except Exception as e:
+                print(f"Error en actualización automática: {e}")
+    
+    # Iniciar actualización automática (opcional - comentar si no se desea)
+    # page.run_task(actualizar_automaticamente())
+    
+    # Registrar función de actualización para uso global
+    from app.utils.actualizador_dashboard import registrar_actualizador
+    registrar_actualizador(actualizar_estadisticas_dinamicas, page)
+    
     # Función para obtener estadísticas del día
     async def obtener_estadisticas():
         try:
             stats = await GestorHistorial.obtener_estadisticas_hoy()  # Usar método estático
             
-            # Obtener totales
+            # Obtener totales usando count() en lugar de stream() para evitar lecturas masivas
             productos_ref = db.collection('productos')
-            productos = productos_ref.stream()
-            total_productos = len(list(productos))
+            total_productos = productos_ref.count().get()[0][0].value
             
             usuarios_ref = db.collection('usuarios')
-            usuarios = usuarios_ref.stream()
-            total_usuarios = len(list(usuarios))
+            total_usuarios = usuarios_ref.count().get()[0][0].value
             
             return {
                 'total_productos': total_productos,
                 'total_usuarios': total_usuarios,
-                'creados_hoy': stats.get('crear_producto', 0),
-                'editados_hoy': stats.get('editar_producto', 0),
-                'eliminados_hoy': stats.get('eliminar_producto', 0),
+                'creados_hoy': stats.get('crear_producto', 0) + stats.get('crear_usuario', 0),
+                'editados_hoy': stats.get('editar_producto', 0) + stats.get('editar_usuario', 0),
+                'eliminados_hoy': stats.get('eliminar_producto', 0) + stats.get('eliminar_usuario', 0),
                 'importados_hoy': stats.get('importar_productos', 0),
             }
         except Exception as e:
             print(f"Error al obtener estadísticas: {e}")
+            # En caso de error, devolver datos reales mínimos
             return {
                 'total_productos': 0,
                 'total_usuarios': 0,
-                'creados_hoy': 1,
+                'creados_hoy': 0,
                 'editados_hoy': 0,
-                'eliminados_hoy': 1,
+                'eliminados_hoy': 0,
                 'importados_hoy': 0,
             }
     
     # Función para obtener productos con menor stock
     async def obtener_productos_bajo_stock():
         try:
+            # Obtener una muestra de productos y ordenar localmente
             productos_ref = db.collection('productos')
-            productos = productos_ref.stream()
+            productos = productos_ref.limit(50).stream()  # Solo 50 productos para reducir lecturas
             
             productos_data = []
             for producto in productos:
                 data = producto.to_dict()
                 stock = int(data.get('stock', 0))
-                productos_data.append({
-                    'nombre': data.get('nombre', 'Sin nombre'),
-                    'stock': stock
-                })
+                # Solo incluir productos con stock bajo (menos de 20)
+                if stock < 20:
+                    productos_data.append({
+                        'nombre': data.get('nombre', 'Sin nombre'),
+                        'stock': stock
+                    })
             
+            # Ordenar por stock ascendente y tomar los 5 menores
             productos_data.sort(key=lambda x: x['stock'])
+            resultado = productos_data[:5]
+            
+            print(f"📦 Productos bajo stock encontrados: {len(resultado)}")
+            return resultado
             return productos_data[:5]
             
         except Exception as e:
@@ -137,76 +315,20 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
         
         return elementos
     
-    # Obtener datos
+    # Obtener datos iniciales
     # NOTA: Estos datos son GLOBALES - compartidos entre todos los usuarios
     stats = await obtener_estadisticas()                    # Estadísticas globales del sistema
+    stats_actuales.update(stats)  # Guardar en variable global
     productos_bajo_stock = await obtener_productos_bajo_stock()  # Productos globales
     actividades_recientes = await obtener_actividades_recientes()  # Historial global del sistema
     
+    # Registrar función de actualización dinámica
+    from app.utils.actualizador_dashboard import registrar_actualizador
+    registrar_actualizador(actualizar_estadisticas_dinamicas, page)
+    print("🔗 Actualizador del dashboard registrado")
+    
     # NOTA: Los pendientes son INDIVIDUALES - específicos de cada usuario
     # Se cargan y guardan en archivos separados por usuario_id
-    
-    # Crear gráfico de estadísticas
-    def crear_grafico_estadisticas():
-        data_sections = []
-        
-        if stats['creados_hoy'] > 0:
-            data_sections.append(
-                ft.PieChartSection(
-                    value=stats['creados_hoy'],
-                    color=tema.SUCCESS_COLOR,
-                    radius=60,
-                    title=str(stats['creados_hoy'])
-                )
-            )
-        
-        if stats['editados_hoy'] > 0:
-            data_sections.append(
-                ft.PieChartSection(
-                    value=stats['editados_hoy'],
-                    color=tema.WARNING_COLOR,
-                    radius=60,
-                    title=str(stats['editados_hoy'])
-                )
-            )
-        
-        if stats['eliminados_hoy'] > 0:
-            data_sections.append(
-                ft.PieChartSection(
-                    value=stats['eliminados_hoy'],
-                    color=tema.ERROR_COLOR,
-                    radius=60,
-                    title=str(stats['eliminados_hoy'])
-                )
-            )
-        
-        if stats['importados_hoy'] > 0:
-            data_sections.append(
-                ft.PieChartSection(
-                    value=stats['importados_hoy'],
-                    color=tema.PRIMARY_COLOR,
-                    radius=60,
-                    title=str(stats['importados_hoy'])
-                )
-            )
-        
-        if not data_sections:
-            data_sections.append(
-                ft.PieChartSection(
-                    value=1,
-                    color=tema.CARD_COLOR,
-                    radius=60,
-                    title="Sin datos"
-                )
-            )
-        
-        return ft.PieChart(
-            sections=data_sections,
-            sections_space=0,
-            center_space_radius=40,
-            width=200,
-            height=200
-        )
     
     # Panel de pendientes con persistencia por usuario
     import json
@@ -252,7 +374,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
     
     def limpiar_completados():
         """Eliminar todos los pendientes completados"""
-        global lista_pendientes
+        nonlocal lista_pendientes
         lista_pendientes = [p for p in lista_pendientes if not p.get('completada', False)]
         actualizar_pendientes()
         guardar_pendientes()
@@ -408,39 +530,60 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                         content=ft.Column([
                             ft.Row([
                                 ft.Icon(ft.Icons.PIE_CHART, color=tema.PRIMARY_COLOR),
-                                ft.Text("Estadísticas de Hoy", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR)
+                                ft.Text("Estadísticas de Hoy", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR),
+                                ft.Container(expand=True),
+                                ft.IconButton(
+                                    icon=ft.Icons.REFRESH,
+                                    icon_size=16,
+                                    icon_color=tema.PRIMARY_COLOR,
+                                    tooltip="Actualizar estadísticas",
+                                    on_click=lambda e: page.run_task(actualizar_estadisticas_dinamicas)
+                                )
                             ]),
                             ft.Container(
                                 content=ft.Row([
                                     ft.Container(
-                                        content=crear_grafico_estadisticas(),
+                                        content=ft.PieChart(
+                                            ref=grafico_estadisticas_ref,
+                                            sections=crear_grafico_estadisticas_dinamico(stats_actuales).sections,
+                                            sections_space=2,
+                                            center_space_radius=40,
+                                            width=200,
+                                            height=200
+                                        ),
                                         alignment=ft.alignment.center,
                                         padding=ft.padding.only(right=55)
                                     ),
                                     ft.Column([
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.PRIMARY_COLOR, border_radius=5),
-                                            ft.Text(f"Total Productos: {stats['total_productos']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Total Productos: {stats_actuales['total_productos']}", 
+                                                   size=10, color=tema.TEXT_COLOR, ref=texto_total_productos_ref)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.SECONDARY_TEXT_COLOR, border_radius=5),
-                                            ft.Text(f"Total Usuarios: {stats['total_usuarios']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Total Usuarios: {stats_actuales['total_usuarios']}", 
+                                                   size=10, color=tema.TEXT_COLOR, ref=texto_total_usuarios_ref)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.SUCCESS_COLOR, border_radius=5),
-                                            ft.Text(f"Creados hoy: {stats['creados_hoy']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Creados hoy: {stats_actuales['creados_hoy']}", 
+                                                   size=10, color=tema.TEXT_COLOR, ref=texto_creados_hoy_ref)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.WARNING_COLOR, border_radius=5),
-                                            ft.Text(f"Editados hoy: {stats['editados_hoy']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Editados hoy: {stats_actuales['editados_hoy']}", 
+                                                   size=10, color=tema.TEXT_COLOR, ref=texto_editados_hoy_ref)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.ERROR_COLOR, border_radius=5),
-                                            ft.Text(f"Eliminados hoy: {stats['eliminados_hoy']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Eliminados hoy: {stats_actuales['eliminados_hoy']}", 
+                                                   size=10, color=tema.TEXT_COLOR, ref=texto_eliminados_hoy_ref)
                                         ], spacing=8),
                                         ft.Row([
                                             ft.Container(width=10, height=10, bgcolor=tema.PRIMARY_COLOR, border_radius=5),
-                                            ft.Text(f"Importados hoy: {stats['importados_hoy']}", size=10, color=tema.TEXT_COLOR)
+                                            ft.Text(f"Importados hoy: {stats_actuales['importados_hoy']}", 
+                                                   size=10, color=tema.TEXT_COLOR, ref=texto_importados_hoy_ref)
                                         ], spacing=8)
                                     ], spacing=4)
                                 ], 
@@ -514,9 +657,16 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                                     ft.Icon(ft.Icons.HISTORY, color=tema.SECONDARY_TEXT_COLOR),
                                     ft.Text("Historial de Actividades", weight=ft.FontWeight.BOLD, size=14, color=tema.TEXT_COLOR),
                                     ft.Container(expand=True),
-                                    ft.IconButton(icon=ft.Icons.REFRESH, icon_size=16, icon_color=tema.PRIMARY_COLOR)
+                                    ft.IconButton(
+                                        icon=ft.Icons.REFRESH, 
+                                        icon_size=16, 
+                                        icon_color=tema.PRIMARY_COLOR,
+                                        tooltip="Actualizar historial",
+                                        on_click=lambda e: page.run_task(actualizar_historial_dinamico)
+                                    )
                                 ]),
                                 ft.Column(
+                                    ref=historial_column_ref,
                                     controls=crear_elementos_historial(actividades_recientes)
                                 )
                             ]),

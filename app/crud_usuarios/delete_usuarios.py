@@ -129,6 +129,13 @@ async def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_elimin
 async def on_eliminar_click(e, page, id_usuario, actualizar_tabla): #Se manda a llamar desde el botón de eliminar en la tabla de usuarios
     if await eliminar_usuario_firebase(id_usuario):
         print("Usuario eliminado exitosamente.")
+        
+        # Actualizar dashboard dinámicamente - TEMPORALMENTE DESHABILITADO
+        # from app.utils.actualizador_dashboard import actualizar_dashboard_sincrono
+        # actualizar_dashboard_sincrono()
+        
+        print("✅ Usuario eliminado - actualización manual con botón refresh")
+        
         if actualizar_tabla:
             await actualizar_tabla()
         page.open(ft.SnackBar(ft.Text("Usuario eliminado exitosamente."), duration=2000))  # milisegundos, opcional

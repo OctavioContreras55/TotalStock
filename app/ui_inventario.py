@@ -8,10 +8,13 @@ from app.crud_productos.search_producto import mostrar_dialogo_busqueda
 from app.utils.temas import GestorTemas
 
 async def vista_inventario(nombre_seccion, contenido, page):
-    #productos = await obtener_productos_firebase()
     contenido.content = vista_carga()  # Mostrar barra de carga mientras se carga la vista
-    await obtener_productos_firebase()  # Cargar productos desde Firebase
     page.update()  # Actualizar la página para mostrar la barra de carga
+    
+    # Pequeña pausa para asegurar que se vea la barra de carga
+    import asyncio
+    await asyncio.sleep(0.1)
+    
     if page is None:
         page = contenido.page
     

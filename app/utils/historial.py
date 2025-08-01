@@ -276,13 +276,20 @@ class GestorHistorial:
                 fecha_hoy = datetime.now().strftime("%Y-%m-%d")
                 estadisticas = {}
                 
-                for actividad in actividades:
-                    # Verificar si es del día actual
-                    fecha_actividad = actividad.get('fecha', '')
-                    if fecha_actividad == fecha_hoy:
-                        tipo = actividad.get('tipo', 'otro')
-                        estadisticas[tipo] = estadisticas.get(tipo, 0) + 1
+                print(f"📊 [DEBUG] Fecha hoy: {fecha_hoy}")
+                print(f"📊 [DEBUG] Total actividades leídas: {len(actividades)}")
                 
+                for actividad in actividades:
+                    # Verificar si es del día actual (usando startswith para fechas ISO)
+                    fecha_actividad = actividad.get('fecha', '')
+                    tipo_actividad = actividad.get('tipo', 'otro')
+                    print(f"📊 [DEBUG] Actividad: fecha={fecha_actividad}, tipo={tipo_actividad}")
+                    
+                    if fecha_actividad.startswith(fecha_hoy):
+                        estadisticas[tipo_actividad] = estadisticas.get(tipo_actividad, 0) + 1
+                        print(f"✅ [DEBUG] Contada: {tipo_actividad} = {estadisticas[tipo_actividad]}")
+                
+                print(f"📊 [DEBUG] Estadísticas finales: {estadisticas}")
                 return estadisticas
             except Exception as error:
                 print(f"Error al obtener estadísticas locales: {error}")
@@ -414,48 +421,7 @@ class RegistroActividades:
         gestor = GestorHistorial()
         return await gestor.obtener_historial_reciente(limite)
     
-    @staticmethod
-    async def obtener_estadisticas_hoy():
-        """Obtener estadísticas del día actual"""
-        if MODO_ECONOMICO:
-            # Obtener estadísticas desde archivo local
-            try:
-                gestor = GestorHistorial()
-                actividades = gestor._leer_historial_local(100)  # Leer más registros para estadísticas
-                
-                fecha_hoy = datetime.now().strftime("%Y-%m-%d")
-                estadisticas = {}
-                
-                for actividad in actividades:
-                    # Verificar si es del día actual
-                    fecha_actividad = actividad.get('fecha', '')
-                    if fecha_actividad == fecha_hoy:
-                        tipo = actividad.get('tipo', 'otro')
-                        estadisticas[tipo] = estadisticas.get(tipo, 0) + 1
-                
-                return estadisticas
-            except Exception as error:
-                print(f"Error al obtener estadísticas locales: {error}")
-                return {}
-        
-        try:
-            from google.cloud.firestore_v1.base_query import FieldFilter
-            fecha_hoy = datetime.now().strftime("%Y-%m-%d")
-            docs = db.collection('historial').where(filter=FieldFilter('fecha', '>=', fecha_hoy)).get()
-            
-            estadisticas = {}
-            for doc in docs:
-                data = doc.to_dict()
-                tipo = data.get('tipo', 'otro')
-                estadisticas[tipo] = estadisticas.get(tipo, 0) + 1
-            
-            return estadisticas
-            
-        except Exception as error:
-            print(f"Error al obtener estadísticas: {error}")
-            return {}
-    
-    @staticmethod
+    # Funciones estáticas adicionales para compatibilidad
     def obtener_productos_stock_bajo(limite=5):
         """Obtener productos con stock bajo desde Firebase"""
         try:

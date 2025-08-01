@@ -90,7 +90,8 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
     
     mensaje_estado = ft.Text("", color=tema.ERROR_COLOR, size=12)
     
-    def crear_usuario_click(e):
+    async def crear_usuario_click(e):
+        # Función síncrona que llama a la async internamente
 
         # Validar campos
         if not campo_nombre.value or not campo_contrasena.value:
@@ -118,11 +119,25 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
             gestor_historial = GestorHistorial()
             usuario_actual = SesionManager.obtener_usuario_actual()
             
-            asyncio.create_task(gestor_historial.agregar_actividad(
-                tipo="crear_usuario",
-                descripcion=f"Creó nuevo usuario '{campo_nombre.value}' (Admin: {'Sí' if campo_es_admin.value else 'No'})",
-                usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
-            ))
+            # Llamar directamente con await en lugar de page.run_task
+            try:
+                await gestor_historial.agregar_actividad(
+                    tipo="crear_usuario",
+                    descripcion=f"Creó nuevo usuario '{campo_nombre.value}' (Admin: {'Sí' if campo_es_admin.value else 'No'})",
+                    usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
+                )
+                
+                # Actualizar dashboard dinámicamente
+                from app.utils.actualizador_dashboard import actualizar_dashboard
+                try:
+                    await actualizar_dashboard()
+                    print("✅ Dashboard actualizado automáticamente")
+                except Exception as e:
+                    print(f"⚠️ Error al actualizar dashboard: {e}")
+                    # No fallar si el dashboard no se puede actualizar
+                
+            except Exception as e:
+                print(f"Error al registrar actividad: {e}")
             
             mensaje_estado.value = "Usuario creado exitosamente"
             mensaje_estado.color = tema.SUCCESS_COLOR
@@ -136,13 +151,18 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                 page.update()
                 # Actualizar la tabla si se proporciona el callback
                 if callback_actualizar_tabla:
-                    await(callback_actualizar_tabla())
+                    await callback_actualizar_tabla()
 
-            asyncio.create_task(restaurar_vista())
+            # Usar página run_task con una corrutina
+            page.run_task(restaurar_vista)
         else:
             mensaje_estado.value = f"Error: {resultado}"
             mensaje_estado.color = tema.ERROR_COLOR
             page.update()
+    
+    # Función wrapper para el botón
+    async def manejar_click_crear():
+        await crear_usuario_click(None)
     
     def cancelar_click(e):
         print("Cancelar presionado")  # Debug
@@ -195,7 +215,7 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                                                 ),
                                                 ft.ElevatedButton(
                                                     "Crear Usuario",
-                                                    on_click=crear_usuario_click,
+                                                    on_click=lambda e: page.run_task(manejar_click_crear),
                                                     style=ft.ButtonStyle(
                                                         bgcolor=tema.BUTTON_PRIMARY_BG,
                                                         color=tema.BUTTON_TEXT,

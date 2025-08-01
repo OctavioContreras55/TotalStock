@@ -8,8 +8,12 @@ from app.ui.barra_carga import vista_carga
 async def vista_usuarios(nombre_seccion, contenido, page=None):
     tema = GestorTemas.obtener_tema()
     contenido.content = vista_carga()  # Mostrar barra de carga mientras se carga la vista
-    await obtener_usuarios_firebase()  # Cargar usuarios desde Firebase
     page.update()  # Actualizar la página para mostrar la barra de carga
+    
+    # Pequeña pausa para asegurar que se vea la barra de carga
+    import asyncio
+    await asyncio.sleep(0.1)
+    
     # Si no se pasa la página, intentar obtenerla del contenido
     if page is None:
         page = contenido.page

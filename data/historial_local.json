@@ -1,0 +1,114 @@
+[
+  {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'Pepe' (Admin: No)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:51:38.869055",
+    "timestamp": "2025-08-01T15:51:38.869066",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'admin' (Admin: Sí)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:43:12.532046",
+    "timestamp": "2025-08-01T15:43:12.532057",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'admin' (ID: nsGsFfI9hnTGnNw1JTNN)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:21:20.860205",
+    "timestamp": "2025-08-01T15:21:20.860217",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'admin' (ID: Yjo9FeNIQioz7ODOKyxb)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:21:17.822056",
+    "timestamp": "2025-08-01T15:21:17.822077",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'admin' (ID: 6sL28S02T9AO8HGz5rq2)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:21:13.672972",
+    "timestamp": "2025-08-01T15:21:13.673013",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'admin' (ID: 0svRlV9vw8KqXoS4KyMS)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:15:42.712683",
+    "timestamp": "2025-08-01T15:15:42.712697",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'admin' (ID: 1BGMkqMqIv09ovx7m7Ei)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:15:39.973788",
+    "timestamp": "2025-08-01T15:15:39.973809",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'admin' (ID: UzpL6jL4OwA1ISHSGkqp)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:15:37.138628",
+    "timestamp": "2025-08-01T15:15:37.138648",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_producto",
+    "descripcion": "Eliminó producto 'prueba' (ID: HonV2OvFkl3DmjL86r1E)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:14:28.751653",
+    "timestamp": "2025-08-01T15:14:28.751680",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_producto",
+    "descripcion": "Creó producto 'prueba' (Modelo: Prueba1)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:14:07.545438",
+    "timestamp": "2025-08-01T15:14:07.545446",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_producto",
+    "descripcion": "Eliminó producto 'prueba' (ID: XEc5h6IZjQdIGNGekBeS)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:02:48.817460",
+    "timestamp": "2025-08-01T15:02:48.817467",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_producto",
+    "descripcion": "Creó producto 'prueba' (Modelo: prueba1)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:02:34.433659",
+    "timestamp": "2025-08-01T15:02:34.433673",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'usuario' (ID: U3u4r70s)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:00:45.587140",
+    "timestamp": "2025-08-01T15:00:45.587162",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 't43t43' (ID: vDAUsk3JNp5EgcdtQSIO)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T15:00:39.054837",
+    "timestamp": "2025-08-01T15:00:39.054854",
+    "detalles": {}
+  }
+]

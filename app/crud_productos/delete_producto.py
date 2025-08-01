@@ -37,6 +37,12 @@ def on_eliminar_producto_click(page, producto_id, actualizar_tabla):
                 usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
             )
             
+            # Actualizar dashboard dinámicamente - TEMPORALMENTE DESHABILITADO  
+            # from app.utils.actualizador_dashboard import actualizar_dashboard_sincrono
+            # actualizar_dashboard_sincrono()
+            
+            print("✅ Producto eliminado - actualización manual con botón refresh")
+            
             page.open(ft.SnackBar(
                 content=ft.Text("Producto eliminado correctamente.", color=tema.TEXT_COLOR),
                 bgcolor=tema.SUCCESS_COLOR
