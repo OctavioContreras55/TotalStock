@@ -1,5 +1,21 @@
 [
   {
+    "tipo": "crear_producto",
+    "descripcion": "Creó producto 'Prueba' (Modelo: Prueba4)",
+    "usuario": "prueba3",
+    "fecha": "2025-08-01T21:10:30.967763",
+    "timestamp": "2025-08-01T21:10:30.968315",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario '34t3t' (ID: gMOombQ2ApPic5PO2jdG)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-01T20:45:04.882873",
+    "timestamp": "2025-08-01T20:45:04.882885",
+    "detalles": {}
+  },
+  {
     "tipo": "crear_usuario",
     "descripcion": "Creó nuevo usuario 'Pepe' (Admin: No)",
     "usuario": "Octavio",

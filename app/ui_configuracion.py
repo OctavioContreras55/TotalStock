@@ -203,6 +203,47 @@ def vista_configuracion(nombre_seccion, contenido, page):
                     controls=[
                         ft.Row(
                             controls=[
+                                ft.Icon(ft.Icons.ANALYTICS, color=tema.PRIMARY_COLOR, size=24),
+                                ft.Text("Monitor Firebase", 
+                                       size=20, 
+                                       color=tema.TEXT_COLOR,
+                                       weight=ft.FontWeight.BOLD),
+                            ],
+                            spacing=10
+                        ),
+                        ft.Container(height=10),
+                        ft.Text("📊 Monitoreo en tiempo real del uso de Firebase", 
+                               color=tema.TEXT_SECONDARY),
+                        ft.Text("🔍 Revisa la consola para ver las consultas en tiempo real", 
+                               color=tema.TEXT_SECONDARY),
+                        ft.Container(height=10),
+                        ft.ElevatedButton(
+                            content=ft.Row([
+                                ft.Icon(ft.Icons.ASSESSMENT, color=tema.ICON_BTN_COLOR),
+                                ft.Text("Ver Reporte Detallado", color=tema.BUTTON_TEXT)
+                            ]),
+                            style=ft.ButtonStyle(
+                                bgcolor=tema.BUTTON_BG,
+                                color=tema.BUTTON_TEXT,
+                                shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                            ),
+                            on_click=lambda e: mostrar_reporte_firebase()
+                        )
+                    ]
+                ),
+                bgcolor=tema.CARD_COLOR,
+                padding=30,
+                border_radius=tema.BORDER_RADIUS,
+                width=600,
+                margin=ft.margin.only(bottom=20)
+            ),
+            
+            # Estado de configuración
+            ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
                                 ft.Icon(ft.Icons.SAVE, color=tema.PRIMARY_COLOR, size=24),
                                 ft.Text("Estado de Configuración", 
                                        size=20, 
@@ -278,6 +319,21 @@ def vista_configuracion(nombre_seccion, contenido, page):
         spacing=0,
         scroll=True
     )
+    
+    def mostrar_reporte_firebase():
+        """Muestra el reporte detallado de Firebase en la consola"""
+        from app.utils.monitor_firebase import monitor_firebase
+        monitor_firebase.mostrar_reporte_detallado()
+        
+        # Mostrar también un snackbar para confirmar
+        snack = ft.SnackBar(
+            content=ft.Text("📊 Reporte mostrado en consola", color="#FFFFFF"),
+            bgcolor=tema.SUCCESS_COLOR,
+            duration=2000
+        )
+        page.overlay.append(snack)
+        snack.open = True
+        page.update()
     
     def mostrar_dialogo_reset():
         """Muestra un diálogo de confirmación para restablecer configuración"""

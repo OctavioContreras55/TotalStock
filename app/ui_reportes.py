@@ -469,14 +469,14 @@ async def vista_reportes(nombre_seccion, contenido, page):
 
     # Contenedor para mostrar el reporte
     contenedor_reporte = ft.Container(
-        content=ft.Text("Selecciona un tipo de reporte y haz clic en 'Generar Reporte'",
-                       color=tema.SECONDARY_TEXT_COLOR,
-                       italic=True),
-        alignment=ft.alignment.center,
-        height=400,
-        bgcolor=tema.CARD_COLOR,
-        border_radius=tema.BORDER_RADIUS,
-        padding=20
+            content=ft.Text("Selecciona un tipo de reporte y haz clic en 'Generar Reporte'",
+                           color=tema.SECONDARY_TEXT_COLOR,
+                           italic=True),
+            alignment=ft.alignment.center,
+            height=400,
+            bgcolor=tema.CARD_COLOR,
+            border_radius=tema.BORDER_RADIUS,
+            padding=20,
     )
 
     async def generar_reporte(e):
@@ -889,7 +889,8 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 )
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10
+            spacing=10,
+            scroll=ft.ScrollMode.AUTO,
             ),
             padding=ft.padding.only(bottom=40),
             bgcolor=tema.BG_COLOR

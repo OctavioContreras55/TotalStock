@@ -8,34 +8,67 @@ from app.crud_productos.search_producto import mostrar_dialogo_busqueda
 from app.utils.temas import GestorTemas
 
 async def vista_inventario(nombre_seccion, contenido, page):
-    contenido.content = vista_carga()  # Mostrar barra de carga mientras se carga la vista
-    page.update()  # Actualizar la página para mostrar la barra de carga
+    from app.utils.monitor_firebase import monitor_firebase
+    from app.utils.cache_firebase import cache_firebase
     
-    # Pequeña pausa para asegurar que se vea la barra de carga
-    import asyncio
-    await asyncio.sleep(0.1)
+    print("🏪 ENTRANDO A INVENTARIO - Optimizando carga...")
     
     if page is None:
         page = contenido.page
     
     productos_actuales = []
 
-    # Obtener productos iniciales
-    try:
-        productos_iniciales = await obtener_productos_firebase()
-        productos_actuales = productos_iniciales  # Inicializar productos actuales
-    except Exception as e:
-        print(f"Error al obtener productos iniciales: {e}")
-        productos_iniciales = []
-        productos_actuales = []
+    # CARGA INMEDIATA desde cache si está disponible
+    productos_cache = cache_firebase.obtener_productos_inmediato()
+    if productos_cache:
+        # Mostrar datos inmediatamente sin loading screen
+        print("⚡ CARGA INSTANTÁNEA desde cache - Saltando loading screen")
+        productos_actuales = productos_cache
+        # Continuar directamente sin mostrar barra de carga
+    else:
+        # Solo mostrar loading si no hay cache
+        print("📡 No hay cache - Mostrando loading y consultando Firebase")
+        contenido.content = vista_carga("Cargando inventario...", 18)
+        page.update()
+        
+        # Obtener productos iniciales desde Firebase
+        try:
+            productos_iniciales = await obtener_productos_firebase()
+            productos_actuales = productos_iniciales
+            print(f"📊 Vista inventario cargada con {len(productos_actuales)} productos")
+        except Exception as e:
+            print(f"Error al obtener productos iniciales: {e}")
+            productos_iniciales = []
+            productos_actuales = []
 
-    async def actualizar_tabla_productos():
+    async def actualizar_tabla_productos(forzar_refresh=False):
+        """
+        Actualizar tabla con carga optimizada.
+        """
         nonlocal productos_actuales
         try:
-            print("Actualizando tabla productos")
-            contenido.content = vista_carga()
-            page.update()
-            productos_actuales = await obtener_productos_firebase()  # Aquí deberías llamar a la función que obtiene los productos de Firebase
+            if forzar_refresh:
+                print("🔄 ACTUALIZANDO TABLA - Refresh forzado (post-operación)")
+                contenido.content = vista_carga("Actualizando datos...", 16)
+                page.update()
+                
+                # Forzar consulta a Firebase (ej: después de crear/editar)
+                productos_actuales = await cache_firebase.obtener_productos(forzar_refresh=True)
+                print(f"   → Refresh forzado completado: {len(productos_actuales)} productos")
+            else:
+                # Carga optimizada normal
+                productos_cache_rapido = cache_firebase.obtener_productos_inmediato()
+                if productos_cache_rapido:
+                    print("⚡ ACTUALIZACIÓN INMEDIATA desde cache")
+                    productos_actuales = productos_cache_rapido
+                else:
+                    print("📡 Cache expirado - Consultando Firebase")
+                    contenido.content = vista_carga("Actualizando inventario...", 16)
+                    page.update()
+                    productos_actuales = await cache_firebase.obtener_productos()
+                productos_actuales = await obtener_productos_firebase()
+                print(f"   → Actualización normal completada: {len(productos_actuales)} productos")
+                
             contenido.content = construir_vista_inventario(productos_actuales)
             page.update()
         except Exception as e:

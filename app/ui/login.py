@@ -2,6 +2,7 @@ import flet as ft
 from app.utils.temas import GestorTemas
 from conexiones.firebase import db
 from app.funciones.sesiones import SesionManager
+from app.ui.barra_carga import progress_ring_pequeno
 import asyncio
 
 def login_view(page: ft.Page, on_login_success): #Función para la vista del login. Argumentos: page = pagina de Flet, on_login_success = función a ejecutar al iniciar sesión correctamente
@@ -66,6 +67,37 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         contrasena_input.border_color = tema.INPUT_BORDER
         page.update()
     
+    # Contenedor para mostrar el progress ring durante validación con animación
+    contenedor_progreso = ft.AnimatedSwitcher(
+        content=ft.Container(height=0),  # Inicialmente invisible
+        transition=ft.AnimatedSwitcherTransition.SCALE,
+        duration=300,
+        reverse_duration=300,
+        switch_in_curve=ft.AnimationCurve.EASE_OUT,
+        switch_out_curve=ft.AnimationCurve.EASE_IN
+    )
+
+    async def precargar_datos_usuario():
+        """
+        Precarga datos en background después del login para optimizar navegación
+        """
+        try:
+            print("🚀 PRECARGA: Iniciando carga de datos en background...")
+            from app.utils.cache_firebase import cache_firebase
+            
+            # Precargar productos sin mostrar loading (background)
+            productos = await cache_firebase.obtener_productos(forzar_refresh=False, mostrar_loading=False)
+            print(f"✅ PRECARGA: {len(productos)} productos cargados en cache")
+            
+            # Precargar usuarios si es necesario
+            usuarios = await cache_firebase.obtener_usuarios(forzar_refresh=False)
+            print(f"✅ PRECARGA: {len(usuarios)} usuarios cargados en cache")
+            
+            print("🎯 PRECARGA COMPLETA: Navegación será instantánea")
+            
+        except Exception as e:
+            print(f"⚠️ Error en precarga (no crítico): {e}")
+
     #Función para validar datos de inicio de sesión
     async def validar_login(e):
         usuario = usuario_input.value.strip()  # Eliminar espacios
@@ -91,6 +123,23 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             page.update()
             return
         
+        # Mostrar progress ring mientras se valida con animación
+        print("🔄 MOSTRANDO PROGRESS RING CON ANIMACIÓN...")
+        
+        # Mostrar progress ring con animación suave
+        contenedor_progreso.content = ft.Container(
+            content=progress_ring_pequeno("Verificando credenciales...", 12),
+            height=60,
+            width=300,
+            alignment=ft.alignment.center
+        )
+        boton_elevated.disabled = True  # Deshabilitar botón durante validación
+        page.update()
+        print("✅ Progress ring animado mostrado y botón deshabilitado")
+        
+        # Pequeño delay para asegurar que la animación se complete
+        await asyncio.sleep(0.4)
+        
         try:
             # Realizar la consulta a la base de datos para verificar las credenciales del usuario  
             from google.cloud.firestore_v1.base_query import FieldFilter
@@ -108,9 +157,31 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                 SesionManager.establecer_usuario(usuario_data)
                 
                 print(f"Login exitoso para el usuario: {usuario}")
+                # Ocultar progress ring con animación
+                print("🔄 OCULTANDO PROGRESS RING CON ANIMACIÓN...")
+                contenedor_progreso.content = ft.Container(height=0)  # Volver a estado invisible
+                boton_elevated.disabled = False
+                page.update()
+                print("✅ Progress ring ocultado con animación y botón habilitado")
+                
+                # Esperar que la animación termine antes de continuar
+                await asyncio.sleep(0.3)
+                
+                # PRECARGA DE DATOS EN BACKGROUND para optimizar navegación
+                asyncio.create_task(precargar_datos_usuario())
+                
                 await on_login_success()
             else:
                 # Credenciales incorrectas - animar ambos campos
+                # Ocultar progress ring con animación primero
+                print("🔄 OCULTANDO PROGRESS RING (credenciales incorrectas)...")
+                contenedor_progreso.content = ft.Container(height=0)  # Volver a estado invisible
+                boton_elevated.disabled = False
+                page.update()
+                
+                # Esperar animación antes de mostrar errores
+                await asyncio.sleep(0.3)
+                
                 await animar_error(usuario_input)
                 await animar_error(contrasena_input)
                 page.open(ft.SnackBar(
@@ -121,6 +192,15 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                 
         except Exception as error:
             print(f"Error al verificar las credenciales: {error}")
+            # Ocultar progress ring con animación en caso de error
+            print("🔄 OCULTANDO PROGRESS RING (error de conexión)...")
+            contenedor_progreso.content = ft.Container(height=0)  # Volver a estado invisible
+            boton_elevated.disabled = False
+            page.update()
+            
+            # Esperar animación antes de mostrar error
+            await asyncio.sleep(0.3)
+            
             page.open(ft.SnackBar(
                 content=ft.Text("Error de conexión. Intente nuevamente.", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
@@ -128,16 +208,18 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             page.update()
             
     #Boton de inicio de sesión - Responsivo
+    boton_elevated = ft.ElevatedButton(
+        text="Iniciar sesión",
+        on_click=validar_login,
+        style=ft.ButtonStyle(
+            bgcolor=tema.BUTTON_PRIMARY_BG,
+            color=tema.BUTTON_TEXT,
+            shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+        )
+    )
+    
     boton_login = ft.Container(
-      content=ft.ElevatedButton(
-          text="Iniciar sesión",
-          on_click=validar_login,
-          style=ft.ButtonStyle(
-              bgcolor=tema.BUTTON_PRIMARY_BG,
-              color=tema.BUTTON_TEXT,
-              shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-          )
-      ),
+      content=boton_elevated,
       padding=ft.padding.only(top=20, bottom=10),
       width=ancho_boton,  # Ancho responsivo
       height=80,
@@ -159,6 +241,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                 ),
                 usuario_input,
                 contrasena_input,
+                contenedor_progreso,  # Agregar el contenedor de progreso aquí
                 boton_login
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,

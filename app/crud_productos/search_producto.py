@@ -63,25 +63,32 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
 async def buscar_en_firebase(page, busqueda, actualizar_tabla=None, dialogo_busqueda=None):
     tema = GestorTemas.obtener_tema()
     try:
-        from google.cloud.firestore_v1.base_query import FieldFilter
-        referencia_productos = db.collection('productos')
-        query = referencia_productos.where(filter=FieldFilter('modelo', '==', busqueda))
-        resultados = query.stream()
-
+        # OPTIMIZACIÓN: Buscar primero en cache local antes que en Firebase
+        from app.utils.cache_firebase import cache_firebase
+        from app.utils.monitor_firebase import monitor_firebase
+        
+        print(f"🔍 BÚSQUEDA INICIADA: '{busqueda}' - usando cache local (0 consultas Firebase)")
+        todos_productos = await cache_firebase.obtener_productos()
+        
+        # Filtrar localmente (sin consulta a Firebase)
         productos_encontrados = []
-        for producto in resultados:
-            data = producto.to_dict() #to.dict() para convertir el documento a diccionario
-            data['firebase_id'] = producto.id  # Guardar el ID real de Firebase
-            productos_encontrados.append(data)
+        busqueda_lower = busqueda.lower().strip()
+        
+        for producto in todos_productos:
+            modelo = producto.get('modelo', '').lower()
+            if busqueda_lower in modelo:  # Búsqueda más flexible (contiene)
+                productos_encontrados.append(producto)
+
+        print(f"🎯 BÚSQUEDA COMPLETADA: {len(productos_encontrados)} productos encontrados (filtrado local)")
 
         if productos_encontrados:
-          page.close(dialogo_busqueda)  # Cerrar el dialog
-          page.open(ft.SnackBar(
-              content=ft.Text(f"Se encontraron {len(productos_encontrados)} productos", color=tema.TEXT_COLOR),
-              bgcolor=tema.SUCCESS_COLOR
-          ))
-          if actualizar_tabla:
-              await actualizar_tabla(productos_encontrados)
+            page.close(dialogo_busqueda)  # Cerrar el dialog
+            page.open(ft.SnackBar(
+                content=ft.Text(f"Se encontraron {len(productos_encontrados)} productos", color=tema.TEXT_COLOR),
+                bgcolor=tema.SUCCESS_COLOR
+            ))
+            if actualizar_tabla:
+                await actualizar_tabla(productos_encontrados)
         else:
             page.open(ft.SnackBar(
                 content=ft.Text("No se encontraron productos con ese modelo.", color=tema.TEXT_COLOR),

@@ -116,7 +116,7 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
                 bgcolor=tema.SUCCESS_COLOR
             ))
             if callback_actualizar_tabla:
-                await callback_actualizar_tabla()
+                await callback_actualizar_tabla(forzar_refresh=True)  # Forzar refresh después de crear
         except Exception as e:
             page.open(ft.SnackBar(
                 content=ft.Text(f"Error al crear producto: {str(e)}", color=tema.TEXT_COLOR),
@@ -157,6 +157,8 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
     page.update()
 
 async def crear_producto_firebase(modelo,tipo, nombre, precio, cantidad):
+    from app.utils.monitor_firebase import monitor_firebase
+    
     # Crear un nuevo producto en la base de datos
     timestamp, producto_ref = db.collection("productos").add({
       "id": modelo,
@@ -166,23 +168,26 @@ async def crear_producto_firebase(modelo,tipo, nombre, precio, cantidad):
       "precio": precio,
       "cantidad": cantidad
     })
+    
+    # Registrar la escritura en el monitor
+    monitor_firebase.registrar_consulta(
+        tipo='escritura',
+        coleccion='productos',
+        descripcion=f'Crear producto: {nombre} (modelo: {modelo})',
+        cantidad_docs=1
+    )
+    
+    # IMPORTANTE: Invalidar cache para forzar refresh en próxima consulta
+    from app.utils.cache_firebase import cache_firebase
+    cache_firebase.invalidar_cache_productos()
+    print("🔄 Cache invalidado después de crear producto")
+    
     return producto_ref.id
 
 async def obtener_productos_firebase():
-    try:
-        referencia_productos = db.collection('productos')
-        productos = referencia_productos.stream()
-        lista_productos = []
-        for producto in productos:
-            data = producto.to_dict()
-            data['firebase_id'] = producto.id
-            data['nombre'] = data.get('nombre', 'Sin nombre')
-            data['precio'] = data.get('precio', 0)
-            data['modelo'] = data.get('modelo', 'Sin modelo')
-            data['tipo'] = data.get('tipo', 'Sin tipo')
-            data['cantidad'] = data.get('cantidad', 0)
-            lista_productos.append(data)
-        return lista_productos
-    except Exception as e:
-        print(f"Error al obtener productos: {str(e)}")
-        return []
+    """
+    Obtiene productos usando cache inteligente para minimizar consultas a Firebase.
+    Solo consulta Firebase si es necesario (cache expirado o primera vez).
+    """
+    from app.utils.cache_firebase import cache_firebase
+    return await cache_firebase.obtener_productos()
