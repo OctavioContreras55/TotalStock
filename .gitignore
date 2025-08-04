@@ -1,1 +1,55 @@
+# Credenciales sensibles
 conexiones/credenciales_firebase.json
+
+# Carpetas de build y distribución
+build/
+dist/
+*.spec
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Archivos temporales
+*.tmp
+*.temp
+temp_*
+~$*
+
+# Archivos de configuración local
+data/config_usuario_*.json
+data/pendientes_*.json
+
+# Archivos de exportación
+exports/
+*.xlsx
+*.xls
+*.json
+*.pdf
+
+# Logs
+*.log
+logs/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
+
+# Archivos de testing
+tests/~$*
