@@ -27,6 +27,10 @@ def on_eliminar_producto_click(page, producto_id, actualizar_tabla):
             # Eliminar el producto
             doc_ref.delete()
             
+            # Invalidar cache para forzar actualización inmediata
+            from app.utils.cache_firebase import cache_firebase
+            cache_firebase.invalidar_cache_productos()
+            
             # Registrar actividad en el historial
             gestor_historial = GestorHistorial()
             usuario_actual = SesionManager.obtener_usuario_actual()

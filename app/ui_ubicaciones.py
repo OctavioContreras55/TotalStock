@@ -3,6 +3,8 @@ from app.utils.temas import GestorTemas
 from app.tablas.ui_tabla_ubicaciones import mostrar_tabla_ubicaciones
 from app.crud_productos.search_producto import buscar_en_firebase
 from app.funciones.carga_archivos import on_click_importar_archivo_ubicaciones
+from app.funciones.exportar_productos import exportar_ubicaciones
+from app.crud_ubicaciones.create_ubicacion import crear_ubicacion_dialog, obtener_ubicaciones_firebase
 from app.ui.barra_carga import vista_carga
 import asyncio
 
@@ -27,48 +29,7 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
 
     async def cargar_ubicaciones_firebase():
         """Cargar ubicaciones desde Firebase"""
-        try:
-            from conexiones.firebase import db
-            ubicaciones_ref = db.collection('ubicaciones')
-            ubicaciones = ubicaciones_ref.stream()
-            
-            ubicaciones_data = []
-            for ubicacion in ubicaciones:
-                data = ubicacion.to_dict()
-                data['firebase_id'] = ubicacion.id
-                ubicaciones_data.append(data)
-            
-            return ubicaciones_data
-            
-        except Exception as e:
-            print(f"Error al cargar ubicaciones: {e}")
-            # Datos de ejemplo para desarrollo
-            return [
-                {
-                    'firebase_id': '1',
-                    'modelo': 'LAP001',
-                    'nombre': 'Laptop Dell',
-                    'almacen': 'Almacén Principal',
-                    'ubicacion': 'Estante A-3, Nivel 2',
-                    'cantidad': 15
-                },
-                {
-                    'firebase_id': '2',
-                    'modelo': 'MOU002',
-                    'nombre': 'Mouse Logitech',
-                    'almacen': 'Almacén Secundario',
-                    'ubicacion': 'Cajón B-1',
-                    'cantidad': 50
-                },
-                {
-                    'firebase_id': '3',
-                    'modelo': 'TEC003',
-                    'nombre': 'Teclado Mecánico',
-                    'almacen': 'Almacén de Repuestos',
-                    'ubicacion': 'Estante C-2, Nivel 1',
-                    'cantidad': 8
-                }
-            ]
+        return await obtener_ubicaciones_firebase()
 
     async def actualizar_tabla_ubicaciones():
         """Actualiza la tabla de ubicaciones"""
@@ -135,16 +96,12 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
             print(f"Error en búsqueda de ubicaciones: {e}")
 
     async def vista_crear_ubicacion_llamada(e):
-        """Placeholder para crear nueva ubicación"""
-        try:
-            print("Vista de crear ubicación llamada")
-            # TODO: Implementar vista de crear ubicación
-            page.open(ft.SnackBar(
-                content=ft.Text("Función 'Crear Ubicación' pendiente de implementar", color=tema.TEXT_COLOR),
-                bgcolor=tema.WARNING_COLOR
-            ))
-        except Exception as error:
-            print(f"Error al abrir ventana de crear ubicación: {error}")
+        """Mostrar diálogo para crear nueva ubicación"""
+        await crear_ubicacion_dialog(page, actualizar_tabla_ubicaciones)
+
+    async def exportar_ubicaciones_llamada(e):
+        """Exportar ubicaciones"""
+        await exportar_ubicaciones(ubicaciones_actuales, page)
 
     def construir_vista_ubicaciones(ubicaciones):
         """Construye la vista completa de ubicaciones"""
@@ -190,7 +147,7 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
                             ft.IconButton(
                                 ft.Icons.REFRESH,
                                 icon_color=tema.SECONDARY_TEXT_COLOR,
-                                on_click=lambda e: asyncio.create_task(actualizar_tabla_ubicaciones()),
+                                on_click=lambda e: page.run_task(actualizar_tabla_ubicaciones),
                                 tooltip="Actualizar lista"
                             )
                         ]),
@@ -239,10 +196,7 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
                                     color=tema.BUTTON_TEXT,
                                     shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                 ),
-                                on_click=lambda e: page.open(ft.SnackBar(
-                                    content=ft.Text("Función 'Exportar' pendiente", color=tema.TEXT_COLOR),
-                                    bgcolor=tema.WARNING_COLOR
-                                )),
+                                on_click=exportar_ubicaciones_llamada,
                             ),
                         ], spacing=10),
                         width=ancho_boton * 3.2,

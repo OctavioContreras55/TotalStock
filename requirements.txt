@@ -4,6 +4,7 @@ firebase-admin>=6.2.0
 
 # Para manipulación de archivos Excel
 polars>=0.20.0
+pandas>=2.0.0
 openpyxl>=3.1.0
 
 # Utilidades adicionales (si se necesitan)

@@ -5,6 +5,7 @@ import asyncio
 from app.funciones.carga_archivos import on_click_importar_archivo
 from app.crud_productos.create_producto import obtener_productos_firebase, vista_crear_producto
 from app.crud_productos.search_producto import mostrar_dialogo_busqueda
+from app.funciones.exportar_productos import mostrar_dialogo_exportar
 from app.utils.temas import GestorTemas
 
 async def vista_inventario(nombre_seccion, contenido, page):
@@ -66,7 +67,6 @@ async def vista_inventario(nombre_seccion, contenido, page):
                     contenido.content = vista_carga("Actualizando inventario...", 16)
                     page.update()
                     productos_actuales = await cache_firebase.obtener_productos()
-                productos_actuales = await obtener_productos_firebase()
                 print(f"   → Actualización normal completada: {len(productos_actuales)} productos")
                 
             contenido.content = construir_vista_inventario(productos_actuales)
@@ -191,6 +191,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                                 color=tema.BUTTON_TEXT,
                                                 shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                             ),
+                                            on_click=lambda e: mostrar_dialogo_exportar(productos_actuales, page)
                                         ),
                                         width=ancho_boton,  # Ancho responsivo
                                         padding=ft.padding.symmetric(horizontal=5, vertical=20)

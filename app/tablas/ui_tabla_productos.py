@@ -17,11 +17,16 @@ def crear_boton_eliminar(producto_id, page, actualizar_tabla_productos):
     )
     
 def crear_boton_editar(producto_id, page, actualizar_tabla_productos):
+    from app.crud_productos.edit_producto import on_click_editar_producto
     tema = GestorTemas.obtener_tema()
+    
+    async def editar_handler(e):
+        await on_click_editar_producto(page, producto_id, actualizar_tabla_productos)
+    
     return ft.IconButton(
         ft.Icons.EDIT,
         icon_color=tema.PRIMARY_COLOR,
-        on_click=lambda e: asyncio.create_task(on_click_editar_producto(page, producto_id, actualizar_tabla_productos)),
+        on_click=editar_handler,
         tooltip="Editar Producto",
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)

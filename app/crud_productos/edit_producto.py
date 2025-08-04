@@ -122,6 +122,10 @@ async def on_click_editar_producto(page, producto_id, actualizar_tabla):
                 'cantidad': cantidad
             })
             
+            # Invalidar cache para forzar actualización inmediata
+            from app.utils.cache_firebase import cache_firebase
+            cache_firebase.invalidar_cache_productos()
+            
             # Registrar actividad en el historial
             gestor_historial = GestorHistorial()
             usuario_actual = SesionManager.obtener_usuario_actual()

@@ -60,31 +60,84 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
     )
 
     def validar_campos():
-        # Verificar que los campos básicos no estén vacíos
-        if not all([
-            campo_modelo.value and campo_modelo.value.strip(),
-            campo_tipo.value and campo_tipo.value.strip(),
-            campo_nombre.value and campo_nombre.value.strip(),
-            campo_precio.value and campo_precio.value.strip(),
-            campo_cantidad.value and campo_cantidad.value.strip(),
-        ]):
-            return False
+        """Validar todos los campos requeridos"""
+        print("🔍 DEBUG: Validando campos...")
+        
+        # Debug: mostrar valores de campos
+        print(f"Modelo: '{campo_modelo.value}'")
+        print(f"Tipo: '{campo_tipo.value}'")
+        print(f"Nombre: '{campo_nombre.value}'")
+        print(f"Precio: '{campo_precio.value}'")
+        print(f"Cantidad: '{campo_cantidad.value}'")
+        
+        # Verificar que los campos básicos no estén vacíos o None
+        campos_requeridos = [
+            (campo_modelo.value, "Modelo"),
+            (campo_tipo.value, "Tipo"),
+            (campo_nombre.value, "Nombre"),
+            (campo_precio.value, "Precio"),
+            (campo_cantidad.value, "Cantidad")
+        ]
+        
+        for valor, nombre_campo in campos_requeridos:
+            if not valor or not str(valor).strip():
+                print(f"❌ Campo {nombre_campo} está vacío")
+                return False, f"El campo {nombre_campo} es requerido"
         
         # Verificar que precio y cantidad sean números válidos
         try:
-            float(campo_precio.value.strip())
-            int(campo_cantidad.value.strip())
-            return True
-        except ValueError:
-            return False
+            precio_valor = float(campo_precio.value.strip())
+            if precio_valor < 0:
+                return False, "El precio debe ser mayor o igual a 0"
+        except (ValueError, AttributeError):
+            return False, "El precio debe ser un número válido"
+            
+        try:
+            cantidad_valor = int(campo_cantidad.value.strip())
+            if cantidad_valor < 0:
+                return False, "La cantidad debe ser mayor o igual a 0"
+        except (ValueError, AttributeError):
+            return False, "La cantidad debe ser un número entero válido"
+        
+        print("✅ Validación exitosa")
+        return True, "OK"
+    
+    # Contenedor para mostrar indicador de carga
+    contenedor_progreso = ft.Container(
+        content=ft.Row([
+            ft.ProgressRing(width=16, height=16, stroke_width=2, color=tema.PRIMARY_COLOR),
+            ft.Text("Creando producto...", color=tema.TEXT_COLOR, size=14)
+        ], alignment=ft.MainAxisAlignment.CENTER),
+        visible=False,
+        height=0
+    )
+    
+    # Definir el botón para poder referenciarlo
+    boton_crear_producto = ft.ElevatedButton(
+        text="Crear Producto", 
+        on_click=None,  # Se asignará después
+        style=ft.ButtonStyle(
+            bgcolor=tema.BUTTON_PRIMARY_BG,
+            color=tema.BUTTON_TEXT,
+            shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+        )
+    )
 
     async def crear_producto(e):
-        if not validar_campos():
+        # Validar campos
+        es_valido, mensaje = validar_campos()
+        if not es_valido:
             page.open(ft.SnackBar(
-                content=ft.Text("Por favor, complete todos los campos correctamente.", color=tema.TEXT_COLOR),
+                content=ft.Text(mensaje, color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
             return
+        
+        # Mostrar indicador de progreso
+        contenedor_progreso.visible = True
+        contenedor_progreso.height = 30
+        boton_crear_producto.disabled = True
+        page.update()
 
         modelo = campo_modelo.value.strip()
         tipo = campo_tipo.value.strip()
@@ -122,6 +175,15 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
                 content=ft.Text(f"Error al crear producto: {str(e)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
+        finally:
+            # Ocultar indicador de progreso
+            contenedor_progreso.visible = False
+            contenedor_progreso.height = 0
+            boton_crear_producto.disabled = False
+            page.update()
+
+    # Asignar la función al botón
+    boton_crear_producto.on_click = crear_producto
 
     dialogo_crear_producto = ft.AlertDialog(
         title=ft.Text("Crear Producto", color=tema.TEXT_COLOR),
@@ -133,15 +195,8 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
                 campo_nombre,
                 campo_precio,
                 campo_cantidad,
-                ft.ElevatedButton(
-                    text="Crear Producto", 
-                    on_click=crear_producto,
-                    style=ft.ButtonStyle(
-                        bgcolor=tema.BUTTON_PRIMARY_BG,
-                        color=tema.BUTTON_TEXT,
-                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-                    )
-                )
+                contenedor_progreso,
+                boton_crear_producto
             ]),
             width=ancho_dialog,   # Ancho responsivo
             height=alto_dialog,   # Alto responsivo

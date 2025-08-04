@@ -172,43 +172,43 @@ async def vista_reportes(nombre_seccion, contenido, page):
         ]
 
     async def generar_reporte_productos():
-        """Generar reporte completo de productos"""
-        return [
-            {
-                "modelo": "LAP001",
-                "nombre": "Laptop Dell Inspiron",
-                "categoria": "Equipos de Cómputo",
-                "stock_actual": 23,
-                "stock_minimo": 5,
-                "stock_maximo": 50,
-                "ubicaciones": [
-                    {"almacen": "Almacén Principal", "ubicacion": "Estante A-3", "cantidad": 10},
-                    {"almacen": "Almacén Secundario", "ubicacion": "Estante B-2", "cantidad": 13}
-                ],
-                "precio_unitario": 15000.00,
-                "valor_total": 345000.00,
-                "fecha_ingreso": "2024-01-10 09:00:00",
-                "usuario_registro": "Admin",
-                "estado": "Activo"
-            },
-            {
-                "modelo": "MOU002",
-                "nombre": "Mouse Logitech MX",
-                "categoria": "Periféricos",
-                "stock_actual": 75,
-                "stock_minimo": 10,
-                "stock_maximo": 100,
-                "ubicaciones": [
-                    {"almacen": "Almacén Secundario", "ubicacion": "Cajón B-1", "cantidad": 50},
-                    {"almacen": "Almacén Principal", "ubicacion": "Cajón A-5", "cantidad": 25}
-                ],
-                "precio_unitario": 850.00,
-                "valor_total": 63750.00,
-                "fecha_ingreso": "2024-01-12 11:30:00",
-                "usuario_registro": "Operador1",
-                "estado": "Activo"
-            }
-        ]
+        """Generar reporte completo de productos desde Firebase"""
+        try:
+            from app.crud_productos.create_producto import obtener_productos_firebase
+            productos_firebase = await obtener_productos_firebase()
+            
+            reporte_productos = []
+            for producto in productos_firebase:
+                reporte_productos.append({
+                    "modelo": producto.get("modelo", "N/A"),
+                    "nombre": producto.get("nombre", "N/A"),
+                    "categoria": producto.get("categoria", "Sin categoría"),
+                    "stock_actual": producto.get("cantidad", 0),
+                    "stock_minimo": producto.get("stock_min", 0),
+                    "precio_unitario": producto.get("precio", 0.0),
+                    "valor_total": producto.get("cantidad", 0) * producto.get("precio", 0.0),
+                    "fecha_ingreso": producto.get("fecha_registro", "N/A"),
+                    "estado": producto.get("estado", "Activo")
+                })
+            
+            return reporte_productos
+            
+        except Exception as e:
+            print(f"Error al generar reporte de productos: {e}")
+            # Datos de ejemplo como fallback
+            return [
+                {
+                    "modelo": "LAP001",
+                    "nombre": "Laptop Dell Inspiron",
+                    "categoria": "Equipos de Cómputo",
+                    "stock_actual": 23,
+                    "stock_minimo": 5,
+                    "precio_unitario": 15000.00,
+                    "valor_total": 345000.00,
+                    "fecha_ingreso": "2024-01-10 09:00:00",
+                    "estado": "Activo"
+                }
+            ]
 
     async def generar_reporte_altas():
         """Generar reporte de productos dados de alta"""
@@ -305,37 +305,62 @@ async def vista_reportes(nombre_seccion, contenido, page):
         ]
 
     async def generar_reporte_stock_critico():
-        """Generar reporte de productos con stock crítico"""
-        return [
-            {
-                "modelo": "RAM001",
-                "nombre": "Memoria RAM DDR4 8GB",
-                "categoria": "Componentes",
-                "stock_actual": 2,
-                "stock_minimo": 10,
-                "stock_maximo": 50,
-                "deficit": 8,
-                "dias_sin_stock": 3,
-                "ultima_salida": "2024-01-14 16:20:00",
-                "ubicacion": "Almacén Principal → Estante B-5",
-                "prioridad": "CRÍTICA",
-                "accion_sugerida": "Compra urgente requerida"
-            },
-            {
-                "modelo": "HDD001",
-                "nombre": "Disco Duro 1TB SATA",
-                "categoria": "Almacenamiento",
-                "stock_actual": 4,
-                "stock_minimo": 8,
-                "stock_maximo": 25,
-                "deficit": 4,
-                "dias_sin_stock": 0,
-                "ultima_salida": "2024-01-15 11:30:00",
-                "ubicacion": "Almacén de Repuestos → Estante A-3",
-                "prioridad": "MEDIA",
-                "accion_sugerida": "Programar reposición"
-            }
-        ]
+        """Generar reporte de productos con stock crítico desde Firebase"""
+        try:
+            from app.crud_productos.create_producto import obtener_productos_firebase
+            productos_firebase = await obtener_productos_firebase()
+            
+            productos_criticos = []
+            for producto in productos_firebase:
+                stock_actual = producto.get("cantidad", 0)
+                stock_minimo = producto.get("stock_min", 0)
+                
+                # Solo incluir productos con stock por debajo del mínimo
+                if stock_actual <= stock_minimo:
+                    deficit = stock_minimo - stock_actual
+                    
+                    # Determinar prioridad
+                    if stock_actual == 0:
+                        prioridad = "CRÍTICA"
+                        accion = "Reposición inmediata requerida"
+                    elif stock_actual < stock_minimo * 0.5:
+                        prioridad = "ALTA"
+                        accion = "Compra urgente requerida"
+                    else:
+                        prioridad = "MEDIA"
+                        accion = "Programar reposición"
+                    
+                    productos_criticos.append({
+                        "modelo": producto.get("modelo", "N/A"),
+                        "nombre": producto.get("nombre", "N/A"),
+                        "categoria": producto.get("categoria", "Sin categoría"),
+                        "stock_actual": stock_actual,
+                        "stock_minimo": stock_minimo,
+                        "deficit": deficit,
+                        "prioridad": prioridad,
+                        "accion_sugerida": accion,
+                        "ubicacion": producto.get("ubicacion", "Sin ubicación"),
+                        "ultima_actualizacion": producto.get("fecha_registro", "N/A")
+                    })
+            
+            return productos_criticos
+            
+        except Exception as e:
+            print(f"Error al generar reporte de stock crítico: {e}")
+            # Datos de ejemplo como fallback
+            return [
+                {
+                    "modelo": "RAM001",
+                    "nombre": "Memoria RAM DDR4 8GB",
+                    "categoria": "Componentes",
+                    "stock_actual": 2,
+                    "stock_minimo": 10,
+                    "deficit": 8,
+                    "prioridad": "CRÍTICA",
+                    "accion_sugerida": "Compra urgente requerida",
+                    "ubicacion": "Almacén Principal → Estante B-5"
+                }
+            ]
 
     async def generar_reporte_rotacion():
         """Generar reporte de rotación de inventario"""

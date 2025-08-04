@@ -1,5 +1,125 @@
 [
   {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T17:43:14.124025",
+    "timestamp": "2025-08-03T17:43:14.124038",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 5 productos desde archivo Excel",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:34:09.326380",
+    "timestamp": "2025-08-03T16:34:09.326389",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_productos",
+    "descripcion": "Exportó 267 productos a JSON (productos_20250803_163301.json)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:33:01.633098",
+    "timestamp": "2025-08-03T16:33:01.633109",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 262 productos desde archivo Excel",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:29:32.434936",
+    "timestamp": "2025-08-03T16:29:32.434944",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_producto",
+    "descripcion": "Editó producto 'prueba2' (ID: 9cUwiYcreqyiG5XsMDBQ)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:28:24.339520",
+    "timestamp": "2025-08-03T16:28:24.339528",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_productos",
+    "descripcion": "Exportó 267 productos a Excel (productos_20250803_161136.xlsx)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:11:36.763201",
+    "timestamp": "2025-08-03T16:11:36.763210",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_productos",
+    "descripcion": "Exportó 2 productos a Excel (productos_20250803_161018.xlsx)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:10:18.718388",
+    "timestamp": "2025-08-03T16:10:18.718395",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_producto",
+    "descripcion": "Editó producto 'prueba' (ID: NkVl4BduO77IvP1EAtnc)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:09:42.827698",
+    "timestamp": "2025-08-03T16:09:42.827707",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_producto",
+    "descripcion": "Creó producto 'prueba' (Modelo: Prueba3)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:09:16.631293",
+    "timestamp": "2025-08-03T16:09:16.631299",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_producto",
+    "descripcion": "Eliminó producto 'prueba' (ID: xuLsyu1qijGjpnCEX5Sv)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:08:57.852071",
+    "timestamp": "2025-08-03T16:08:57.852079",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'prueba3' (ID: Wa7aqHqKza2SPYWSFLrm) - Archivos limpiados: 1",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:04:37.918350",
+    "timestamp": "2025-08-03T16:04:37.918359",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_producto",
+    "descripcion": "Creó producto 'prueba' (Modelo: Prueba2)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T16:02:49.478717",
+    "timestamp": "2025-08-03T16:02:49.478726",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_producto",
+    "descripcion": "Eliminó producto 'Si' (ID: 5432)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T13:47:49.839803",
+    "timestamp": "2025-08-03T13:47:49.839816",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'Pepe' (ID: fSI9xSkHNVz68v75DvTM)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-03T13:47:29.346896",
+    "timestamp": "2025-08-03T13:47:29.346910",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'nrh546' (ID: jjagJ0WQf6j9AbiiSZ5i)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-02T21:54:52.139327",
+    "timestamp": "2025-08-02T21:54:52.139337",
+    "detalles": {}
+  },
+  {
     "tipo": "crear_producto",
     "descripcion": "Creó producto 'Prueba' (Modelo: Prueba4)",
     "usuario": "prueba3",

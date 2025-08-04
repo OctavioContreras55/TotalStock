@@ -96,6 +96,12 @@ def on_click_importar_archivo(page):
     tema = GestorTemas.obtener_tema()
 
     productos_importados = []
+    
+    async def importar_productos_handler(e, page, ventana, productos_importados):
+        """Handler para importar productos de forma asíncrona"""
+        page.close(ventana)
+        await guardar_productos_en_firebase(productos_importados, page)
+    
     def picked_file(e: ft.FilePickerResultEvent):
 
         if e.files:
@@ -155,7 +161,7 @@ def on_click_importar_archivo(page):
                                         color=tema.BUTTON_TEXT,
                                         shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                     ),
-                                    on_click=lambda e: [page.close(ventana), asyncio.create_task(guardar_productos_en_firebase(productos_importados, page))],
+                                    on_click=lambda e: page.run_task(importar_productos_handler, e, page, ventana, productos_importados),
                                     width=100,
                                     height=40,
                                 ),
@@ -192,23 +198,39 @@ def on_click_importar_archivo(page):
 
 def cargar_archivo_excel_ubicaciones(ruta_archivo):
     """Cargar archivo Excel específico para ubicaciones"""
-    import pandas as pd
-    
     try:
-        # Leer archivo Excel
+        # Leer archivo Excel con polars (consistente con el resto del código)
         df = pd.read_excel(ruta_archivo)
         ubicaciones = []
         
-        for index, row in df.iterrows():
+        print(f"Columnas encontradas en el archivo: {df.columns.tolist()}")
+        
+        for row in df.iter_rows(named=True):
+            print(f"Procesando fila: {row}")
+            
+            # Obtener valores con múltiples opciones de nombre de columna
+            modelo = row.get("Modelo") or row.get("modelo") or f"MOD{len(ubicaciones)+1:03d}"
+            nombre = (row.get("Nombre") or row.get("nombre") or 
+                     row.get("Producto") or row.get("producto") or "Sin nombre")
+            almacen = (row.get("Almacen") or row.get("Almacén") or 
+                      row.get("almacen") or row.get("almacén") or "Sin asignar")
+            ubicacion_val = (row.get("Ubicacion") or row.get("Ubicación") or 
+                           row.get("ubicacion") or row.get("ubicación") or "Sin ubicación")
+            cantidad = row.get("Cantidad") or row.get("cantidad") or 0
+            
+            # Convertir a tipos apropiados
             ubicacion = {
-                "modelo": str(row.get("Modelo", f"MOD{index:03d}")),
-                "nombre": str(row.get("Nombre", row.get("Producto", "Sin nombre"))),
-                "almacen": str(row.get("Almacen", row.get("Almacén", "Sin asignar"))),
-                "ubicacion": str(row.get("Ubicacion", row.get("Ubicación", "Sin ubicación"))),
-                "cantidad": int(row.get("Cantidad", 0))
+                "modelo": str(modelo) if modelo is not None else "Sin modelo",
+                "nombre": str(nombre) if nombre is not None else "Sin nombre", 
+                "almacen": str(almacen) if almacen is not None else "Sin asignar",
+                "ubicacion": str(ubicacion_val) if ubicacion_val is not None else "Sin ubicación",
+                "cantidad": int(cantidad) if cantidad is not None and str(cantidad).isdigit() else 0
             }
+            
+            print(f"Ubicación procesada: {ubicacion}")
             ubicaciones.append(ubicacion)
         
+        print(f"Total ubicaciones procesadas: {len(ubicaciones)}")
         return ubicaciones
         
     except Exception as e:
@@ -300,24 +322,15 @@ def on_click_importar_archivo_ubicaciones(page):
             return
 
         try:
-            # Ruta temporal para el archivo
-            ruta_temporal = f"temp_ubicaciones_{archivo_seleccionado.name}"
-            
-            # Guardar archivo temporalmente
-            with open(ruta_temporal, "wb") as f:
-                f.write(archivo_seleccionado.read())
+            # Usar directamente la ruta del archivo seleccionado
+            ruta_archivo = archivo_seleccionado.path
             
             # Cargar y procesar Excel de ubicaciones
-            ubicaciones = cargar_archivo_excel_ubicaciones(ruta_temporal)
+            ubicaciones = cargar_archivo_excel_ubicaciones(ruta_archivo)
             
             if ubicaciones:
                 page.close(ventana_ubicaciones)
                 await guardar_ubicaciones_en_firebase(ubicaciones, page)
-                
-                # Limpiar archivo temporal
-                import os
-                if os.path.exists(ruta_temporal):
-                    os.remove(ruta_temporal)
             else:
                 page.open(ft.SnackBar(
                     content=ft.Text("Error al procesar el archivo de ubicaciones", color=tema.TEXT_COLOR),
@@ -331,68 +344,53 @@ def on_click_importar_archivo_ubicaciones(page):
                 bgcolor=tema.ERROR_COLOR
             ))
 
-    # Crear diálogo para importar ubicaciones
+    # Diálogo para importar ubicaciones
     ventana_ubicaciones = ft.AlertDialog(
-        content=ft.Column([
-                ft.Row([
-                    ft.Icon(ft.Icons.LOCATION_ON, color=tema.PRIMARY_COLOR),
-                    ft.Text("Importar Ubicaciones desde Excel", color=tema.TEXT_COLOR, weight=ft.FontWeight.BOLD)
-                ]),
-                ft.Divider(color=tema.DIVIDER_COLOR),
-                ft.Text("Formato esperado del Excel:", color=tema.TEXT_COLOR, size=12),
+        title=ft.Text("Importar Ubicaciones desde Excel", color=tema.TEXT_COLOR),
+        bgcolor=tema.CARD_COLOR,
+        content=ft.Container(
+            content=ft.Column([
+                ft.Text("Seleccione un archivo Excel con las siguientes columnas:", color=tema.TEXT_COLOR),
                 ft.Text("• Modelo, Nombre/Producto, Almacen/Almacén, Ubicacion/Ubicación, Cantidad", 
-                       color=tema.SECONDARY_TEXT_COLOR, size=10),
+                       color=tema.TEXT_SECONDARY, size=12),
+                ft.Container(height=10),
+                ft.ElevatedButton(
+                    "Seleccionar archivo Excel",
+                    icon=ft.Icon(ft.Icons.FOLDER_OPEN),
+                    style=ft.ButtonStyle(
+                        bgcolor=tema.BUTTON_BG,
+                        color=tema.BUTTON_TEXT,
+                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                    ),
+                    on_click=lambda e: selector_archivo.pick_files(
+                        allowed_extensions=["xlsx", "xls"]
+                    )
+                ),
                 ft.Container(height=10),
                 texto_archivo,
-                ft.Row([
-                    ft.ElevatedButton(
-                        "Seleccionar Archivo",
-                        icon=ft.Icons.FILE_OPEN,
-                        on_click=lambda _: selector_archivo.pick_files(
-                            allowed_extensions=["xlsx", "xls"]
-                        ),
-                        style=ft.ButtonStyle(
-                            bgcolor=tema.BUTTON_BG,
-                            color=tema.BUTTON_TEXT,
-                            shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-                        )
-                    )
-                ]),
-                ft.Row(
-                    controls=[
-                        ft.ElevatedButton(
-                            "Importar Ubicaciones",
-                            style=ft.ButtonStyle(
-                                bgcolor=tema.BUTTON_SUCCESS_BG,
-                                color=tema.BUTTON_TEXT,
-                                shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-                            ),
-                            on_click=lambda e: asyncio.create_task(procesar_archivo_ubicaciones(e)),
-                            width=140,
-                            height=40,
-                        ),
-                        ft.ElevatedButton(
-                            "Cancelar",
-                            style=ft.ButtonStyle(
-                                bgcolor=tema.BUTTON_BG,
-                                color=tema.BUTTON_TEXT,
-                                shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-                            ),
-                            on_click=lambda e: page.close(ventana_ubicaciones),
-                            width=100,
-                            height=40,
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    spacing=10,
-                ),
-            ],
-            padding=ft.Padding(10, 10, 10, 10),
+            ], spacing=10),
+            width=450,
+            height=250,
+            padding=ft.Padding(15, 15, 15, 15)
         ),
-        modal=True, 
-        title=ft.Text("Importar Ubicaciones", color=tema.TEXT_COLOR), 
-        actions_alignment=ft.MainAxisAlignment.END, 
+        actions=[
+            ft.ElevatedButton(
+                "Importar Ubicaciones",
+                style=ft.ButtonStyle(
+                    bgcolor=tema.BUTTON_SUCCESS_BG,
+                    color=tema.BUTTON_TEXT,
+                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                ),
+                on_click=procesar_archivo_ubicaciones
+            ),
+            ft.TextButton(
+                "Cancelar",
+                style=ft.ButtonStyle(color=tema.TEXT_SECONDARY),
+                on_click=lambda e: page.close(ventana_ubicaciones)
+            ),
+        ],
+        modal=True,
     )
-
+    
     page.open(ventana_ubicaciones)
     page.update()

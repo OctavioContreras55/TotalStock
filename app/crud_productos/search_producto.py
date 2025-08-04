@@ -20,35 +20,63 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
       focused_border_color=tema.PRIMARY_COLOR,
       label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
     )
+    # Contenedor para mostrar indicador de carga
+    contenedor_carga = ft.Container(
+        content=ft.Row([
+            ft.ProgressRing(width=16, height=16, stroke_width=2, color=tema.PRIMARY_COLOR),
+            ft.Text("Buscando...", color=tema.TEXT_COLOR, size=14)
+        ], alignment=ft.MainAxisAlignment.CENTER),
+        visible=False,
+        height=0
+    )
+    
     async def validar_busqueda(e):
         if not campo_buscar.value.strip():
-          page.open(ft.SnackBar(
-          content=ft.Text("Por favor, ingrese un modelo para buscar.", color=tema.TEXT_COLOR),
-          bgcolor=tema.ERROR_COLOR
-      ))
+            page.open(ft.SnackBar(
+                content=ft.Text("Por favor, ingrese un modelo para buscar.", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
+            ))
         else:
-            await buscar_en_firebase(page, campo_buscar.value, mostrar_productos_filtrados, dialogo_busqueda)
+            # Mostrar indicador de carga
+            contenedor_carga.visible = True
+            contenedor_carga.height = 30
+            boton_buscar.disabled = True
+            page.update()
+            
+            try:
+                await buscar_en_firebase(page, campo_buscar.value, mostrar_productos_filtrados, dialogo_busqueda)
+            finally:
+                # Ocultar indicador de carga
+                contenedor_carga.visible = False
+                contenedor_carga.height = 0
+                boton_buscar.disabled = False
+                page.update()
+    
+    boton_buscar = ft.ElevatedButton(
+        text="Buscar",
+        style=ft.ButtonStyle(
+            bgcolor=tema.BUTTON_PRIMARY_BG,
+            color=tema.BUTTON_TEXT,
+            shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+        ),
+        on_click=validar_busqueda
+    )
 
     dialogo_busqueda = ft.AlertDialog(
         title=ft.Text("Buscar Producto", color=tema.TEXT_COLOR),
         bgcolor=tema.CARD_COLOR,
         content=ft.Container(
-          content=ft.Row(
-              controls=[
-                  campo_buscar,
-                  ft.ElevatedButton(
-                      text="Buscar",
-                      style=ft.ButtonStyle(
-                          bgcolor=tema.BUTTON_PRIMARY_BG,
-                          color=tema.BUTTON_TEXT,
-                          shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-                      ),
-                      on_click=validar_busqueda
-                  )
-              ]
-          ),
-          width=ancho_dialog,   # Ancho responsivo
-          height=100,
+            content=ft.Column([
+                ft.Row(
+                    controls=[
+                        campo_buscar,
+                        boton_buscar
+                    ]
+                ),
+                contenedor_carga
+            ]),
+            width=ancho_dialog,   # Ancho responsivo
+            height=120,
         ),
         actions=[
             ft.TextButton("Cerrar", 
@@ -75,8 +103,15 @@ async def buscar_en_firebase(page, busqueda, actualizar_tabla=None, dialogo_busq
         busqueda_lower = busqueda.lower().strip()
         
         for producto in todos_productos:
-            modelo = producto.get('modelo', '').lower()
-            if busqueda_lower in modelo:  # Búsqueda más flexible (contiene)
+            # Convertir a string para evitar errores con tipos de datos
+            modelo = str(producto.get('modelo', '')).lower()
+            nombre = str(producto.get('nombre', '')).lower()
+            tipo = str(producto.get('tipo', '')).lower()
+            
+            # Buscar en modelo, nombre y tipo
+            if (busqueda_lower in modelo or 
+                busqueda_lower in nombre or 
+                busqueda_lower in tipo):
                 productos_encontrados.append(producto)
 
         print(f"🎯 BÚSQUEDA COMPLETADA: {len(productos_encontrados)} productos encontrados (filtrado local)")

@@ -4,6 +4,19 @@ from conexiones.firebase import db
 from app.funciones.sesiones import SesionManager
 from app.ui.barra_carga import progress_ring_pequeno
 import asyncio
+import os
+import sys
+
+def obtener_ruta_recurso(ruta_relativa):
+    """Obtiene la ruta correcta para recursos, tanto en desarrollo como en ejecutable"""
+    try:
+        # PyInstaller crea una carpeta temporal _MEIPASS cuando ejecuta
+        ruta_base = sys._MEIPASS
+    except AttributeError:
+        # En desarrollo, usar la ruta actual
+        ruta_base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
+    return os.path.join(ruta_base, ruta_relativa)
 
 def login_view(page: ft.Page, on_login_success): #Función para la vista del login. Argumentos: page = pagina de Flet, on_login_success = función a ejecutar al iniciar sesión correctamente
     tema = GestorTemas.obtener_tema()
@@ -61,6 +74,25 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         campo.offset = ft.Offset(0, 0)
         page.update()
     
+    async def animar_errores_simultaneos(campos):
+        """Anima múltiples campos simultáneamente"""
+        # Establecer color rojo para todos los campos
+        for campo in campos:
+            campo.border_color = ft.Colors.RED
+        page.update()
+        
+        # Animar todos los campos al mismo tiempo
+        for offset in [-10, 10, -6, 6, -3, 3, 0]:
+            for campo in campos:
+                campo.offset = ft.Offset(offset, 0)
+            page.update()
+            await asyncio.sleep(0.06)
+        
+        # Resetear posición
+        for campo in campos:
+            campo.offset = ft.Offset(0, 0)
+        page.update()
+    
     async def resetear_campos():
         """Resetea el color de los campos"""
         usuario_input.border_color = tema.INPUT_BORDER
@@ -110,12 +142,12 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         campos_vacios = []
         if not usuario:
             campos_vacios.append(usuario_input)
-            await animar_error(usuario_input)
         if not contrasena:
             campos_vacios.append(contrasena_input)
-            await animar_error(contrasena_input)
 
         if campos_vacios:
+            # Animar todos los campos vacíos simultáneamente
+            await animar_errores_simultaneos(campos_vacios)
             page.open(ft.SnackBar(
                 content=ft.Text("Por favor, complete todos los campos", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
@@ -147,7 +179,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             query = referencia_usuarios.where(filter=FieldFilter('nombre', '==', usuario)).where(filter=FieldFilter('contrasena', '==', contrasena)).limit(1).get()
             
             if query:
-                # Login exitoso - obtener datos del usuario
+                # Login exitoso - mostrar palomita de validación
                 usuario_doc = query[0]
                 usuario_data = usuario_doc.to_dict()
                 usuario_data['firebase_id'] = usuario_doc.id
@@ -157,22 +189,34 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                 SesionManager.establecer_usuario(usuario_data)
                 
                 print(f"Login exitoso para el usuario: {usuario}")
-                # Ocultar progress ring con animación
-                print("🔄 OCULTANDO PROGRESS RING CON ANIMACIÓN...")
-                contenedor_progreso.content = ft.Container(height=0)  # Volver a estado invisible
+                
+                # Mostrar palomita de validación exitosa
+                contenedor_progreso.content = ft.Container(
+                    content=ft.Row([
+                        ft.Icon(ft.Icons.CHECK_CIRCLE, color=ft.Colors.GREEN, size=24),
+                        ft.Text("¡Acceso concedido!", color=ft.Colors.GREEN, size=16, weight=ft.FontWeight.BOLD)
+                    ], alignment=ft.MainAxisAlignment.CENTER),
+                    height=60,
+                    width=300,
+                    alignment=ft.alignment.center
+                )
+                page.update()
+                
+                # Esperar un momento para mostrar la validación exitosa
+                await asyncio.sleep(0.8)
+                
+                # Ocultar indicador y proceder
+                contenedor_progreso.content = ft.Container(height=0)
                 boton_elevated.disabled = False
                 page.update()
-                print("✅ Progress ring ocultado con animación y botón habilitado")
-                
-                # Esperar que la animación termine antes de continuar
-                await asyncio.sleep(0.3)
                 
                 # PRECARGA DE DATOS EN BACKGROUND para optimizar navegación
                 asyncio.create_task(precargar_datos_usuario())
                 
+                # Proceder inmediatamente al login
                 await on_login_success()
             else:
-                # Credenciales incorrectas - animar ambos campos
+                # Credenciales incorrectas - animar ambos campos simultáneamente
                 # Ocultar progress ring con animación primero
                 print("🔄 OCULTANDO PROGRESS RING (credenciales incorrectas)...")
                 contenedor_progreso.content = ft.Container(height=0)  # Volver a estado invisible
@@ -182,8 +226,8 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                 # Esperar animación antes de mostrar errores
                 await asyncio.sleep(0.3)
                 
-                await animar_error(usuario_input)
-                await animar_error(contrasena_input)
+                # Animar ambos campos simultáneamente
+                await animar_errores_simultaneos([usuario_input, contrasena_input])
                 page.open(ft.SnackBar(
                     content=ft.Text("Usuario o contraseña incorrectos", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
@@ -302,7 +346,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                   padding= ft.padding.only(top=20),
                 ),
                 ft.Container(
-                  content=ft.Image("assets/logo.png",
+                  content=ft.Image(obtener_ruta_recurso("assets/logo.png"),
                       width=150,
                       height=150,
                       fit=ft.ImageFit.CONTAIN

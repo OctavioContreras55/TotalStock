@@ -16,7 +16,7 @@ def crear_boton_editar(ubicacion_id, page, actualizar_tabla_ubicaciones):
     return ft.IconButton(
         ft.Icons.EDIT_LOCATION,
         icon_color=tema.PRIMARY_COLOR,
-        on_click=lambda e: asyncio.create_task(editar_ubicacion(e)),
+        on_click=lambda e: print(f"Editar ubicación: {ubicacion_id}"),
         tooltip="Editar ubicación"
     )
 
@@ -32,7 +32,7 @@ def crear_boton_eliminar(ubicacion_id, page, actualizar_tabla_ubicaciones):
         ))
     
     return ft.IconButton(
-        ft.Icons.DELETE_LOCATION,
+        ft.Icons.DELETE,
         icon_color=tema.ERROR_COLOR,
         on_click=eliminar_ubicacion,
         tooltip="Eliminar ubicación"
