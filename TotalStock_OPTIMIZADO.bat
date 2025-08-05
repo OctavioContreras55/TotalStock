@@ -1,5 +1,3 @@
 @echo off
-title TotalStock - Inicio Rápido
-cd /d "C:\Users\PC\Documents\ProyectoAnalisis\Sistema de inventariado\TotalStock\dist\TotalStock"
-echo ⚡ Iniciando TotalStock (Versión Optimizada)...
-start "" "TotalStock.exe"
+cd /d "C:\Users\Octavio Contreras\Documents\Personales\TotalStock"
+start "" "dist\TotalStock\TotalStock.exe"

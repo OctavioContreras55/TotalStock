@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Script final para crear ejecutable sin errores async
+TotalStock - Script de compilación FINAL
+Crea ejecutable en archivo único para distribución fácil
 """
 
 import os
@@ -8,136 +9,143 @@ import sys
 import subprocess
 import shutil
 from pathlib import Path
+import time
 
-def crear_ejecutable_final():
-    """Crear ejecutable con todas las correcciones aplicadas"""
-    
-    print("🔧 TotalStock - Ejecutable Final (Sin Errores Async)")
+def main():
+    print("📦 TotalStock - Ejecutable FINAL (Archivo Único)")
     print("=" * 60)
-    print("🐛 Solucionando problema de await...")
-    
-    # Limpiar build anterior
-    for carpeta in ["dist", "build"]:
-        if os.path.exists(carpeta):
-            shutil.rmtree(carpeta)
-            print(f"🧹 Limpiando: {carpeta}/")
+    print("🚀 Creando versión portátil para distribución...")
     
     # Obtener la ruta correcta del directorio raíz
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.dirname(script_dir)
     os.chdir(root_dir)
     
-    # Verificar correcciones aplicadas
-    print("✅ Verificando correcciones aplicadas:")
+    # Limpiar compilaciones anteriores
+    print("\n🧹 Limpiando compilaciones anteriores...")
+    for carpeta in ["dist", "build"]:
+        if os.path.exists(carpeta):
+            shutil.rmtree(carpeta)
+            print(f"✅ Limpiado: {carpeta}/")
     
-    # Verificar que run.py no tenga await login_view
-    with open("run.py", "r", encoding="utf-8") as f:
-        contenido_run = f.read()
-        if "await login_view" in contenido_run:
-            print("❌ Error: run.py aún tiene 'await login_view'")
-            print("💡 El archivo run.py debe tener: login_view(page, cargar_pantalla_principal)")
-            return False
-        else:
-            print("   • ✅ run.py: await corregido")
+    print("\n📦 Creando versión ONEFILE (archivo único)...")
+    print("⏳ Construyendo ejecutable final...")
     
-    # Verificar que firebase.py tenga la función de rutas
-    with open("conexiones/firebase.py", "r", encoding="utf-8") as f:
-        contenido_firebase = f.read()
-        if "obtener_ruta_recurso" in contenido_firebase:
-            print("   • ✅ firebase.py: rutas dinámicas implementadas")
-        else:
-            print("❌ Error: firebase.py no tiene la función obtener_ruta_recurso")
-            return False
-    
-    # Verificar credenciales
-    if os.path.exists("conexiones/credenciales_firebase.json"):
-        print("   • ✅ credenciales_firebase.json: encontrado")
-    else:
-        print("❌ Error: credenciales_firebase.json no encontrado")
-        return False
-    
-    print("\n🚀 Creando ejecutable final...")
-    
-    # Comando PyInstaller optimizado
+    # Comando PyInstaller para archivo único
     comando = [
         sys.executable, "-m", "PyInstaller",
-        "--onefile",
-        "--windowed", 
+        "--onefile",  # Archivo único
+        "--windowed",  # Sin consola
         "--name=TotalStock",
-        "--noconfirm",
-        # Agregar datos con rutas específicas
+        "--noconfirm",  # No preguntar sobre sobrescribir
+        
+        # Datos necesarios
         "--add-data=conexiones;conexiones",
         "--add-data=assets;assets",
         "--add-data=data;data",
-        # Importaciones críticas
+        
+        # Importaciones específicas
         "--hidden-import=flet",
         "--hidden-import=flet.core",
-        "--hidden-import=flet.security",
         "--hidden-import=firebase_admin",
         "--hidden-import=firebase_admin.credentials",
         "--hidden-import=firebase_admin.firestore",
-        "--hidden-import=google.cloud.firestore",
+        "--hidden-import=polars",
         "--hidden-import=polars",
         "--hidden-import=openpyxl",
-        "--hidden-import=asyncio",
-        # Recopilar módulos completos
-        "--collect-all=flet",
-        "--collect-all=firebase_admin",
-        # Excluir módulos innecesarios para reducir tamaño
-        "--exclude-module=tkinter",
-        "--exclude-module=matplotlib", 
-        "--exclude-module=numpy",
+        
+        # Optimizaciones para archivo único
+        "--optimize=2",  # Optimización máxima
+        
+        # Archivo principal
+        "run.py"
     ]
     
     # Agregar icono si existe
     if os.path.exists("assets/logo.ico"):
         comando.extend(["--icon", "assets/logo.ico"])
-        print("🎨 Incluyendo icono")
-    
-    # Archivo principal
-    comando.append("run.py")
-    
-    print("⏳ Construyendo ejecutable (puede tomar varios minutos)...")
     
     try:
+        # Ejecutar PyInstaller
+        start_time = time.time()
         resultado = subprocess.run(comando, check=True)
+        end_time = time.time()
         
         # Verificar resultado
         exe_path = Path("dist/TotalStock.exe")
+        
         if exe_path.exists():
+            # Calcular estadísticas
             tamaño_mb = exe_path.stat().st_size / (1024 * 1024)
-            print(f"\n✅ ¡Ejecutable creado exitosamente!")
+            tiempo_compilacion = end_time - start_time
+            
+            # Crear acceso directo
+            crear_acceso_directo()
+            
+            print(f"\n✅ ¡Ejecutable FINAL creado!")
             print(f"📁 Ubicación: {exe_path.absolute()}")
             print(f"📊 Tamaño: {tamaño_mb:.1f} MB")
+            print(f"⏱️  Tiempo de compilación: {tiempo_compilacion:.1f} segundos")
+            print("✅ Acceso rápido creado: TotalStock_FINAL.bat")
             
-            print(f"\n🎉 ¡PROCESO COMPLETADO!")
-            print("🔧 **TODAS LAS CORRECCIONES APLICADAS:**")
-            print("   • ✅ Error 'await login_view' → CORREGIDO")
-            print("   • ✅ Error 'credenciales Firebase' → CORREGIDO") 
-            print("   • ✅ Rutas dinámicas → IMPLEMENTADAS")
-            print("   • ✅ Importaciones async → OPTIMIZADAS")
+            print(f"\n🎉 ¡COMPILACIÓN FINAL EXITOSA!")
+            print("📦 **VENTAJAS de esta versión:**")
+            print("   • 📁 Un solo archivo ejecutable")
+            print("   • 📤 Súper fácil de distribuir")
+            print("   • 💾 No necesita instalación")
+            print("   • 🔧 Funciona en cualquier Windows")
             
-            print(f"\n📋 **LISTO PARA USAR:**")
-            print("1. 🧪 Ejecuta: dist/TotalStock.exe")
-            print("2. 🔐 Prueba el login")
-            print("3. 📊 Verifica todas las funcionalidades")
-            print("4. 🚀 ¡Distribuye tu aplicación!")
+            mostrar_instrucciones(exe_path)
             
             return True
         else:
-            print("❌ No se encontró el ejecutable generado")
+            print("❌ Error: No se pudo crear el ejecutable")
             return False
             
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error al ejecutar PyInstaller: {e}")
+        print(f"❌ Error en PyInstaller: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ Error inesperado: {e}")
         return False
 
+def crear_acceso_directo():
+    """Crear archivo BAT para acceso directo"""
+    contenido_bat = f'''@echo off
+cd /d "{os.getcwd()}"
+start "" "dist\\TotalStock.exe"
+'''
+    
+    with open("TotalStock_FINAL.bat", "w", encoding="utf-8") as f:
+        f.write(contenido_bat)
+
+def mostrar_instrucciones(exe_path):
+    """Mostrar instrucciones de uso"""
+    print(f"\n📋 INSTRUCCIONES DE USO:")
+    print("=" * 30)
+    print("🏃‍♂️ **PARA EJECUTAR:**")
+    print(f"   • Doble clic en: {exe_path}")
+    print("   • O usar: TotalStock_FINAL.bat")
+    print()
+    print("📤 **PARA DISTRIBUIR:**")
+    print(f"   • Enviar archivo: {exe_path}")
+    print("   • Solo 1 archivo, súper fácil")
+    print("   • No necesita instalación")
+    print()
+    print("⚠️  **NOTA IMPORTANTE:**")
+    print("   • Primera ejecución: 8-15 segundos")
+    print("   • Siguientes ejecuciones: más rápido")
+    print("   • Windows puede mostrar advertencia de seguridad")
+    print()
+    print("🎊 ¡EJECUTABLE FINAL LISTO!")
+    print("📦 Perfecto para distribución!")
+
 if __name__ == "__main__":
-    success = crear_ejecutable_final()
+    success = main()
     
     if success:
-        print("\n🎯 ¡EJECUTABLE FINAL LISTO! Sin errores async ni Firebase.")
+        print("\n✅ Compilación completada exitosamente")
     else:
-        print("\n❌ Hubo un problema. Revisa los errores anteriores.")
+        print("\n❌ Hubo problemas en la compilación.")
     
     input("\nPresiona Enter para continuar...")

@@ -1,5 +1,6 @@
-import polars as pd
+import polars as pl
 import flet as ft
+from datetime import datetime
 from conexiones.firebase import db
 from app.utils.temas import GestorTemas
 from app.utils.historial import GestorHistorial
@@ -7,7 +8,7 @@ from app.funciones.sesiones import SesionManager
 import asyncio
 
 def cargar_archivo_excel(ruta_archivo):
-    archivo = pd.read_excel(ruta_archivo)
+    archivo = pl.read_excel(ruta_archivo)
     productos = []
     for row in archivo.iter_rows(named=True):
         producto = {
@@ -197,34 +198,79 @@ def on_click_importar_archivo(page):
 
 
 def cargar_archivo_excel_ubicaciones(ruta_archivo):
-    """Cargar archivo Excel específico para ubicaciones"""
+    """Cargar archivo Excel específico para ubicaciones usando Polars"""
     try:
-        # Leer archivo Excel con polars (consistente con el resto del código)
-        df = pd.read_excel(ruta_archivo)
+        print(f"[DEBUG] Intentando cargar archivo: {ruta_archivo}")
+        print(f"[DEBUG] Tipo de ruta_archivo: {type(ruta_archivo)}")
+        
+        # Leer archivo Excel con Polars
+        df = pl.read_excel(ruta_archivo)
+        print(f"[DEBUG] DataFrame cargado exitosamente")
+        print(f"[DEBUG] Tipo de df: {type(df)}")
+        print(f"[DEBUG] Shape del DataFrame: {df.shape}")
+        
         ubicaciones = []
         
-        print(f"Columnas encontradas en el archivo: {df.columns.tolist()}")
+        print(f"Columnas encontradas en el archivo: {df.columns}")
         
+        # Debug: mostrar los nombres exactos de las columnas para diagnosis
+        print(f"[DEBUG] Columnas exactas: {list(df.columns)}")
+        for i, col in enumerate(df.columns):
+            print(f"[DEBUG] Columna {i}: '{col}' (tipo: {type(col)})")
+        
+        # Iterar sobre las filas con Polars
         for row in df.iter_rows(named=True):
             print(f"Procesando fila: {row}")
+            print(f"[DEBUG] Claves disponibles en row: {list(row.keys())}")
             
             # Obtener valores con múltiples opciones de nombre de columna
-            modelo = row.get("Modelo") or row.get("modelo") or f"MOD{len(ubicaciones)+1:03d}"
-            nombre = (row.get("Nombre") or row.get("nombre") or 
-                     row.get("Producto") or row.get("producto") or "Sin nombre")
+            # Primero verificar valores directos
+            modelo_directo = row.get("Modelo") or row.get("Material")  # Agregar "Material"
+            modelo_minuscula = row.get("modelo") or row.get("material")  # Agregar "material"
+            print(f"[DEBUG] Modelo directo: '{modelo_directo}' (tipo: {type(modelo_directo)})")
+            print(f"[DEBUG] Modelo minúscula: '{modelo_minuscula}' (tipo: {type(modelo_minuscula)})")
+            
+            # Usar el nombre del material directamente como modelo
+            modelo = None
+            if modelo_directo and str(modelo_directo).strip() and str(modelo_directo).strip().lower() != 'none':
+                modelo = str(modelo_directo).strip()
+                print(f"[DEBUG] Usando modelo directo: '{modelo}'")
+            elif modelo_minuscula and str(modelo_minuscula).strip() and str(modelo_minuscula).strip().lower() != 'none':
+                modelo = str(modelo_minuscula).strip()
+                print(f"[DEBUG] Usando modelo minúscula: '{modelo}'")
+            else:
+                modelo = f"MOD{len(ubicaciones)+1:03d}"
+                print(f"[DEBUG] Generando código automático: '{modelo}'")
+            
+            print(f"[DEBUG] Modelo final: '{modelo}'")
+            
             almacen = (row.get("Almacen") or row.get("Almacén") or 
                       row.get("almacen") or row.get("almacén") or "Sin asignar")
-            ubicacion_val = (row.get("Ubicacion") or row.get("Ubicación") or 
-                           row.get("ubicacion") or row.get("ubicación") or "Sin ubicación")
-            cantidad = row.get("Cantidad") or row.get("cantidad") or 0
+            estanteria = (row.get("Estanteria") or row.get("Estantería") or 
+                         row.get("estanteria") or row.get("estantería") or 
+                         row.get("Ubicacion") or row.get("Ubicación") or 
+                         row.get("ubicacion") or row.get("ubicación") or "Sin asignar")
+            observaciones = (row.get("Observaciones") or row.get("observaciones") or 
+                           row.get("Notas") or row.get("notas") or "Sin observaciones")
             
-            # Convertir a tipos apropiados
+            # Obtener cantidad si está disponible
+            cantidad = 1  # Valor por defecto
+            cantidad_raw = (row.get("Cantidad") or row.get("cantidad") or 
+                           row.get("Qty") or row.get("qty") or "1")
+            try:
+                cantidad = int(cantidad_raw) if cantidad_raw else 1
+            except (ValueError, TypeError):
+                cantidad = 1
+            
+            # Convertir a tipos apropiados y crear estructura para nuevo sistema
+            # Polars maneja nulos de forma diferente, usamos verificación directa
             ubicacion = {
                 "modelo": str(modelo) if modelo is not None else "Sin modelo",
-                "nombre": str(nombre) if nombre is not None else "Sin nombre", 
                 "almacen": str(almacen) if almacen is not None else "Sin asignar",
-                "ubicacion": str(ubicacion_val) if ubicacion_val is not None else "Sin ubicación",
-                "cantidad": int(cantidad) if cantidad is not None and str(cantidad).isdigit() else 0
+                "estanteria": str(estanteria) if estanteria is not None else "Sin asignar",
+                "cantidad": cantidad,
+                "fecha_asignacion": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "observaciones": str(observaciones) if observaciones is not None else "Sin observaciones"
             }
             
             print(f"Ubicación procesada: {ubicacion}")
@@ -235,6 +281,9 @@ def cargar_archivo_excel_ubicaciones(ruta_archivo):
         
     except Exception as e:
         print(f"Error al cargar archivo Excel de ubicaciones: {e}")
+        print(f"[DEBUG] Tipo del error: {type(e)}")
+        import traceback
+        print(f"[DEBUG] Traceback completo: {traceback.format_exc()}")
         return []
 
 
@@ -259,11 +308,11 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
                 # Guardar en colección 'ubicaciones'
                 db.collection('ubicaciones').add(ubicacion)
                 guardados += 1
-                print(f"Ubicación guardada: {ubicacion.get('nombre', 'Sin nombre')}")
+                print(f"Ubicación guardada: {ubicacion.get('modelo', 'Sin modelo')} -> {ubicacion.get('almacen', 'Sin almacen')} / {ubicacion.get('estanteria', 'Sin estanteria')}")
                 
             except Exception as e:
                 errores += 1
-                print(f"Error al guardar ubicación {ubicacion.get('nombre', 'Sin nombre')}: {e}")
+                print(f"Error al guardar ubicación {ubicacion.get('modelo', 'Sin modelo')}: {e}")
         
         # Registrar en historial
         gestor_historial = GestorHistorial()
@@ -351,7 +400,9 @@ def on_click_importar_archivo_ubicaciones(page):
         content=ft.Container(
             content=ft.Column([
                 ft.Text("Seleccione un archivo Excel con las siguientes columnas:", color=tema.TEXT_COLOR),
-                ft.Text("• Modelo, Nombre/Producto, Almacen/Almacén, Ubicacion/Ubicación, Cantidad", 
+                ft.Text("• Material/Modelo, Almacen/Almacén, Estanteria/Estantería/Ubicacion", 
+                       color=tema.TEXT_SECONDARY, size=12),
+                ft.Text("• Cantidad (opcional), Observaciones/Notas (opcional)", 
                        color=tema.TEXT_SECONDARY, size=12),
                 ft.Container(height=10),
                 ft.ElevatedButton(

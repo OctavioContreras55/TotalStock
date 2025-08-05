@@ -1,10 +1,12 @@
 import flet as ft
 from app.utils.temas import GestorTemas
 from app.tablas.ui_tabla_ubicaciones import mostrar_tabla_ubicaciones
+from app.tablas import ui_tabla_ubicaciones
 from app.crud_productos.search_producto import buscar_en_firebase
 from app.funciones.carga_archivos import on_click_importar_archivo_ubicaciones
 from app.funciones.exportar_productos import exportar_ubicaciones
 from app.crud_ubicaciones.create_ubicacion import crear_ubicacion_dialog, obtener_ubicaciones_firebase
+from app.crud_ubicaciones.ubicaciones_productos import crear_ubicacion_producto_dialog, obtener_ubicaciones_productos_firebase
 from app.ui.barra_carga import vista_carga
 import asyncio
 
@@ -28,8 +30,15 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
         ancho_boton = 220
 
     async def cargar_ubicaciones_firebase():
-        """Cargar ubicaciones desde Firebase"""
-        return await obtener_ubicaciones_firebase()
+        """Cargar ubicaciones de productos desde Firebase"""
+        try:
+            print("[DEBUG] Cargando ubicaciones desde Firebase...")
+            ubicaciones = await obtener_ubicaciones_productos_firebase()
+            print(f"[DEBUG] Ubicaciones obtenidas: {len(ubicaciones) if ubicaciones else 0}")
+            return ubicaciones
+        except Exception as e:
+            print(f"[DEBUG] Error al cargar desde Firebase: {e}")
+            return []
 
     async def actualizar_tabla_ubicaciones():
         """Actualiza la tabla de ubicaciones"""
@@ -52,29 +61,38 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
         nonlocal ubicaciones_actuales
         try:
             print("Mostrando ubicaciones filtradas")
-            contenido.content = vista_carga()
-            page.update()
+            
+            # Actualizar ubicaciones actuales
             ubicaciones_actuales = ubicaciones_filtradas
-            contenido.content = construir_vista_ubicaciones(ubicaciones_actuales)
-            page.update()
+            
+            # Crear nueva tabla con ubicaciones filtradas
+            nueva_tabla = ui_tabla_ubicaciones.mostrar_tabla_ubicaciones(
+                page, ubicaciones_filtradas, actualizar_tabla_ubicaciones
+            )
+            
+            # Actualizar solo el container de la tabla (último elemento de la columna)
+            if hasattr(contenido.content, 'controls') and len(contenido.content.controls) >= 4:
+                # El container de la tabla es el último elemento
+                contenido.content.controls[-1].content = nueva_tabla
+                page.update()
+            else:
+                # Fallback: reconstruir toda la vista si no se puede actualizar solo la tabla
+                contenido.content = construir_vista_ubicaciones(ubicaciones_filtradas)
+                page.update()
+                
         except Exception as e:
             print(f"Error al mostrar ubicaciones filtradas: {e}")
-            page.update()
-
-    # Campo de búsqueda
-    campo_busqueda = ft.TextField(
-        label="Buscar por modelo o nombre",
-        width=300,
-        bgcolor=tema.INPUT_BG,
-        color=tema.TEXT_COLOR,
-        border_color=tema.INPUT_BORDER,
-        focused_border_color=tema.PRIMARY_COLOR,
-        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
-    )
+            # En caso de error, reconstruir la vista completa
+            try:
+                contenido.content = construir_vista_ubicaciones(ubicaciones_filtradas)
+                page.update()
+            except Exception as e2:
+                print(f"Error al reconstruir vista: {e2}")
+                page.update()
 
     async def buscar_ubicaciones(e):
-        """Buscar ubicaciones por modelo o nombre"""
-        termino_busqueda = campo_busqueda.value.strip().lower()
+        """Buscar ubicaciones por modelo, almacén o estantería"""
+        termino_busqueda = campo_busqueda.value.strip().lower() if campo_busqueda and campo_busqueda.value else ""
         
         if not termino_busqueda:
             await actualizar_tabla_ubicaciones()
@@ -85,9 +103,9 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
             ubicaciones_filtradas = [
                 ubicacion for ubicacion in ubicaciones_actuales
                 if (termino_busqueda in str(ubicacion.get('modelo', '')).lower() or
-                    termino_busqueda in str(ubicacion.get('nombre', '')).lower() or
                     termino_busqueda in str(ubicacion.get('almacen', '')).lower() or
-                    termino_busqueda in str(ubicacion.get('ubicacion', '')).lower())
+                    termino_busqueda in str(ubicacion.get('estanteria', '')).lower() or
+                    termino_busqueda in str(ubicacion.get('observaciones', '')).lower())
             ]
             
             await mostrar_ubicaciones_filtradas(ubicaciones_filtradas)
@@ -95,9 +113,80 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
         except Exception as e:
             print(f"Error en búsqueda de ubicaciones: {e}")
 
+    def mostrar_sugerencias(texto):
+        """Mostrar sugerencias de búsqueda basadas en lo que escribe el usuario"""
+        if not texto or len(texto) < 2:
+            sugerencias_container.visible = False
+            page.update()
+            return
+        
+        texto_lower = texto.lower()
+        sugerencias = []
+        
+        # Buscar coincidencias en ubicaciones actuales
+        for ubicacion in ubicaciones_actuales[:5]:  # Limitar a 5 sugerencias
+            modelo = ubicacion.get('modelo', '').lower()
+            almacen = str(ubicacion.get('almacen', '')).lower()
+            estanteria = ubicacion.get('estanteria', '').lower()
+            
+            if (texto_lower in modelo or 
+                texto_lower in almacen or 
+                texto_lower in estanteria):
+                sugerencia_texto = f"{ubicacion.get('modelo', 'N/A')} - Almacén {ubicacion.get('almacen', 'N/A')} / {ubicacion.get('estanteria', 'N/A')}"
+                if sugerencia_texto not in [s.content.value for s in sugerencias]:
+                    sugerencias.append(
+                        ft.Container(
+                            content=ft.Text(sugerencia_texto, color=tema.TEXT_COLOR, size=12),
+                            bgcolor=tema.CARD_COLOR,
+                            padding=8,
+                            border_radius=tema.BORDER_RADIUS,
+                            on_click=lambda e, texto=sugerencia_texto.split(' - ')[0]: seleccionar_sugerencia(texto),
+                            ink=True
+                        )
+                    )
+        
+        if sugerencias:
+            sugerencias_container.content = ft.Column(
+                controls=sugerencias,
+                spacing=2,
+                scroll=ft.ScrollMode.AUTO,
+                height=min(150, len(sugerencias) * 35)
+            )
+            sugerencias_container.visible = True
+        else:
+            sugerencias_container.visible = False
+        
+        page.update()
+
+    def seleccionar_sugerencia(texto):
+        """Seleccionar una sugerencia y ejecutar búsqueda"""
+        campo_busqueda.value = texto
+        sugerencias_container.visible = False
+        page.run_task(buscar_ubicaciones, None)
+        page.update()
+
+    # Campo de búsqueda con sugerencias
+    sugerencias_container = ft.Container(visible=False)
+    
+    campo_busqueda = ft.TextField(
+        label="Buscar por modelo, almacén o estantería",
+        width=350,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY),
+        on_change=lambda e: mostrar_sugerencias(e.control.value),
+        # Removemos on_submit temporalmente para evitar el error
+        helper_text="Escriba para ver sugerencias"
+    )
+    
+    # Ahora que campo_busqueda está definido, añadimos el on_submit
+    campo_busqueda.on_submit = buscar_ubicaciones
+
     async def vista_crear_ubicacion_llamada(e):
-        """Mostrar diálogo para crear nueva ubicación"""
-        await crear_ubicacion_dialog(page, actualizar_tabla_ubicaciones)
+        """Mostrar diálogo para asignar ubicación a producto"""
+        await crear_ubicacion_producto_dialog(page, actualizar_tabla_ubicaciones)
 
     async def exportar_ubicaciones_llamada(e):
         """Exportar ubicaciones"""
@@ -133,94 +222,97 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
                     margin=ft.margin.only(bottom=20, top=5),
                 ),
                 
-                # Barra de búsqueda y botones de acción
-                ft.Row([
-                    # Búsqueda
-                    ft.Container(
-                        content=ft.Row([
-                            campo_busqueda,
-                            ft.IconButton(
-                                ft.Icons.SEARCH,
-                                icon_color=tema.PRIMARY_COLOR,
-                                on_click=buscar_ubicaciones
-                            ),
-                            ft.IconButton(
-                                ft.Icons.REFRESH,
-                                icon_color=tema.SECONDARY_TEXT_COLOR,
-                                on_click=lambda e: page.run_task(actualizar_tabla_ubicaciones),
-                                tooltip="Actualizar lista"
-                            )
-                        ]),
-                        padding=ft.padding.symmetric(horizontal=5, vertical=20)
-                    ),
-                    
-                    # Botones de acción
-                    ft.Container(
-                        content=ft.Row([
-                            # Botón Agregar Ubicación
-                            ft.ElevatedButton(
-                                content=ft.Row([
-                                    ft.Icon(ft.Icons.ADD_LOCATION, color=tema.ICON_BTN_COLOR),
-                                    ft.Text("Agregar Ubicación", color=tema.BUTTON_TEXT)
-                                ]),
-                                style=ft.ButtonStyle(
-                                    bgcolor=tema.BUTTON_BG,
-                                    color=tema.BUTTON_TEXT,
-                                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                # Barra de búsqueda y botones de acción - Responsiva
+                ft.Container(
+                    content=ft.Column([
+                        # Fila de búsqueda con sugerencias
+                        ft.Column([
+                            ft.Row([
+                                ft.Container(
+                                    content=ft.Row([
+                                        campo_busqueda,
+                                        ft.IconButton(
+                                            ft.Icons.SEARCH,
+                                            icon_color=tema.PRIMARY_COLOR,
+                                            on_click=buscar_ubicaciones
+                                        ),
+                                        ft.IconButton(
+                                            ft.Icons.REFRESH,
+                                            icon_color=tema.SECONDARY_TEXT_COLOR,
+                                            on_click=lambda e: page.run_task(actualizar_tabla_ubicaciones),
+                                            tooltip="Actualizar lista"
+                                        )
+                                    ]),
+                                    expand=True
                                 ),
-                                on_click=vista_crear_ubicacion_llamada,
-                            ),
-                            
-                            # Botón Importar Excel
-                            ft.ElevatedButton(
-                                content=ft.Row([
-                                    ft.Icon(ft.Icons.FILE_UPLOAD, color=tema.ICON_BTN_COLOR),
-                                    ft.Text("Importar Ubicaciones", color=tema.BUTTON_TEXT)
-                                ]),
-                                style=ft.ButtonStyle(
-                                    bgcolor=tema.BUTTON_BG,
-                                    color=tema.BUTTON_TEXT,
-                                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                            ]),
+                            # Container para sugerencias
+                            sugerencias_container
+                        ], spacing=5),
+                        
+                        # Fila de botones de acción - Centrados y con ancho fijo
+                        ft.Container(
+                            content=ft.Row([
+                                # Botón Agregar Ubicación
+                                ft.ElevatedButton(
+                                    content=ft.Row([
+                                        ft.Icon(ft.Icons.ADD_LOCATION, color=tema.ICON_BTN_COLOR, size=16),
+                                        ft.Text("Asignar Ubicación", color=tema.BUTTON_TEXT, size=12)
+                                    ], spacing=5),
+                                    style=ft.ButtonStyle(
+                                        bgcolor=tema.BUTTON_BG,
+                                        color=tema.BUTTON_TEXT,
+                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                    ),
+                                    on_click=vista_crear_ubicacion_llamada,
+                                    width=180
                                 ),
-                                on_click=lambda e: on_click_importar_archivo_ubicaciones(page),
-                            ),
-                            
-                            # Botón Exportar
-                            ft.ElevatedButton(
-                                content=ft.Row([
-                                    ft.Icon(ft.Icons.FILE_DOWNLOAD, color=tema.ICON_BTN_COLOR),
-                                    ft.Text("Exportar Ubicaciones", color=tema.BUTTON_TEXT)
-                                ]),
-                                style=ft.ButtonStyle(
-                                    bgcolor=tema.BUTTON_BG,
-                                    color=tema.BUTTON_TEXT,
-                                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                
+                                # Botón Importar Excel
+                                ft.ElevatedButton(
+                                    content=ft.Row([
+                                        ft.Icon(ft.Icons.FILE_UPLOAD, color=tema.ICON_BTN_COLOR, size=16),
+                                        ft.Text("Importar Excel", color=tema.BUTTON_TEXT, size=12)
+                                    ], spacing=5),
+                                    style=ft.ButtonStyle(
+                                        bgcolor=tema.BUTTON_BG,
+                                        color=tema.BUTTON_TEXT,
+                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                    ),
+                                    on_click=lambda e: on_click_importar_archivo_ubicaciones(page),
+                                    width=160
                                 ),
-                                on_click=exportar_ubicaciones_llamada,
-                            ),
-                        ], spacing=10),
-                        width=ancho_boton * 3.2,
-                        padding=ft.padding.symmetric(horizontal=5, vertical=20)
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                                
+                                # Botón Exportar
+                                ft.ElevatedButton(
+                                    content=ft.Row([
+                                        ft.Icon(ft.Icons.FILE_DOWNLOAD, color=tema.ICON_BTN_COLOR, size=16),
+                                        ft.Text("Exportar", color=tema.BUTTON_TEXT, size=12)
+                                    ], spacing=5),
+                                    style=ft.ButtonStyle(
+                                        bgcolor=tema.BUTTON_BG,
+                                        color=tema.BUTTON_TEXT,
+                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                    ),
+                                    on_click=exportar_ubicaciones_llamada,
+                                    width=130
+                                ),
+                            ], spacing=15, alignment=ft.MainAxisAlignment.CENTER),
+                            alignment=ft.alignment.center
+                        ),
+                    ], spacing=15),
+                    width=ancho_ventana * 0.95,
+                    padding=ft.padding.symmetric(horizontal=10, vertical=15)
                 ),
                 
-                # Tabla de ubicaciones
-                ft.Row([
-                    ft.Column([
-                        ft.Container(
-                            content=mostrar_tabla_ubicaciones(page, ubicaciones, actualizar_tabla_ubicaciones),
-                            padding=ft.padding.symmetric(horizontal=5, vertical=20),
-                            bgcolor=tema.CARD_COLOR,
-                            border_radius=tema.BORDER_RADIUS,
-                        ),
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.START
+                # Tabla de ubicaciones - Contenedor responsivo
+                ft.Container(
+                    content=mostrar_tabla_ubicaciones(page, ubicaciones, actualizar_tabla_ubicaciones),
+                    width=ancho_ventana * 0.95,  # Más responsivo
+                    padding=ft.padding.symmetric(horizontal=10, vertical=20),
+                    bgcolor=tema.CARD_COLOR,
+                    border_radius=tema.BORDER_RADIUS,
+                    alignment=ft.alignment.center,
                 )     
             ],
             alignment=ft.MainAxisAlignment.START,

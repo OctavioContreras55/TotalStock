@@ -1,5 +1,109 @@
 [
   {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó ubicación: Cadena 105 de 3/3A",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T16:08:51.357784",
+    "timestamp": "2025-08-05T16:08:51.357793",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó ubicación: Cadena 105 de 2/2CE",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T16:08:47.117398",
+    "timestamp": "2025-08-05T16:08:47.117406",
+    "detalles": {}
+  },
+  {
+    "tipo": "mover_ubicacion",
+    "descripcion": "Movió 3x Cadena 105 de 3/3A → 2/2CE",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T16:08:35.088865",
+    "timestamp": "2025-08-05T16:08:35.088891",
+    "detalles": {}
+  },
+  {
+    "tipo": "asignar_ubicacion",
+    "descripcion": "Asignó ubicación: Cadena 105 → Almacén 3, Estantería 3A",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T16:08:15.402077",
+    "timestamp": "2025-08-05T16:08:15.402104",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó ubicación: 100B19 de 3/3B",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T15:58:27.214206",
+    "timestamp": "2025-08-05T15:58:27.214218",
+    "detalles": {}
+  },
+  {
+    "tipo": "mover_ubicacion",
+    "descripcion": "Movió 5x 100B19 de 2/2B → 3/3B",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T15:26:05.930528",
+    "timestamp": "2025-08-05T15:26:05.930562",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó ubicación: 100B21 de 1/12C",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T15:25:15.862906",
+    "timestamp": "2025-08-05T15:25:15.862916",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_ubicaciones",
+    "descripcion": "Exportó 15 ubicaciones a Excel: ubicaciones_20250805_145920.xlsx",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T14:59:21.142119",
+    "timestamp": "2025-08-05T14:59:21.142128",
+    "detalles": {}
+  },
+  {
+    "tipo": "asignar_ubicacion",
+    "descripcion": "Asignó ubicación: 100B19 → Almacén 2, Estantería 2B",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T14:48:17.736124",
+    "timestamp": "2025-08-05T14:48:17.736140",
+    "detalles": {}
+  },
+  {
+    "tipo": "asignar_ubicacion",
+    "descripcion": "Asignó ubicación: 100B21 → Almacén 1, Estantería 12C",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T14:36:00.283772",
+    "timestamp": "2025-08-05T14:36:00.283781",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T11:40:06.941575",
+    "timestamp": "2025-08-05T11:40:06.941600",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T11:26:14.900102",
+    "timestamp": "2025-08-05T11:26:14.900127",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-05T11:13:37.347499",
+    "timestamp": "2025-08-05T11:13:37.347509",
+    "detalles": {}
+  },
+  {
     "tipo": "importar_ubicaciones",
     "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
     "usuario": "Octavio",

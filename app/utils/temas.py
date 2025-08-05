@@ -71,7 +71,7 @@ class TemaAzul:
     SUCCESS_COLOR = "#27AE60"  # Verde equilibrado
     ERROR_COLOR = "#E74C3C"  # Rojo estándar
     WARNING_COLOR = "#F39C12"  # Naranja equilibrado
-    ICON_BTN_COLOR = "#2E86AB"  # Azul principal para iconos de botones
+    ICON_BTN_COLOR = "#FFFFFF"  # Azul principal para iconos de botones
     
     # Texto - Mejorado para legibilidad
     TEXT_COLOR = "#1B365D"  # Azul oscuro para texto principal
@@ -99,6 +99,12 @@ class TemaAzul:
     INPUT_BG = "#FFFFFF"
     INPUT_BORDER = "#B8E0F0"  # Azul claro para bordes de inputs
     INPUT_FOCUS = "#2E86AB"  # Azul principal para focus
+    
+    # Dropdown específico
+    DROPDOWN_BG = "#FFFFFF"  # Fondo blanco para dropdown
+    DROPDOWN_TEXT = "#1B365D"  # Texto azul oscuro para mejor contraste
+    DROPDOWN_SELECTED = "#E3F2FD"  # Azul muy claro para selección
+    DROPDOWN_BORDER = "#2E86AB"  # Borde azul principal
     
     # Efectos
     BORDER_RADIUS = 8  # Radio más moderado

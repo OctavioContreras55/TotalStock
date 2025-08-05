@@ -51,7 +51,7 @@ def crear_ejecutable_corregido():
         "--hidden-import=firebase_admin.credentials",
         "--hidden-import=firebase_admin.firestore",
         "--hidden-import=google.cloud.firestore",
-        "--hidden-import=pandas",
+        "--hidden-import=polars",
         "--hidden-import=openpyxl",
         "--hidden-import=PIL",
         "--hidden-import=PIL.Image",

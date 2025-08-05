@@ -1,6 +1,6 @@
 import os
 import json
-import pandas as pd
+import polars as pl
 import flet as ft
 import asyncio
 from datetime import datetime
@@ -106,9 +106,9 @@ async def exportar_productos_excel(productos, page):
                     'Fecha Registro': producto.get('fecha_registro', '')
                 })
             
-            # Crear DataFrame y guardar en Excel
-            df = pd.DataFrame(datos_excel)
-            df.to_excel(ruta_archivo, index=False, sheet_name='Productos')
+            # Crear DataFrame con Polars y guardar en Excel
+            df = pl.DataFrame(datos_excel)
+            df.write_excel(ruta_archivo, worksheet="Productos")
             
             # Registrar actividad en el historial
             gestor_historial = GestorHistorial()
@@ -565,7 +565,7 @@ async def exportar_ubicaciones(ubicaciones, page):
         label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
     )
     
-    # Dropdown para formato
+    # Dropdown para formato con mejor visibilidad
     dropdown_formato = ft.Dropdown(
         label="Formato de exportación",
         options=[
@@ -579,7 +579,8 @@ async def exportar_ubicaciones(ubicaciones, page):
         color=tema.TEXT_COLOR,
         border_color=tema.INPUT_BORDER,
         focused_border_color=tema.PRIMARY_COLOR,
-        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY),
+        text_style=ft.TextStyle(color=tema.TEXT_COLOR, size=14)  # Mejorar visibilidad del texto
     )
     
     # Remover None si PDF no está disponible
@@ -668,25 +669,28 @@ async def exportar_ubicaciones_excel_archivo(ubicaciones, ruta_destino, timestam
     nombre_archivo = f"ubicaciones_{timestamp}.xlsx"
     ruta_completa = os.path.join(ruta_destino, nombre_archivo)
     
-    # Preparar datos para pandas
+    # Preparar datos para Polars
     datos = []
     for ubicacion in ubicaciones:
         datos.append({
             "Modelo": ubicacion.get("modelo", ""),
-            "Nombre": ubicacion.get("nombre", ""),
             "Almacén": ubicacion.get("almacen", ""),
-            "Ubicación": ubicacion.get("ubicacion", ""),
-            "Cantidad": ubicacion.get("cantidad", 0)
+            "Estantería": ubicacion.get("estanteria", ""),
+            "Fecha Asignación": ubicacion.get("fecha_asignacion", ""),
+            "Observaciones": ubicacion.get("observaciones", "")
         })
     
-    # Crear DataFrame y exportar
-    df = pd.DataFrame(datos)
-    df.to_excel(ruta_completa, index=False)
+    # Crear DataFrame con Polars y exportar
+    df = pl.DataFrame(datos)
+    df.write_excel(ruta_completa, worksheet="Ubicaciones")
     
     # Registrar actividad
-    GestorHistorial.agregar_actividad(
-        f"Exportó {len(ubicaciones)} ubicaciones a Excel: {nombre_archivo}",
-        SesionManager.obtener_usuario_id() or "Sistema"
+    usuario_actual = SesionManager.obtener_usuario_actual()
+    gestor_historial = GestorHistorial()
+    await gestor_historial.agregar_actividad(
+        tipo="exportar_ubicaciones",
+        descripcion=f"Exportó {len(ubicaciones)} ubicaciones a Excel: {nombre_archivo}",
+        usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
     )
     
     page.open(ft.SnackBar(
@@ -713,9 +717,12 @@ async def exportar_ubicaciones_json_archivo(ubicaciones, ruta_destino, timestamp
         json.dump(datos_exportacion, f, ensure_ascii=False, indent=2)
     
     # Registrar actividad
-    GestorHistorial.agregar_actividad(
-        f"Exportó {len(ubicaciones)} ubicaciones a JSON: {nombre_archivo}",
-        SesionManager.obtener_usuario_id() or "Sistema"
+    usuario_actual = SesionManager.obtener_usuario_actual()
+    gestor_historial = GestorHistorial()
+    await gestor_historial.agregar_actividad(
+        tipo="exportar_ubicaciones",
+        descripcion=f"Exportó {len(ubicaciones)} ubicaciones a JSON: {nombre_archivo}",
+        usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
     )
     
     page.open(ft.SnackBar(
@@ -797,9 +804,12 @@ async def exportar_ubicaciones_pdf_archivo(ubicaciones, ruta_destino, timestamp,
     doc.build(elements)
     
     # Registrar actividad
-    GestorHistorial.agregar_actividad(
-        f"Exportó {len(ubicaciones)} ubicaciones a PDF: {nombre_archivo}",
-        SesionManager.obtener_usuario_id() or "Sistema"
+    usuario_actual = SesionManager.obtener_usuario_actual()
+    gestor_historial = GestorHistorial()
+    await gestor_historial.agregar_actividad(
+        tipo="exportar_ubicaciones",
+        descripcion=f"Exportó {len(ubicaciones)} ubicaciones a PDF: {nombre_archivo}",
+        usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
     )
     
     page.open(ft.SnackBar(
