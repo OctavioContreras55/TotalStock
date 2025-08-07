@@ -128,30 +128,41 @@ async def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_elimin
     
 async def on_eliminar_click(e, page, id_usuario, actualizar_tabla): #Se manda a llamar desde el botón de eliminar en la tabla de usuarios
     if await eliminar_usuario_firebase(id_usuario):
-        print("Usuario eliminado exitosamente.")
+        print("✅ Usuario eliminado exitosamente.")
         
-        # Actualizar dashboard dinámicamente - TEMPORALMENTE DESHABILITADO
-        # from app.utils.actualizador_dashboard import actualizar_dashboard_sincrono
-        # actualizar_dashboard_sincrono()
+        # Invalidar cache para futuras consultas
+        from app.utils.cache_firebase import cache_firebase
+        cache_firebase._cache_usuarios = []
+        cache_firebase._ultimo_update_usuarios = None
+        print("🗑️ Cache de usuarios invalidado")
         
-        print("✅ Usuario eliminado - actualización manual con botón refresh")
-        
+        # ACTUALIZACIÓN AUTOMÁTICA: Recargar tabla después de eliminar
         if actualizar_tabla:
-            await actualizar_tabla()
-        page.open(ft.SnackBar(ft.Text("Usuario eliminado exitosamente."), duration=2000))  # milisegundos, opcional
-        page.update()
+            print("⚡ Ejecutando actualización automática después de eliminar usuario")
+            try:
+                await actualizar_tabla(forzar_refresh=True)  # Forzar refresh desde Firebase
+            except Exception as e:
+                print(f"Error en actualización automática: {e}")
+        else:
+            print("⚠️ No hay callback de actualización disponible")
+            page.update()
+        
+        page.open(ft.SnackBar(ft.Text("Usuario eliminado exitosamente."), duration=2000))
     else:
-        print("Error al eliminar usuario.")
+        print("❌ Error al eliminar usuario.")
+        page.open(ft.SnackBar(ft.Text("Error al eliminar usuario."), duration=2000))
 
 
 def mensaje_confirmacion(page, id_usuario, actualizar_tabla): # Se manda a llamar desde el botón de eliminar en la tabla de usuarios
     tema = GestorTemas.obtener_tema()
     print(f"Se llamó a mensaje_confirmacion para ID: {id_usuario}")
 
-    def confirmar(e):
+    async def confirmar_async(e):
         page.close(dialog)
-        page.update()
-        asyncio.run(on_eliminar_click(e, page, id_usuario, actualizar_tabla))
+        await on_eliminar_click(e, page, id_usuario, actualizar_tabla)
+
+    def confirmar(e):
+        page.run_task(confirmar_async, e)
 
     def cerrar_dialogo(page):
         page.close(dialog)

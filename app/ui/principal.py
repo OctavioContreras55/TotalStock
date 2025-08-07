@@ -4,7 +4,7 @@ from app.ui_inventario import vista_inventario as vista_inventario_modular
 from app.ui_inicio import vista_inicio as vista_inicio_modular
 from app.funciones.sesiones import cerrar_sesion, SesionManager
 from app.ui_usuarios import vista_usuarios as vista_usuarios_modular
-from app.ui_categorias import categorias_mostrar
+from app.ui_categorias import vista_categorias
 from app.ui_ubicaciones import vista_ubicaciones as vista_ubicaciones_modular
 from app.ui_movimientos import vista_movimientos as vista_movimientos_modular
 from app.ui_reportes import vista_reportes as vista_reportes_modular
@@ -136,8 +136,8 @@ async def principal_view(page: ft.Page):
         await vista_inventario_modular(nombre_seccion, contenido, page)
         page.update()
     
-    def vista_categorias(nombre_seccion):
-        categorias_mostrar(nombre_seccion, contenido)
+    async def vista_categorias_nav(nombre_seccion):
+        await vista_categorias(nombre_seccion, contenido, page)
         page.update()
         
     def vista_ubicaciones(nombre_seccion):
@@ -265,7 +265,7 @@ async def principal_view(page: ft.Page):
                 ),
                 crear_menu_item(ft.Icons.HOME, "Inicio", "Inicio", lambda: vista_inicio("Inicio"), es_async=True),
                 crear_menu_item(ft.Icons.INVENTORY_2, "Inventario", "Inventario", lambda: vista_inventario("Inventario"), es_async=True),
-                crear_menu_item(ft.Icons.LABEL, "Categorías", "Categorías", lambda: vista_categorias("Categorías")),
+                crear_menu_item(ft.Icons.LABEL, "Categorías", "Categorías", lambda: vista_categorias_nav("Categorías"), es_async=True),
                 crear_menu_item(ft.Icons.LOCATION_ON, "Ubicaciones", "Ubicaciones", lambda: vista_ubicaciones("Ubicaciones"), es_async=True),
                 crear_menu_item(ft.Icons.SWAP_HORIZ, "Movimientos", "Movimientos", lambda: vista_movimientos("Movimientos"), es_async=True),
                 crear_menu_item(ft.Icons.INSERT_CHART, "Reportes", "Reportes", lambda: vista_reportes("Reportes"), es_async=True),

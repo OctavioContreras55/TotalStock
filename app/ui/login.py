@@ -2,6 +2,7 @@ import flet as ft
 from app.utils.temas import GestorTemas
 from conexiones.firebase import db
 from app.funciones.sesiones import SesionManager
+from app.utils.sesiones_unicas import gestor_sesiones
 from app.ui.barra_carga import progress_ring_pequeno
 import asyncio
 import os
@@ -36,6 +37,11 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
     ancho_tarjeta = min(400, ancho_ventana * 0.85)  # Máximo 400px o 85% del ancho
     ancho_boton = min(200, ancho_tarjeta * 0.6)     # Proporcionalmente al ancho de la tarjeta
     
+    # Función para manejar Enter en campos
+    async def manejar_enter(e):
+        """Ejecutar login cuando se presiona Enter"""
+        await validar_login(e)
+    
     #Campos de entrada para el usuario y la contraseña
     usuario_input = ft.TextField(
         label="Usuario", 
@@ -44,7 +50,8 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         color=tema.TEXT_COLOR,
         border_color=tema.INPUT_BORDER,
         focused_border_color=tema.PRIMARY_COLOR,
-        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY),
+        on_submit=lambda e: page.run_task(manejar_enter, e)  # Enter en usuario
     )
     contrasena_input = ft.TextField(
         label="Contraseña", 
@@ -54,7 +61,8 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         color=tema.TEXT_COLOR,
         border_color=tema.INPUT_BORDER,
         focused_border_color=tema.PRIMARY_COLOR,
-        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY),
+        on_submit=lambda e: page.run_task(manejar_enter, e)  # Enter en contraseña
     )
 
     # Configuración responsiva de ventana mínima
@@ -114,7 +122,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         Precarga datos en background después del login para optimizar navegación
         """
         try:
-            print("🚀 PRECARGA: Iniciando carga de datos en background...")
+            print("PRECARGA: Iniciando carga de datos en background...")
             from app.utils.cache_firebase import cache_firebase
             
             # Precargar productos sin mostrar loading (background)
@@ -179,7 +187,43 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             query = referencia_usuarios.where(filter=FieldFilter('nombre', '==', usuario)).where(filter=FieldFilter('contrasena', '==', contrasena)).limit(1).get()
             
             if query:
-                # Login exitoso - mostrar palomita de validación
+                # Credenciales válidas - verificar sesión única
+                print("🔐 Credenciales válidas, verificando sesión única...")
+                
+                # Verificar si el usuario ya tiene una sesión activa
+                resultado_sesion = gestor_sesiones.iniciar_sesion(usuario)
+                
+                if not resultado_sesion["exito"]:
+                    # Ya existe una sesión activa
+                    contenedor_progreso.content = ft.Container(
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.WARNING, color=ft.Colors.ORANGE, size=24),
+                            ft.Text("Sesión ya activa", color=ft.Colors.ORANGE, size=16, weight=ft.FontWeight.BOLD)
+                        ], alignment=ft.MainAxisAlignment.CENTER),
+                        height=60,
+                        width=300,
+                        alignment=ft.alignment.center
+                    )
+                    page.update()
+                    
+                    await asyncio.sleep(1)
+                    
+                    # Mostrar diálogo de sesión existente
+                    page.open(ft.AlertDialog(
+                        title=ft.Text("⚠️ Sesión ya activa", weight=ft.FontWeight.BOLD),
+                        content=ft.Text(resultado_sesion["mensaje"]),
+                        actions=[
+                            ft.TextButton("Cerrar", on_click=lambda e: page.close(e.control.parent))
+                        ]
+                    ))
+                    
+                    # Restaurar estado del botón
+                    contenedor_progreso.content = ft.Container(height=0)
+                    boton_elevated.disabled = False
+                    page.update()
+                    return
+                
+                # Sesión única OK - proceder con login exitoso
                 usuario_doc = query[0]
                 usuario_data = usuario_doc.to_dict()
                 usuario_data['firebase_id'] = usuario_doc.id
@@ -187,6 +231,12 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                 
                 # Establecer la sesión del usuario
                 SesionManager.establecer_usuario(usuario_data)
+                
+                # También actualizar variable global para limpieza automática
+                import run
+                if hasattr(run, '_usuario_actual_global'):
+                    run._usuario_actual_global = usuario_data.get('username', usuario)
+                    print(f"👤 Usuario global actualizado en login: {run._usuario_actual_global}")
                 
                 print(f"Login exitoso para el usuario: {usuario}")
                 

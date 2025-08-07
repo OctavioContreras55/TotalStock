@@ -93,20 +93,9 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
             
             # Invalidar cache para futuras consultas
             from app.utils.cache_firebase import cache_firebase
-            
-            # Actualizar el usuario específico en el cache
-            try:
-                usuarios_cache = cache_firebase._cache_usuarios
-                for i, usuario in enumerate(usuarios_cache):
-                    if usuario.get('firebase_id') == firebase_id:
-                        usuarios_cache[i] = usuario_data_actualizada
-                        break
-                print("⚡ Cache actualizado optimísticamente")
-            except Exception as e:
-                print(f"Error al actualizar cache optimísticamente: {e}")
-                # Si falla, invalidar completamente el cache
-                cache_firebase._cache_usuarios = []
-                cache_firebase._ultimo_update_usuarios = None
+            cache_firebase._cache_usuarios = []
+            cache_firebase._ultimo_update_usuarios = None
+            print("🗑️ Cache de usuarios invalidado después de editar")
             
             print("🔄 Preparando actualización silenciosa")
             
@@ -133,7 +122,7 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
             if actualizar_callback:
                 print("⚡ Ejecutando actualización automática después de editar usuario")
                 try:
-                    await actualizar_callback(True)  # Forzar refresh desde Firebase
+                    await actualizar_callback(forzar_refresh=True)  # Forzar refresh desde Firebase
                 except Exception as e:
                     print(f"Error en actualización automática: {e}")
                     page.update()

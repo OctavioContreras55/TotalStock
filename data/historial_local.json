@@ -1,5 +1,61 @@
 [
   {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'Prueba3' (Admin: No)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T12:58:49.588522",
+    "timestamp": "2025-08-07T12:58:49.588539",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'Diego' (Admin: No)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T11:41:46.170036",
+    "timestamp": "2025-08-07T11:41:46.170046",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: admin",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T11:41:30.945443",
+    "timestamp": "2025-08-07T11:41:30.945463",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'prueba233' (ID: 35DiAaF7DejCbRd3yHzb)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T11:41:26.604904",
+    "timestamp": "2025-08-07T11:41:26.604917",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuarios_masivo",
+    "descripcion": "Eliminó 2 usuarios masivamente",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T11:41:21.028538",
+    "timestamp": "2025-08-07T11:41:21.028575",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'prueba12' (Admin: No)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T11:41:09.507000",
+    "timestamp": "2025-08-07T11:41:09.507008",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'Prueba434' (Admin: No)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T11:31:21.523095",
+    "timestamp": "2025-08-07T11:31:21.523111",
+    "detalles": {}
+  },
+  {
     "tipo": "eliminar_usuario",
     "descripcion": "Eliminó usuario 'prueba4' (ID: D0K1IvkehAY9y63wAqv4)",
     "usuario": "Octavio",
@@ -741,62 +797,6 @@
     "usuario": "Octavio",
     "fecha": "2025-08-03T16:29:32.434936",
     "timestamp": "2025-08-03T16:29:32.434944",
-    "detalles": {}
-  },
-  {
-    "tipo": "editar_producto",
-    "descripcion": "Editó producto 'prueba2' (ID: 9cUwiYcreqyiG5XsMDBQ)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:28:24.339520",
-    "timestamp": "2025-08-03T16:28:24.339528",
-    "detalles": {}
-  },
-  {
-    "tipo": "exportar_productos",
-    "descripcion": "Exportó 267 productos a Excel (productos_20250803_161136.xlsx)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:11:36.763201",
-    "timestamp": "2025-08-03T16:11:36.763210",
-    "detalles": {}
-  },
-  {
-    "tipo": "exportar_productos",
-    "descripcion": "Exportó 2 productos a Excel (productos_20250803_161018.xlsx)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:10:18.718388",
-    "timestamp": "2025-08-03T16:10:18.718395",
-    "detalles": {}
-  },
-  {
-    "tipo": "editar_producto",
-    "descripcion": "Editó producto 'prueba' (ID: NkVl4BduO77IvP1EAtnc)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:09:42.827698",
-    "timestamp": "2025-08-03T16:09:42.827707",
-    "detalles": {}
-  },
-  {
-    "tipo": "crear_producto",
-    "descripcion": "Creó producto 'prueba' (Modelo: Prueba3)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:09:16.631293",
-    "timestamp": "2025-08-03T16:09:16.631299",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_producto",
-    "descripcion": "Eliminó producto 'prueba' (ID: xuLsyu1qijGjpnCEX5Sv)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:08:57.852071",
-    "timestamp": "2025-08-03T16:08:57.852079",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'prueba3' (ID: Wa7aqHqKza2SPYWSFLrm) - Archivos limpiados: 1",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:04:37.918350",
-    "timestamp": "2025-08-03T16:04:37.918359",
     "detalles": {}
   }
 ]

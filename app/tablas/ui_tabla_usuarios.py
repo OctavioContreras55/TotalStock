@@ -57,112 +57,174 @@ def _actualizar_boton_eliminar():
     if page_ref and boton_eliminar_ref:
         try:
             nueva_visibilidad = len(usuarios_seleccionados) > 0
-            if boton_eliminar_ref.visible != nueva_visibilidad:  # Solo actualizar si cambia
-                boton_eliminar_ref.visible = nueva_visibilidad
-                print(f"🔴 Botón eliminar actualizado: visible={nueva_visibilidad}, seleccionados={len(usuarios_seleccionados)}")
-                page_ref.update()
+            boton_eliminar_ref.visible = nueva_visibilidad
+            
+            # Actualizar el texto del botón con la cantidad
+            if len(usuarios_seleccionados) > 0:
+                boton_eliminar_ref.content.controls[1].value = f"Eliminar Selec. ({len(usuarios_seleccionados)})"
+            else:
+                boton_eliminar_ref.content.controls[1].value = "Eliminar Selec."
+            
+            print(f"🔴 Botón eliminar actualizado: visible={nueva_visibilidad}, seleccionados={len(usuarios_seleccionados)}")
+            # Solo actualizar el botón, no toda la página
+            boton_eliminar_ref.update()
         except Exception as e:
             print(f"❌ Error al actualizar botón eliminar: {e}")
+            # Fallback: actualizar toda la página
+            if page_ref:
+                page_ref.update()
     else:
         print("⚠️ Referencia al botón eliminar no encontrada")
 
 async def eliminar_usuarios_seleccionados(page, callback_actualizar=None):
     """Eliminar usuarios seleccionados"""
     global usuarios_seleccionados, actualizar_tabla_callback
+    tema = GestorTemas.obtener_tema()
+    
     if not usuarios_seleccionados:
+        page.open(ft.SnackBar(
+            content=ft.Text("⚠️ No hay usuarios seleccionados", color=tema.TEXT_COLOR),
+            bgcolor=tema.WARNING_COLOR
+        ))
         return
     
     # Usar el callback proporcionado o el global
     callback_a_usar = callback_actualizar or actualizar_tabla_callback
     
-    try:
-        # Crear diálogo de confirmación
-        texto_confirmacion = f"¿Estás seguro de que deseas eliminar {len(usuarios_seleccionados)} usuario(s) seleccionado(s)?"
+    # Diálogo de confirmación
+    def confirmar_eliminacion(e):
+        page.close(dialogo)
+        page.run_task(procesar_eliminacion)
+    
+    def cancelar_eliminacion(e):
+        page.close(dialogo)
+    
+    async def procesar_eliminacion():
+        # Mostrar progreso
+        mensaje_progreso = ft.AlertDialog(
+            title=ft.Text("Eliminando usuarios", color=tema.TEXT_COLOR),
+            bgcolor=tema.CARD_COLOR,
+            content=ft.Container(
+                content=ft.Row([
+                    ft.ProgressRing(width=18, height=18, stroke_width=2, color=tema.PRIMARY_COLOR),
+                    ft.Text(f"Eliminando {len(usuarios_seleccionados)} usuarios...", color=tema.TEXT_COLOR)
+                ], spacing=12, alignment=ft.MainAxisAlignment.CENTER),
+                padding=ft.Padding(15, 10, 15, 10),
+                width=320
+            ),
+            modal=True,
+        )
+        page.open(mensaje_progreso)
+        page.update()
         
-        async def confirmar_eliminacion(e):
-            try:
-                from conexiones.firebase import db
-                from app.utils.cache_firebase import cache_firebase
-                
-                # Eliminar usuarios de Firebase
-                usuarios_eliminados = len(usuarios_seleccionados)
-                ids_eliminados = list(usuarios_seleccionados.copy())  # Copia para uso posterior
-                
-                for usuario_id in usuarios_seleccionados:
+        # Delay mínimo para visibilidad
+        await asyncio.sleep(1.0)
+        
+        try:
+            from conexiones.firebase import db
+            from app.utils.cache_firebase import cache_firebase
+            from app.utils.historial import GestorHistorial
+            from app.funciones.sesiones import SesionManager
+            
+            # Eliminar usuarios de Firebase
+            usuarios_eliminados = len(usuarios_seleccionados)
+            ids_eliminados = list(usuarios_seleccionados.copy())
+            
+            for usuario_id in usuarios_seleccionados:
+                try:
                     doc_ref = db.collection('usuarios').document(usuario_id)
                     doc_ref.delete()
                     print(f"Usuario {usuario_id} eliminado de Firebase")
-                
-                # Invalidar cache para futuras consultas
-                cache_firebase._cache_usuarios = []
-                cache_firebase._ultimo_update_usuarios = None
-                print("🗑️ Cache invalidado para futuras consultas")
-                
-                # Limpiar selección
-                usuarios_seleccionados.clear()
-                
-                # Cerrar diálogo
-                page.close(dialogo)
-                
-                # Mostrar snackbar de éxito
-                page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text(f"{usuarios_eliminados} usuario(s) eliminado(s) exitosamente"),
-                        bgcolor=ft.Colors.GREEN_400
-                    )
-                )
-                
-                # ACTUALIZACIÓN AUTOMÁTICA: Recargar tabla después de eliminar
-                if callback_a_usar:
-                    print(f"⚡ Ejecutando actualización automática después de eliminar {usuarios_eliminados} usuarios")
-                    try:
-                        # Llamar al callback para actualizar la tabla
-                        await callback_a_usar(True)  # Forzar refresh desde Firebase
-                    except Exception as e:
-                        print(f"Error en actualización automática: {e}")
-                        page.update()
-                else:
-                    print("⚠️ No hay callback de actualización disponible")
-                    page.update()
-                
-            except Exception as e:
-                print(f"Error al eliminar usuarios: {e}")
-                page.close(dialogo)
-                page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text(f"Error al eliminar usuarios: {str(e)}"),
-                        bgcolor=ft.Colors.RED_400
-                    )
-                )
-        
-        def cancelar_eliminacion(e):
-            page.close(dialogo)
-        
-        dialogo = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Confirmar eliminación"),
-            content=ft.Text(texto_confirmacion),
-            actions=[
-                ft.TextButton("Cancelar", on_click=cancelar_eliminacion),
-                ft.TextButton("Eliminar", on_click=lambda e: page.run_task(confirmar_eliminacion, e)),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-        )
-        
-        page.open(dialogo)
-        
-    except Exception as e:
-        print(f"Error en eliminar_usuarios_seleccionados: {e}")
-        page.show_snack_bar(
-            ft.SnackBar(
-                content=ft.Text(f"Error: {str(e)}"),
-                bgcolor=ft.Colors.RED_400
+                    
+                    # Pequeño delay para progreso visible
+                    if usuarios_eliminados % 5 == 0:
+                        await asyncio.sleep(0.1)
+                except Exception as e:
+                    print(f"Error al eliminar usuario {usuario_id}: {e}")
+            
+            # Invalidar cache para futuras consultas
+            cache_firebase._cache_usuarios = []
+            cache_firebase._ultimo_update_usuarios = None
+            print("🗑️ Cache invalidado para futuras consultas")
+            
+            # Registrar en historial
+            gestor_historial = GestorHistorial()
+            usuario_actual = SesionManager.obtener_usuario_actual()
+            
+            await gestor_historial.agregar_actividad(
+                tipo="eliminar_usuarios_masivo",
+                descripcion=f"Eliminó {usuarios_eliminados} usuarios masivamente",
+                usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
             )
-        )
+            
+            # Limpiar selección
+            usuarios_seleccionados.clear()
+            
+            # Cerrar progreso
+            await asyncio.sleep(0.5)
+            page.close(mensaje_progreso)
+            
+            # Mostrar mensaje de éxito
+            mensaje_exito = ft.AlertDialog(
+                title=ft.Text(f"Usuarios eliminados: {usuarios_eliminados}", color=tema.TEXT_COLOR),
+                bgcolor=tema.CARD_COLOR,
+                actions=[ft.TextButton("Aceptar", 
+                                       style=ft.ButtonStyle(color=tema.PRIMARY_COLOR),
+                                       on_click=lambda e: page.close(mensaje_exito))],
+                modal=True,
+            )
+            page.open(mensaje_exito)
+            
+            # ACTUALIZACIÓN AUTOMÁTICA: Recargar tabla después de eliminar
+            if callback_a_usar:
+                print(f"⚡ Ejecutando actualización automática después de eliminar {usuarios_eliminados} usuarios")
+                try:
+                    await callback_a_usar(forzar_refresh=True)  # Forzar refresh desde Firebase
+                except Exception as e:
+                    print(f"Error en actualización automática: {e}")
+                    page.update()
+            else:
+                print("⚠️ No hay callback de actualización disponible")
+                page.update()
+                
+        except Exception as e:
+            print(f"Error en eliminación masiva: {e}")
+            page.close(mensaje_progreso)
+            page.open(ft.SnackBar(
+                content=ft.Text(f"Error: {str(e)}", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
+            ))
+    
+    dialogo = ft.AlertDialog(
+        title=ft.Text("Confirmar eliminación", color=tema.TEXT_COLOR, size=16),
+        bgcolor=tema.CARD_COLOR,
+        content=ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Icon(ft.Icons.WARNING, color=tema.WARNING_COLOR, size=18),
+                    ft.Text(f"¿Eliminar {len(usuarios_seleccionados)} usuarios?", 
+                           color=tema.TEXT_COLOR, size=13)
+                ], spacing=6),
+                ft.Text("Acción irreversible.", color=tema.TEXT_SECONDARY, size=10)
+            ], spacing=8),
+            padding=ft.Padding(8, 5, 8, 5),
+            width=240,
+            height=60
+        ),
+        actions=[
+            ft.TextButton("Cancelar", on_click=cancelar_eliminacion, 
+                         style=ft.ButtonStyle(color=tema.TEXT_SECONDARY)),
+            ft.ElevatedButton("Eliminar", on_click=confirmar_eliminacion,
+                            style=ft.ButtonStyle(bgcolor=tema.ERROR_COLOR, color=tema.TEXT_COLOR))
+        ],
+        modal=True,
+    )
+    
+    page.open(dialogo)
 
 def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
     """Mostrar tabla de usuarios con selección múltiple"""
-    global usuarios_seleccionados, checkbox_principal
+    global usuarios_seleccionados, checkbox_principal, tabla
     tema = GestorTemas.obtener_tema()
     
     # Configurar referencias globales
@@ -186,34 +248,32 @@ def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
         seleccionar_todas = e.control.value
         toggle_seleccion_todas(seleccionar_todas, usuarios)
         
-        # Forzar actualización del valor del checkbox principal
-        if 'checkbox_principal' in locals():
-            checkbox_principal.value = seleccionar_todas
+        # Actualizar todos los checkboxes individuales en la tabla
+        if 'tabla' in globals() and tabla and tabla.rows:
+            for fila in tabla.rows:
+                checkbox_individual = fila.cells[0].content.content
+                checkbox_individual.value = seleccionar_todas
         
         print(f"🔲 Checkbox principal cambiado a: {seleccionar_todas}, seleccionados: {len(usuarios_seleccionados)}")
         
-        # Actualizar la tabla completa para reflejar los cambios
-        if actualizar_tabla:
-            page.run_task(actualizar_tabla)
-        else:
-            page.update()
+        # Solo actualizar la página, NO reconstruir la tabla
+        if page_ref:
+            page_ref.update()
     
     # Función para manejar checkboxes individuales
     def on_checkbox_individual_changed(e, usuario_id):
         toggle_seleccion_usuario(usuario_id, e.control.value)
         
-        # Actualizar checkbox principal basado en la selección actual
+        # Actualizar estado del checkbox principal basado en la selección actual
         total_usuarios = len([u for u in usuarios if u.get('firebase_id') or u.get('id')])
         if len(usuarios_seleccionados) == 0:
             checkbox_principal.value = False
         elif len(usuarios_seleccionados) == total_usuarios:
             checkbox_principal.value = True
         else:
-            checkbox_principal.value = False
+            checkbox_principal.value = None  # Estado indeterminado
         
-        # Actualizar botón eliminar
-        _actualizar_boton_eliminar()
-        
+        # Solo actualizar la página, NO la tabla completa
         if page_ref:
             page_ref.update()
     
@@ -309,7 +369,7 @@ def mostrar_tabla_usuarios(page, usuarios, actualizar_tabla=None):
                                     ft.IconButton(
                                         ft.Icons.EDIT, 
                                         icon_color=tema.PRIMARY_COLOR, 
-                                        on_click=lambda e, uid=usuario.get('firebase_id', ''): editar_usuario(uid, page, lambda: page.run_task(actualizar_tabla) if actualizar_tabla else None),
+                                        on_click=lambda e, uid=usuario.get('firebase_id', ''): editar_usuario(uid, page, actualizar_tabla),
                                         tooltip="Editar usuario"
                                     ),
                                     crear_boton_eliminar(page, usuario.get('firebase_id', ''), actualizar_tabla),

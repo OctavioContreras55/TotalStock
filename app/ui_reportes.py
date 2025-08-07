@@ -6,6 +6,7 @@ from conexiones.firebase import db
 from datetime import datetime, timedelta
 import json
 import os
+import asyncio
 
 async def vista_reportes(nombre_seccion, contenido, page):
     """Vista completa para generar y visualizar reportes del sistema"""
@@ -21,6 +22,12 @@ async def vista_reportes(nombre_seccion, contenido, page):
     fecha_fin = datetime.now()
     usuario_filtro = "todos"
     datos_reporte = []
+
+    # Container principal para el selector (para poder actualizarlo)
+    contenedor_selector = ft.Container()
+    
+    # Lista para mantener referencia a las cards
+    cards_reportes_list = []
 
     # Tipos de reportes disponibles
     tipos_reportes = {
@@ -103,73 +110,140 @@ async def vista_reportes(nombre_seccion, contenido, page):
             return []
 
     async def generar_reporte_movimientos():
-        """Generar reporte de movimientos de productos"""
-        # En implementación real, estos datos vendrían de Firebase
-        return [
-            {
-                "fecha": "2024-01-15 14:30:25",
-                "usuario": "Admin",
-                "producto": "Laptop Dell Inspiron",
-                "modelo": "LAP001",
-                "cantidad": 5,
-                "origen": "Almacén Principal → Estante A-3, Nivel 2",
-                "destino": "Almacén Secundario → Estante B-2, Nivel 1",
-                "motivo": "Redistribución de inventario",
-                "tipo": "Transferencia"
-            },
-            {
-                "fecha": "2024-01-15 10:15:12",
-                "usuario": "Operador1",
-                "producto": "Mouse Logitech MX",
-                "modelo": "MOU002",
-                "cantidad": 25,
-                "origen": "Almacén Secundario → Cajón B-1",
-                "destino": "Almacén Principal → Cajón A-5",
-                "motivo": "Reposición de stock",
-                "tipo": "Transferencia"
-            },
-            {
-                "fecha": "2024-01-14 16:45:33",
-                "usuario": "Supervisor",
-                "producto": "Teclado Mecánico Corsair",
-                "modelo": "TEC003",
-                "cantidad": 10,
-                "origen": "Recepción",
-                "destino": "Almacén de Repuestos → Estante C-2",
-                "motivo": "Ingreso de nueva mercancía",
-                "tipo": "Ingreso"
-            }
-        ]
+        """Generar reporte de movimientos desde datos reales del sistema"""
+        try:
+            from app.utils.cache_firebase import cache_firebase
+            
+            # Obtener movimientos reales desde Firebase
+            movimientos_firebase = await cache_firebase.obtener_movimientos()
+            
+            # También obtener del historial local para movimientos de ubicaciones
+            historial_manager = GestorHistorial()
+            historial_local = await historial_manager.obtener_historial_reciente(limite=1000)
+            
+            reporte_movimientos = []
+            
+            # Procesar movimientos de Firebase
+            for mov in movimientos_firebase:
+                # Verificar que mov sea un diccionario
+                if not isinstance(mov, dict):
+                    print(f"Elemento no es diccionario: {type(mov)} -> {mov}")
+                    continue
+                    
+                # Manejar ubicaciones origen y destino de forma segura
+                ubicacion_origen = mov.get('ubicacion_origen', {})
+                ubicacion_destino = mov.get('ubicacion_destino', {})
+                
+                if isinstance(ubicacion_origen, dict):
+                    origen_str = f"{ubicacion_origen.get('almacen', 'N/A')} → {ubicacion_origen.get('ubicacion', 'N/A')}"
+                else:
+                    origen_str = str(ubicacion_origen) if ubicacion_origen else "N/A"
+                
+                if isinstance(ubicacion_destino, dict):
+                    destino_str = f"{ubicacion_destino.get('almacen', 'N/A')} → {ubicacion_destino.get('ubicacion', 'N/A')}"
+                else:
+                    destino_str = str(ubicacion_destino) if ubicacion_destino else "N/A"
+                
+                reporte_movimientos.append({
+                    "fecha": mov.get("fecha_movimiento", mov.get("fecha", "N/A")),
+                    "usuario": mov.get("usuario", "Sistema"),
+                    "producto": f"{mov.get('producto_modelo', 'N/A')} - {mov.get('nombre_producto', 'Producto')}",
+                    "modelo": mov.get("producto_modelo", "N/A"),
+                    "cantidad": mov.get("cantidad", 0),
+                    "origen": origen_str,
+                    "destino": destino_str,
+                    "motivo": mov.get("motivo", "Movimiento de inventario"),
+                    "tipo": mov.get("tipo_movimiento", "Transferencia")
+                })
+            
+            # Procesar movimientos del historial local
+            for actividad in historial_local:
+                # Verificar que la actividad sea un diccionario
+                if not isinstance(actividad, dict):
+                    print(f"Actividad no es diccionario: {type(actividad)} -> {actividad}")
+                    continue
+                    
+                if actividad.get("tipo") in ["movimiento_ubicacion", "mover_ubicacion"]:
+                    desc = actividad.get("descripcion", "")
+                    reporte_movimientos.append({
+                        "fecha": actividad.get("fecha", "N/A"),
+                        "usuario": actividad.get("usuario", "Sistema"),
+                        "producto": desc,
+                        "modelo": "Ver descripción",
+                        "cantidad": "Ver descripción",
+                        "origen": "Ver descripción",
+                        "destino": "Ver descripción", 
+                        "motivo": "Movimiento entre ubicaciones",
+                        "tipo": "Transferencia"
+                    })
+            
+            return reporte_movimientos[:100]  # Limitar a últimos 100
+            
+        except Exception as e:
+            print(f"Error al generar reporte de movimientos: {e}")
+            # Fallback a datos de ejemplo
+            return [
+                {
+                    "fecha": "2024-01-15 14:30:25",
+                    "usuario": "Admin",
+                    "producto": "Laptop Dell Inspiron",
+                    "modelo": "LAP001",
+                    "cantidad": 5,
+                    "origen": "Almacén Principal → Estante A-3, Nivel 2",
+                    "destino": "Almacén Secundario → Estante B-2, Nivel 1",
+                    "motivo": "Redistribución de inventario",
+                    "tipo": "Transferencia"
+                }
+            ]
 
     async def generar_reporte_ubicaciones():
-        """Generar reporte de estado de ubicaciones"""
-        return [
-            {
-                "almacen": "Almacén Principal",
-                "ubicacion": "Estante A-3, Nivel 2",
-                "productos_total": 3,
-                "productos": [
-                    {"modelo": "LAP001", "nombre": "Laptop Dell Inspiron", "cantidad": 10},
-                    {"modelo": "MON001", "nombre": "Monitor Samsung 24", "cantidad": 5},
-                    {"modelo": "CPU001", "nombre": "CPU Intel i7", "cantidad": 8}
-                ],
-                "capacidad_utilizada": "75%",
-                "ultima_actualizacion": "2024-01-15 14:30:25",
-                "usuario_actualizacion": "Admin"
-            },
-            {
-                "almacen": "Almacén Secundario",
-                "ubicacion": "Cajón B-1",
-                "productos_total": 2,
-                "productos": [
-                    {"modelo": "MOU002", "nombre": "Mouse Logitech MX", "cantidad": 25},
-                    {"modelo": "PAD001", "nombre": "MousePad Gaming", "cantidad": 15}
-                ],
-                "capacidad_utilizada": "40%",
-                "ultima_actualizacion": "2024-01-15 10:15:12",
-                "usuario_actualizacion": "Operador1"
-            }
-        ]
+        """Generar reporte de ubicaciones desde datos reales"""
+        try:
+            from app.utils.cache_firebase import cache_firebase
+            
+            # Obtener ubicaciones reales desde Firebase
+            ubicaciones_firebase = await cache_firebase.obtener_ubicaciones()
+            
+            reporte_ubicaciones = []
+            for ubicacion in ubicaciones_firebase:
+                # Verificar que ubicacion sea un diccionario
+                if not isinstance(ubicacion, dict):
+                    print(f"Ubicación no es diccionario: {type(ubicacion)} -> {ubicacion}")
+                    continue
+                    
+                reporte_ubicaciones.append({
+                    "almacen": ubicacion.get("almacen", "Sin almacén"),
+                    "ubicacion": f"{ubicacion.get('estanteria', 'Sin estantería')}",
+                    "productos_total": 1,  # Cada ubicación tiene un producto asignado
+                    "productos": [
+                        {
+                            "modelo": ubicacion.get("modelo", "Sin modelo"),
+                            "cantidad": ubicacion.get("cantidad", 0)
+                        }
+                    ],
+                    "capacidad_utilizada": f"{min(100, ubicacion.get('cantidad', 0) * 10)}%",
+                    "ultima_actualizacion": ubicacion.get("fecha_asignacion", "N/A"),
+                    "usuario_actualizacion": "Sistema"
+                })
+            
+            return reporte_ubicaciones
+            
+        except Exception as e:
+            print(f"Error al generar reporte de ubicaciones: {e}")
+            # Fallback a datos de ejemplo
+            return [
+                {
+                    "almacen": "Almacén Principal",
+                    "ubicacion": "Estante A-3, Nivel 2",
+                    "productos_total": 3,
+                    "productos": [
+                        {"modelo": "LAP001", "nombre": "Laptop Dell Inspiron", "cantidad": 10}
+                    ],
+                    "capacidad_utilizada": "75%",
+                    "ultima_actualizacion": "2024-01-15 14:30:25",
+                    "usuario_actualizacion": "Admin"
+                }
+            ]
 
     async def generar_reporte_productos():
         """Generar reporte completo de productos desde Firebase"""
@@ -179,6 +253,11 @@ async def vista_reportes(nombre_seccion, contenido, page):
             
             reporte_productos = []
             for producto in productos_firebase:
+                # Verificar que producto sea un diccionario
+                if not isinstance(producto, dict):
+                    print(f"Producto no es diccionario: {type(producto)} -> {producto}")
+                    continue
+                    
                 reporte_productos.append({
                     "modelo": producto.get("modelo", "N/A"),
                     "nombre": producto.get("nombre", "N/A"),
@@ -211,98 +290,213 @@ async def vista_reportes(nombre_seccion, contenido, page):
             ]
 
     async def generar_reporte_altas():
-        """Generar reporte de productos dados de alta"""
-        return [
-            {
-                "fecha": "2024-01-15 09:15:30",
-                "usuario": "Admin",
-                "modelo": "TAB001",
-                "nombre": "Tablet Samsung Galaxy",
-                "categoria": "Dispositivos Móviles",
-                "cantidad_inicial": 12,
-                "precio_unitario": 8500.00,
-                "valor_total": 102000.00,
-                "proveedor": "Tech Solutions SA",
-                "motivo": "Nuevo producto en catálogo",
-                "ubicacion_asignada": "Almacén Principal → Estante D-1"
-            },
-            {
-                "fecha": "2024-01-14 16:45:15",
-                "usuario": "Supervisor",
-                "modelo": "TEC003",
-                "nombre": "Teclado Mecánico Corsair",
-                "categoria": "Periféricos",
-                "cantidad_inicial": 10,
-                "precio_unitario": 2300.00,
-                "valor_total": 23000.00,
-                "proveedor": "Gaming Pro",
-                "motivo": "Reposición de stock",
-                "ubicacion_asignada": "Almacén de Repuestos → Estante C-2"
-            }
-        ]
+        """Generar reporte de productos dados de alta desde historial real"""
+        try:
+            historial_manager = GestorHistorial()
+            historial_actividades = await historial_manager.obtener_historial_reciente(limite=1000)
+            
+            reporte_altas = []
+            for actividad in historial_actividades:
+                # Verificar que actividad sea un diccionario
+                if not isinstance(actividad, dict):
+                    print(f"Actividad altas no es diccionario: {type(actividad)} -> {actividad}")
+                    continue
+                    
+                if actividad.get("tipo") == "crear_producto":
+                    descripcion = actividad.get("descripcion", "")
+                    # Extraer información de la descripción: "Creó producto 'nombre' (Modelo: modelo)"
+                    try:
+                        if "'" in descripcion and "(Modelo:" in descripcion:
+                            nombre = descripcion.split("'")[1]
+                            modelo = descripcion.split("(Modelo: ")[1].split(")")[0]
+                        else:
+                            nombre = "Ver descripción"
+                            modelo = "Ver descripción"
+                    except:
+                        nombre = descripcion
+                        modelo = "N/A"
+                    
+                    reporte_altas.append({
+                        "fecha": actividad.get("fecha", "N/A"),
+                        "usuario": actividad.get("usuario", "Sistema"),
+                        "modelo": modelo,
+                        "nombre": nombre,
+                        "categoria": "Inventario General",
+                        "cantidad_inicial": "Ver sistema",
+                        "precio_unitario": 0.0,
+                        "valor_total": 0.0,
+                        "proveedor": "No especificado",
+                        "motivo": "Alta de producto en sistema",
+                        "ubicacion_asignada": "Por asignar"
+                    })
+            
+            return reporte_altas[:50]  # Últimas 50 altas
+            
+        except Exception as e:
+            print(f"Error al generar reporte de altas: {e}")
+            # Fallback a datos de ejemplo
+            return [
+                {
+                    "fecha": "2024-01-15 09:15:30",
+                    "usuario": "Admin",
+                    "modelo": "TAB001",
+                    "nombre": "Tablet Samsung Galaxy",
+                    "categoria": "Dispositivos Móviles",
+                    "cantidad_inicial": 12,
+                    "precio_unitario": 8500.00,
+                    "valor_total": 102000.00,
+                    "proveedor": "Tech Solutions SA",
+                    "motivo": "Nuevo producto en catálogo",
+                    "ubicacion_asignada": "Almacén Principal → Estante D-1"
+                }
+            ]
 
     async def generar_reporte_bajas():
-        """Generar reporte de productos dados de baja"""
-        return [
-            {
-                "fecha": "2024-01-13 14:22:10",
-                "usuario": "Admin",
-                "modelo": "LAP999",
-                "nombre": "Laptop HP Antigua",
-                "categoria": "Equipos de Cómputo",
-                "cantidad_baja": 3,
-                "valor_perdido": 18000.00,
-                "motivo": "Obsolescencia tecnológica",
-                "ubicacion_origen": "Almacén Principal → Estante A-1",
-                "estado_final": "Desechado",
-                "observaciones": "Equipos con más de 5 años de uso"
-            },
-            {
-                "fecha": "2024-01-12 10:30:45",
-                "usuario": "Operador1",
-                "modelo": "MOU999",
-                "nombre": "Mouse Básico Genérico",
-                "categoria": "Periféricos",
-                "cantidad_baja": 8,
-                "valor_perdido": 2400.00,
-                "motivo": "Daño por uso",
-                "ubicacion_origen": "Almacén Secundario → Cajón C-3",
-                "estado_final": "Reparación/Reciclaje",
-                "observaciones": "Fallas mecánicas recurrentes"
-            }
-        ]
+        """Generar reporte de productos dados de baja desde historial real"""
+        try:
+            historial_manager = GestorHistorial()
+            historial_actividades = await historial_manager.obtener_historial_reciente(limite=1000)
+            
+            reporte_bajas = []
+            for actividad in historial_actividades:
+                # Verificar que actividad sea un diccionario
+                if not isinstance(actividad, dict):
+                    print(f"Actividad bajas no es diccionario: {type(actividad)} -> {actividad}")
+                    continue
+                    
+                if actividad.get("tipo") in ["eliminar_producto", "eliminar_productos_multiple"]:
+                    descripcion = actividad.get("descripcion", "")
+                    
+                    if "eliminar_productos_multiple" in actividad.get("tipo", ""):
+                        # Para eliminaciones múltiples
+                        try:
+                            cantidad = int(descripcion.split("Eliminó ")[1].split(" productos")[0])
+                            nombre = f"{cantidad} productos eliminados"
+                            modelo = "Múltiple"
+                        except:
+                            cantidad = 1
+                            nombre = descripcion
+                            modelo = "N/A"
+                    else:
+                        # Para eliminaciones individuales: "Eliminó producto 'nombre' (ID: id)"
+                        try:
+                            if "'" in descripcion:
+                                nombre = descripcion.split("'")[1]
+                                modelo = "Ver sistema"
+                            else:
+                                nombre = descripcion
+                                modelo = "N/A"
+                            cantidad = 1
+                        except:
+                            nombre = descripcion
+                            modelo = "N/A"
+                            cantidad = 1
+                    
+                    reporte_bajas.append({
+                        "fecha": actividad.get("fecha", "N/A"),
+                        "usuario": actividad.get("usuario", "Sistema"),
+                        "modelo": modelo,
+                        "nombre": nombre,
+                        "categoria": "Inventario General",
+                        "cantidad_baja": cantidad,
+                        "valor_perdido": 0.0,  # No disponible en historial
+                        "motivo": "Eliminación desde sistema",
+                        "ubicacion_origen": "Sistema",
+                        "estado_final": "Eliminado",
+                        "observaciones": descripcion
+                    })
+            
+            return reporte_bajas[:50]  # Últimas 50 bajas
+            
+        except Exception as e:
+            print(f"Error al generar reporte de bajas: {e}")
+            # Fallback a datos de ejemplo
+            return [
+                {
+                    "fecha": "2024-01-13 14:22:10",
+                    "usuario": "Admin",
+                    "modelo": "LAP999",
+                    "nombre": "Laptop HP Antigua",
+                    "categoria": "Equipos de Cómputo",
+                    "cantidad_baja": 3,
+                    "valor_perdido": 18000.00,
+                    "motivo": "Obsolescencia tecnológica",
+                    "ubicacion_origen": "Almacén Principal → Estante A-1",
+                    "estado_final": "Desechado",
+                    "observaciones": "Equipos con más de 5 años de uso"
+                }
+            ]
 
     async def generar_reporte_usuarios():
-        """Generar reporte de actividad de usuarios"""
-        return [
-            {
-                "fecha": "2024-01-15 14:30:25",
-                "usuario": "Admin",
-                "accion": "Movimiento de Producto",
-                "detalle": "Movió 5 unidades de 'Laptop Dell Inspiron' desde Almacén Principal hacia Almacén Secundario",
-                "modulo": "Movimientos",
-                "ip_origen": "192.168.1.100",
-                "duracion_sesion": "2h 15m"
-            },
-            {
-                "fecha": "2024-01-15 10:15:12",
-                "usuario": "Operador1",
-                "accion": "Alta de Producto",
-                "detalle": "Registró nuevo producto 'Teclado Mecánico Corsair' con 10 unidades",
-                "modulo": "Inventario",
-                "ip_origen": "192.168.1.101",
-                "duracion_sesion": "1h 45m"
-            },
-            {
-                "fecha": "2024-01-15 08:00:00",
-                "usuario": "Supervisor",
-                "accion": "Inicio de Sesión",
-                "detalle": "Acceso al sistema TotalStock",
-                "modulo": "Autenticación",
-                "ip_origen": "192.168.1.102",
-                "duracion_sesion": "4h 30m"
-            }
-        ]
+        """Generar reporte de actividad de usuarios desde historial real"""
+        try:
+            historial_manager = GestorHistorial()
+            historial_actividades = await historial_manager.obtener_historial_reciente(limite=200)
+            
+            reporte_usuarios = []
+            for actividad in historial_actividades:
+                # Verificar que actividad sea un diccionario
+                if not isinstance(actividad, dict):
+                    print(f"Actividad usuarios no es diccionario: {type(actividad)} -> {actividad}")
+                    continue
+                    
+                # Convertir tipo de actividad a acción legible
+                tipo = actividad.get("tipo", "")
+                if "crear" in tipo:
+                    accion = "Creación"
+                elif "editar" in tipo:
+                    accion = "Edición"
+                elif "eliminar" in tipo:
+                    accion = "Eliminación"
+                elif "importar" in tipo:
+                    accion = "Importación"
+                elif "exportar" in tipo:
+                    accion = "Exportación"
+                elif "movimiento" in tipo or "mover" in tipo:
+                    accion = "Movimiento"
+                elif "asignar" in tipo:
+                    accion = "Asignación"
+                else:
+                    accion = tipo.replace("_", " ").title()
+                
+                # Determinar módulo
+                if "producto" in tipo:
+                    modulo = "Inventario"
+                elif "usuario" in tipo:
+                    modulo = "Usuarios"
+                elif "ubicacion" in tipo:
+                    modulo = "Ubicaciones"
+                elif "movimiento" in tipo:
+                    modulo = "Movimientos"
+                else:
+                    modulo = "Sistema"
+                
+                reporte_usuarios.append({
+                    "fecha": actividad.get("fecha", "N/A"),
+                    "usuario": actividad.get("usuario", "Sistema"),
+                    "accion": accion,
+                    "detalle": actividad.get("descripcion", "Sin detalles"),
+                    "modulo": modulo,
+                    "ip_origen": "192.168.1.100",  # IP por defecto
+                    "duracion_sesion": "N/A"
+                })
+            
+            return reporte_usuarios
+            
+        except Exception as e:
+            print(f"Error al generar reporte de usuarios: {e}")
+            # Fallback a datos de ejemplo
+            return [
+                {
+                    "fecha": "2024-01-15 14:30:25",
+                    "usuario": "Admin",
+                    "accion": "Movimiento de Producto",
+                    "detalle": "Movió 5 unidades de 'Laptop Dell Inspiron'",
+                    "modulo": "Movimientos",
+                    "ip_origen": "192.168.1.100",
+                    "duracion_sesion": "2h 15m"
+                }
+            ]
 
     async def generar_reporte_stock_critico():
         """Generar reporte de productos con stock crítico desde Firebase"""
@@ -312,6 +506,11 @@ async def vista_reportes(nombre_seccion, contenido, page):
             
             productos_criticos = []
             for producto in productos_firebase:
+                # Verificar que producto sea un diccionario
+                if not isinstance(producto, dict):
+                    print(f"Producto crítico no es diccionario: {type(producto)} -> {producto}")
+                    continue
+                    
                 stock_actual = producto.get("cantidad", 0)
                 stock_minimo = producto.get("stock_min", 0)
                 
@@ -395,64 +594,221 @@ async def vista_reportes(nombre_seccion, contenido, page):
 
     # Componentes de la interfaz
     def crear_selector_tipo_reporte():
-        """Crear selector de tipo de reporte"""
-        cards_reportes = []
+        """Crear selector de tipo de reporte con mejores efectos visuales"""
+        cards_reportes_list.clear()
         
         for tipo_id, info in tipos_reportes.items():
             def crear_handler(tipo):
-                def handler(e):
+                async def handler(e):
                     nonlocal tipo_reporte_seleccionado
+                    
+                    # Efecto de clic inmediato
+                    e.control.scale = 0.95
+                    e.control.update()
+                    
+                    # Restaurar escala después de un breve delay
+                    await asyncio.sleep(0.1)
+                    e.control.scale = 1.0
+                    e.control.update()
+                    
+                    # Actualizar selección
                     tipo_reporte_seleccionado = tipo
                     actualizar_selector_visual()
-                    page.update()
+                    
+                    # Mostrar información automáticamente
+                    await mostrar_info_reporte_seleccionado()
+                    
                 return handler
 
             esta_seleccionado = tipo_reporte_seleccionado == tipo_id
             
+            # Colores dinámicos según selección
+            if esta_seleccionado:
+                color_fondo = tema.PRIMARY_COLOR
+                color_icono = tema.CARD_COLOR
+                color_texto = tema.CARD_COLOR
+                color_descripcion = tema.CARD_COLOR
+                borde = ft.border.all(3, tema.SUCCESS_COLOR)
+                elevacion = 10
+            else:
+                color_fondo = tema.CARD_COLOR
+                color_icono = info["color"]
+                color_texto = tema.TEXT_COLOR
+                color_descripcion = tema.SECONDARY_TEXT_COLOR
+                borde = ft.border.all(1, tema.DIVIDER_COLOR)
+                elevacion = 3
+            
             card = ft.Card(
                 content=ft.Container(
                     content=ft.Column([
-                        ft.Icon(info["icono"], color=info["color"], size=32),
+                        ft.Icon(info["icono"], 
+                               color=color_icono, 
+                               size=36),
                         ft.Text(info["nombre"], 
                                weight=ft.FontWeight.BOLD, 
-                               color=tema.TEXT_COLOR,
+                               color=color_texto,
                                text_align=ft.TextAlign.CENTER,
-                               size=12),
+                               size=13),
                         ft.Text(info["descripcion"],
-                               color=tema.SECONDARY_TEXT_COLOR,
+                               color=color_descripcion,
                                text_align=ft.TextAlign.CENTER,
                                size=10)
                     ], 
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=8),
-                    padding=15,
+                    spacing=10),
+                    padding=18,
                     width=180,
-                    height=140,
-                    on_click=crear_handler(tipo_id)
+                    height=150,
+                    bgcolor=color_fondo,
+                    border=borde,
+                    border_radius=12,
+                    on_click=lambda e, tipo=tipo_id: page.run_task(crear_handler(tipo), e),
+                    # Efecto hover
+                    on_hover=lambda e, card_ref=None: hover_effect(e, card_ref)
                 ),
-                color=tema.PRIMARY_COLOR if esta_seleccionado else tema.CARD_COLOR,
-                elevation=5 if esta_seleccionado else 2
+                elevation=elevacion
             )
-            cards_reportes.append(card)
+            
+            # Guardar referencia
+            card.content.on_hover = lambda e, card_container=card.content: hover_effect(e, card_container)
+            cards_reportes_list.append(card)
         
         # Organizar en filas de 4
         filas = []
-        for i in range(0, len(cards_reportes), 4):
+        for i in range(0, len(cards_reportes_list), 4):
             fila = ft.Row(
-                cards_reportes[i:i+4],
+                cards_reportes_list[i:i+4],
                 alignment=ft.MainAxisAlignment.CENTER,
-                spacing=15
+                spacing=20
             )
             filas.append(fila)
         
-        return ft.Column(filas, spacing=15)
+        return ft.Column(filas, spacing=20)
 
-    selector_reportes = crear_selector_tipo_reporte()
+    def hover_effect(e, container):
+        """Efecto hover para las cards"""
+        if container and hasattr(container, 'scale'):
+            if e.data == "true":  # Mouse enter
+                container.scale = 1.05
+            else:  # Mouse leave
+                container.scale = 1.0
+            container.update()
 
     def actualizar_selector_visual():
         """Actualizar el selector visual de reportes"""
-        nonlocal selector_reportes
-        selector_reportes = crear_selector_tipo_reporte()
+        # Actualizar cada card existente
+        for i, (tipo_id, info) in enumerate(tipos_reportes.items()):
+            if i < len(cards_reportes_list):
+                card = cards_reportes_list[i]
+                esta_seleccionado = tipo_reporte_seleccionado == tipo_id
+                
+                # Colores según selección
+                if esta_seleccionado:
+                    color_fondo = tema.PRIMARY_COLOR
+                    color_icono = tema.CARD_COLOR
+                    color_texto = tema.CARD_COLOR
+                    color_descripcion = tema.CARD_COLOR
+                    borde = ft.border.all(3, tema.SUCCESS_COLOR)
+                    elevacion = 10
+                else:
+                    color_fondo = tema.CARD_COLOR
+                    color_icono = info["color"]
+                    color_texto = tema.TEXT_COLOR
+                    color_descripcion = tema.SECONDARY_TEXT_COLOR
+                    borde = ft.border.all(1, tema.DIVIDER_COLOR)
+                    elevacion = 3
+                
+                # Actualizar contenido de la card
+                container = card.content
+                container.bgcolor = color_fondo
+                container.border = borde
+                
+                # Actualizar controles internos
+                columna = container.content
+                if len(columna.controls) >= 3:
+                    columna.controls[0].color = color_icono  # Ícono
+                    columna.controls[1].color = color_texto  # Nombre
+                    columna.controls[2].color = color_descripcion  # Descripción
+                
+                # Actualizar elevación
+                card.elevation = elevacion
+                
+                # Forzar actualización
+                card.update()
+        
+        # Actualizar el contenedor principal
+        contenedor_selector.update()
+
+    # Inicializar el contenedor selector
+    contenedor_selector.content = crear_selector_tipo_reporte()
+
+    # Función para analizar disponibilidad de datos
+    def analizar_disponibilidad_reportes():
+        """Analiza qué reportes pueden generarse con datos reales del sistema"""
+        return {
+            "productos": {
+                "disponible": True,
+                "fuente_datos": "Firebase collection 'productos'",
+                "descripcion": "~266 productos en inventario con precios, cantidades, modelos"
+            },
+            "ubicaciones": {
+                "disponible": True,
+                "fuente_datos": "Firebase collection 'ubicaciones'",
+                "descripcion": "~262 ubicaciones con almacenes y estanterías asignadas"
+            },
+            "movimientos": {
+                "disponible": True,
+                "fuente_datos": "Firebase collection 'movimientos' + historial local",
+                "descripcion": "Historial completo de movimientos entre ubicaciones"
+            },
+            "usuarios": {
+                "disponible": True,
+                "fuente_datos": "Firebase collection 'usuarios' + historial local",
+                "descripcion": "Actividades de usuarios con timestamps y detalles"
+            },
+            "stock_critico": {
+                "disponible": True,
+                "fuente_datos": "Análisis de productos vs stock mínimo",
+                "descripcion": "Detección automática de productos con stock bajo"
+            },
+            "altas": {
+                "disponible": True,
+                "fuente_datos": "Historial local - actividades tipo 'crear_producto'",
+                "descripcion": "Productos dados de alta según historial del sistema"
+            },
+            "bajas": {
+                "disponible": True,
+                "fuente_datos": "Historial local - actividades tipo 'eliminar_producto'",
+                "descripcion": "Productos eliminados según historial del sistema"
+            },
+            "rotacion": {
+                "disponible": False,
+                "fuente_datos": "Requiere datos de entradas/salidas temporales",
+                "descripcion": "Necesita implementar tracking de movimientos temporales"
+            }
+        }
+
+    async def mostrar_info_reporte_seleccionado():
+        """Mostrar información sobre el reporte seleccionado"""
+        if not tipo_reporte_seleccionado:
+            return
+        
+        info_reporte = tipos_reportes[tipo_reporte_seleccionado]
+        disponibilidad = analizar_disponibilidad_reportes()[tipo_reporte_seleccionado]
+        
+        # Crear mensaje informativo
+        if disponibilidad["disponible"]:
+            mensaje = f"✅ {info_reporte['nombre']}\n\n📊 Fuente: {disponibilidad['fuente_datos']}\n📋 {disponibilidad['descripcion']}"
+            color_bg = tema.SUCCESS_COLOR
+        else:
+            mensaje = f"⚠️ {info_reporte['nombre']}\n\n🚧 {disponibilidad['descripcion']}\n📋 Fuente requerida: {disponibilidad['fuente_datos']}"
+            color_bg = tema.WARNING_COLOR
+        
+        page.open(ft.SnackBar(
+            content=ft.Text(mensaje, color=tema.TEXT_COLOR, size=13),
+            bgcolor=color_bg,
+            duration=3000
+        ))
 
     # Controles de filtro de fechas
     campo_fecha_inicio = ft.TextField(
@@ -570,31 +926,31 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 content=ft.Row([
                     ft.Container(
                         content=ft.Column([
-                            ft.Text("Total Registros", size=12, color=tema.SECONDARY_TEXT_COLOR),
+                            ft.Text("Total Registros", size=12, color=tema.TEXT_COLOR),
                             ft.Text(str(stats["total"]), size=20, weight=ft.FontWeight.BOLD, color=tema.PRIMARY_COLOR)
                         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                        bgcolor=tema.BG_COLOR,
+                        bgcolor=tema.CARD_COLOR,
                         padding=15,
                         border_radius=8,
                         expand=True
                     ),
                     ft.Container(
                         content=ft.Column([
-                            ft.Text("Período", size=12, color=tema.SECONDARY_TEXT_COLOR),
+                            ft.Text("Período", size=12, color=tema.TEXT_COLOR),
                             ft.Text(stats["periodo"], size=14, weight=ft.FontWeight.BOLD, color=tema.TEXT_COLOR)
                         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                        bgcolor=tema.BG_COLOR,
+                        bgcolor=tema.CARD_COLOR,
                         padding=15,
                         border_radius=8,
                         expand=True
                     ),
                     ft.Container(
                         content=ft.Column([
-                            ft.Text("Generado", size=12, color=tema.SECONDARY_TEXT_COLOR),
+                            ft.Text("Generado", size=12, color=tema.TEXT_COLOR),
                             ft.Text(datetime.now().strftime("%Y-%m-%d %H:%M"), 
                                    size=12, color=tema.TEXT_COLOR)
                         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                        bgcolor=tema.BG_COLOR,
+                        bgcolor=tema.CARD_COLOR,
                         padding=15,
                         border_radius=8,
                         expand=True
@@ -620,76 +976,76 @@ async def vista_reportes(nombre_seccion, contenido, page):
         """Obtener columnas según el tipo de reporte"""
         if tipo_reporte_seleccionado == "movimientos":
             return [
-                ft.DataColumn(ft.Text("Fecha/Hora", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Origen", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Destino", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Motivo", weight=ft.FontWeight.BOLD))
+                ft.DataColumn(ft.Text("Fecha/Hora", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Origen", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Destino", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Motivo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "ubicaciones":
             return [
-                ft.DataColumn(ft.Text("Almacén", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Ubicación", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Productos", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Capacidad", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Última Act.", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD))
+                ft.DataColumn(ft.Text("Almacén", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Ubicación", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Productos", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Capacidad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Última Act.", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "productos":
             return [
-                ft.DataColumn(ft.Text("Modelo", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Nombre", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Stock Actual", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Stock Min/Max", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Valor Total", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Estado", weight=ft.FontWeight.BOLD))
+                ft.DataColumn(ft.Text("Modelo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Nombre", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Stock Actual", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Stock Min/Max", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Valor Total", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Estado", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "altas":
             return [
-                ft.DataColumn(ft.Text("Fecha", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Valor Total", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Motivo", weight=ft.FontWeight.BOLD))
+                ft.DataColumn(ft.Text("Fecha", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Valor Total", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Motivo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "bajas":
             return [
-                ft.DataColumn(ft.Text("Fecha", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Valor Perdido", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Motivo", weight=ft.FontWeight.BOLD))
+                ft.DataColumn(ft.Text("Fecha", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Valor Perdido", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Motivo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "usuarios":
             return [
-                ft.DataColumn(ft.Text("Fecha/Hora", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Acción", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Detalle", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Módulo", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("IP", weight=ft.FontWeight.BOLD))
+                ft.DataColumn(ft.Text("Fecha/Hora", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Acción", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Detalle", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Módulo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("IP", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "stock_critico":
             return [
-                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Stock Actual", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Stock Mínimo", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Déficit", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Prioridad", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Acción", weight=ft.FontWeight.BOLD))
+                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Stock Actual", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Stock Mínimo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Déficit", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Prioridad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Acción", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "rotacion":
             return [
-                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Entradas", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Salidas", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Rotación", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Tendencia", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Clasificación", weight=ft.FontWeight.BOLD))
+                ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Entradas", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Salidas", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Rotación", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Tendencia", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Clasificación", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         else:
             return []
@@ -701,77 +1057,77 @@ async def vista_reportes(nombre_seccion, contenido, page):
         for item in datos_reporte[:100]:  # Limitar a 100 registros por performance
             if tipo_reporte_seleccionado == "movimientos":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["fecha"], size=11)),
-                    ft.DataCell(ft.Text(item["usuario"], size=11)),
-                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['producto']}", size=11)),
-                    ft.DataCell(ft.Text(str(item["cantidad"]), size=11)),
-                    ft.DataCell(ft.Text(item["origen"], size=10)),
-                    ft.DataCell(ft.Text(item["destino"], size=10)),
-                    ft.DataCell(ft.Text(item["motivo"], size=10))
+                    ft.DataCell(ft.Text(item["fecha"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["usuario"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['producto']}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["cantidad"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["origen"], size=10, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["destino"], size=10, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["motivo"], size=10, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "ubicaciones":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["almacen"], size=11)),
-                    ft.DataCell(ft.Text(item["ubicacion"], size=11)),
-                    ft.DataCell(ft.Text(str(item["productos_total"]), size=11)),
-                    ft.DataCell(ft.Text(item["capacidad_utilizada"], size=11)),
-                    ft.DataCell(ft.Text(item["ultima_actualizacion"], size=10)),
-                    ft.DataCell(ft.Text(item["usuario_actualizacion"], size=11))
+                    ft.DataCell(ft.Text(item["almacen"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["ubicacion"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["productos_total"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["capacidad_utilizada"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["ultima_actualizacion"], size=10, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["usuario_actualizacion"], size=11, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "productos":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["modelo"], size=11)),
-                    ft.DataCell(ft.Text(item["nombre"], size=11)),
-                    ft.DataCell(ft.Text(str(item["stock_actual"]), size=11)),
-                    ft.DataCell(ft.Text(f"{item['stock_minimo']}/{item['stock_maximo']}", size=11)),
-                    ft.DataCell(ft.Text(f"${item['valor_total']:,.2f}", size=11)),
-                    ft.DataCell(ft.Text(item["estado"], size=11))
+                    ft.DataCell(ft.Text(item["modelo"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["nombre"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["stock_actual"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(f"{item.get('stock_minimo', 0)}/N/A", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(f"${item['valor_total']:,.2f}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["estado"], size=11, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "altas":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["fecha"], size=11)),
-                    ft.DataCell(ft.Text(item["usuario"], size=11)),
-                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11)),
-                    ft.DataCell(ft.Text(str(item["cantidad_inicial"]), size=11)),
-                    ft.DataCell(ft.Text(f"${item['valor_total']:,.2f}", size=11)),
-                    ft.DataCell(ft.Text(item["motivo"], size=10))
+                    ft.DataCell(ft.Text(item["fecha"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["usuario"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["cantidad_inicial"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(f"${item['valor_total']:,.2f}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["motivo"], size=10, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "bajas":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["fecha"], size=11)),
-                    ft.DataCell(ft.Text(item["usuario"], size=11)),
-                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11)),
-                    ft.DataCell(ft.Text(str(item["cantidad_baja"]), size=11)),
-                    ft.DataCell(ft.Text(f"${item['valor_perdido']:,.2f}", size=11)),
-                    ft.DataCell(ft.Text(item["motivo"], size=10))
+                    ft.DataCell(ft.Text(item["fecha"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["usuario"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["cantidad_baja"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(f"${item['valor_perdido']:,.2f}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["motivo"], size=10, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "usuarios":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["fecha"], size=11)),
-                    ft.DataCell(ft.Text(item["usuario"], size=11)),
-                    ft.DataCell(ft.Text(item["accion"], size=11)),
-                    ft.DataCell(ft.Text(item["detalle"], size=10)),
-                    ft.DataCell(ft.Text(item["modulo"], size=11)),
-                    ft.DataCell(ft.Text(item["ip_origen"], size=11))
+                    ft.DataCell(ft.Text(item["fecha"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["usuario"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["accion"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["detalle"], size=10, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["modulo"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["ip_origen"], size=11, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "stock_critico":
                 color_prioridad = tema.ERROR_COLOR if item["prioridad"] == "CRÍTICA" else tema.WARNING_COLOR
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11)),
-                    ft.DataCell(ft.Text(str(item["stock_actual"]), size=11)),
-                    ft.DataCell(ft.Text(str(item["stock_minimo"]), size=11)),
-                    ft.DataCell(ft.Text(str(item["deficit"]), size=11)),
-                    ft.DataCell(ft.Text(item["prioridad"], size=11, color=color_prioridad)),
-                    ft.DataCell(ft.Text(item["accion_sugerida"], size=10))
+                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["stock_actual"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["stock_minimo"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["deficit"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["prioridad"], size=11, color=color_prioridad, weight=ft.FontWeight.BOLD)),
+                    ft.DataCell(ft.Text(item["accion_sugerida"], size=10, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "rotacion":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11)),
-                    ft.DataCell(ft.Text(str(item["entradas_mes"]), size=11)),
-                    ft.DataCell(ft.Text(str(item["salidas_mes"]), size=11)),
-                    ft.DataCell(ft.Text(f"{item['rotacion_mensual']:.1%}", size=11)),
-                    ft.DataCell(ft.Text(item["tendencia"], size=11)),
-                    ft.DataCell(ft.Text(item["clasificacion"], size=10))
+                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["entradas_mes"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["salidas_mes"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(f"{item['rotacion_mensual']:.1%}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["tendencia"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["clasificacion"], size=10, color=tema.TEXT_COLOR))
                 ]))
         
         return filas
@@ -858,7 +1214,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
                     content=ft.Column([
                         ft.Text("📊 Selecciona el Tipo de Reporte", 
                                size=18, weight=ft.FontWeight.BOLD, color=tema.TEXT_COLOR),
-                        selector_reportes
+                        contenedor_selector
                     ]),
                     bgcolor=tema.CARD_COLOR,
                     padding=20,

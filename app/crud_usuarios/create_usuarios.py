@@ -119,6 +119,12 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
         )
         
         if resultado and isinstance(resultado, dict):
+            # Invalidar cache para asegurar datos frescos
+            from app.utils.cache_firebase import cache_firebase
+            cache_firebase._cache_usuarios = []
+            cache_firebase._ultimo_update_usuarios = None
+            print("🗑️ Cache de usuarios invalidado después de crear")
+            
             # Registrar actividad en el historial
             gestor_historial = GestorHistorial()
             usuario_actual = SesionManager.obtener_usuario_actual()
@@ -158,7 +164,7 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                 if callback_actualizar_tabla:
                     print("⚡ Ejecutando actualización automática después de crear usuario")
                     try:
-                        await callback_actualizar_tabla(True)  # Forzar refresh desde Firebase
+                        await callback_actualizar_tabla(forzar_refresh=True)  # Forzar refresh desde Firebase
                     except Exception as e:
                         print(f"Error en actualización automática: {e}")
                 else:

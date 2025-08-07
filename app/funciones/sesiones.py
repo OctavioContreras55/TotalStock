@@ -19,6 +19,11 @@ class SesionManager:
         return _usuario_actual
     
     @staticmethod
+    def get_current_user():
+        """Alias para compatibilidad - obtiene los datos del usuario actual"""
+        return SesionManager.obtener_usuario_actual()
+    
+    @staticmethod
     def limpiar_sesion():
         """Limpia la sesión actual"""
         global _usuario_actual

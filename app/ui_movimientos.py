@@ -341,6 +341,8 @@ async def vista_movimientos(nombre_seccion, contenido, page):
                                     color=ft.Colors.BLACK12,
                                     offset=ft.Offset(0, 3)
                                 ),
+                                width=ancho_ventana * 0.95,  # Container hijo usa casi todo el ancho disponible
+                                alignment=ft.alignment.top_center  # Alineación superior y centrada
                             )
                         ], spacing=5),
                         width=ancho_ventana * 0.995,  # Ancho máximo para usar todo el espacio disponible
@@ -358,7 +360,7 @@ async def vista_movimientos(nombre_seccion, contenido, page):
                     ),
                     alignment=ft.alignment.top_center,  # Centrado horizontal y pegado arriba
                     width=ancho_ventana * 0.995,  # Container padre usa casi todo el ancho disponible
-                    height=alto_ventana * 0.53  # Altura más pequeña para mejor visualización
+                    height=alto_ventana * 0.57  # Altura más pequeña para mejor visualización
                 )
             ], spacing=10),  # Espaciado reducido para vista más compacta
             padding=10,  # Padding reducido para contenedor más compacto

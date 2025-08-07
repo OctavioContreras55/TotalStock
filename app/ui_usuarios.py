@@ -197,7 +197,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
     def abrir_ventana_crear_usuario(e):
         """Función para abrir la ventana de crear usuario"""
         try:
-            mostrar_ventana_crear_usuario(page, lambda: page.run_task(actualizar_tabla_usuarios, True))
+            mostrar_ventana_crear_usuario(page, actualizar_tabla_usuarios)
             print("Ventana de crear usuario llamada exitosamente")
         except Exception as error:
             print(f"Error al abrir ventana: {error}")
@@ -217,7 +217,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                 color="#FFFFFF",
                 shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
             ),
-            on_click=lambda e: page.run_task(ui_tabla_usuarios.eliminar_usuarios_seleccionados, page, lambda: actualizar_tabla_usuarios(forzar_refresh=True)),
+            on_click=lambda e: page.run_task(ui_tabla_usuarios.eliminar_usuarios_seleccionados, page, actualizar_tabla_usuarios),
             width=170,
             visible=False,  # Se mostrará cuando haya selecciones
             data="btn_eliminar_usuarios_seleccionados"  # ID para encontrarlo después
