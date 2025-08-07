@@ -92,18 +92,11 @@ async def exportar_productos_excel(productos, page):
             datos_excel = []
             for producto in productos:
                 datos_excel.append({
-                    'ID': producto.get('id', ''),
                     'Modelo': producto.get('modelo', ''),
                     'Tipo': producto.get('tipo', ''),
                     'Nombre': producto.get('nombre', ''),
-                    'Descripción': producto.get('descripcion', ''),
-                    'Categoría': producto.get('categoria', ''),
-                    'Ubicación': producto.get('ubicacion', ''),
-                    'Stock Mínimo': producto.get('stock_min', 0),
-                    'Stock Actual': producto.get('stock_act', 0),
-                    'Precio': producto.get('precio', 0.0),
-                    'Estado': producto.get('estado', 'Activo'),
-                    'Fecha Registro': producto.get('fecha_registro', '')
+                    'Cantidad': producto.get('cantidad', 0),
+                    'Precio': producto.get('precio', 0.0)
                 })
             
             # Crear DataFrame con Polars y guardar en Excel
@@ -355,7 +348,7 @@ async def exportar_productos_pdf(productos, page):
                     str(producto.get('modelo', ''))[:15],  # Limitar longitud
                     str(producto.get('nombre', ''))[:20],
                     str(producto.get('tipo', ''))[:15],
-                    str(producto.get('stock_act', 0)),
+                    str(producto.get('cantidad', 0)),
                     f"${producto.get('precio', 0.0):.2f}"
                 ]
                 datos_tabla.append(fila)
@@ -494,7 +487,7 @@ def mostrar_dialogo_exportar(productos, page):
                 "Excel (.xlsx)",
                 style=ft.ButtonStyle(
                     bgcolor=tema.BUTTON_SUCCESS_BG,
-                    color=tema.BUTTON_TEXT,
+                    color=tema.TEXT_COLOR,
                     shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                 ),
                 on_click=exportar_excel_handler
@@ -503,7 +496,7 @@ def mostrar_dialogo_exportar(productos, page):
                 "PDF",
                 style=ft.ButtonStyle(
                     bgcolor="#FF5722",  # Color naranja para PDF
-                    color=tema.BUTTON_TEXT,
+                    color=tema.TEXT_COLOR,
                     shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                 ),
                 on_click=exportar_pdf_handler
@@ -512,7 +505,7 @@ def mostrar_dialogo_exportar(productos, page):
                 "JSON",
                 style=ft.ButtonStyle(
                     bgcolor=tema.BUTTON_BG,
-                    color=tema.BUTTON_TEXT,
+                    color=tema.TEXT_COLOR,
                     shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                 ),
                 on_click=exportar_json_handler
@@ -569,9 +562,9 @@ async def exportar_ubicaciones(ubicaciones, page):
     dropdown_formato = ft.Dropdown(
         label="Formato de exportación",
         options=[
-            ft.dropdown.Option("excel", "Excel (.xlsx)"),
-            ft.dropdown.Option("json", "JSON (.json)"),
-            ft.dropdown.Option("pdf", "PDF (.pdf)") if PDF_AVAILABLE else None,
+            ft.dropdown.Option("excel", "Excel (.xlsx)", style=ft.TextStyle(color=tema.TEXT_COLOR)),
+            ft.dropdown.Option("json", "JSON (.json)", style=ft.TextStyle(color=tema.TEXT_COLOR)),
+            ft.dropdown.Option("pdf", "PDF (.pdf)", style=ft.TextStyle(color=tema.TEXT_COLOR)) if PDF_AVAILABLE else None,
         ],
         value="excel",
         width=200,
@@ -772,15 +765,23 @@ async def exportar_ubicaciones_pdf_archivo(ubicaciones, ruta_destino, timestamp,
     elements.append(Spacer(1, 20))
     
     # Preparar datos para la tabla
-    data = [["Modelo", "Nombre", "Almacén", "Ubicación", "Cantidad"]]
+    data = [["Modelo", "Almacén", "Estantería", "Cantidad", "Fecha"]]
     
     for ubicacion in ubicaciones:
+        # Formatear fecha si existe
+        fecha_str = ""
+        if ubicacion.get("fecha_asignacion"):
+            try:
+                fecha_str = ubicacion.get("fecha_asignacion")[:10]  # Solo YYYY-MM-DD
+            except:
+                fecha_str = ""
+        
         data.append([
-            ubicacion.get("modelo", "")[:20],  # Limitar longitud
-            ubicacion.get("nombre", "")[:25],
-            ubicacion.get("almacen", "")[:15],
-            ubicacion.get("ubicacion", "")[:15],
-            str(ubicacion.get("cantidad", 0))
+            str(ubicacion.get("modelo", ""))[:20],  # Limitar longitud
+            str(ubicacion.get("almacen", ""))[:15],
+            str(ubicacion.get("estanteria", ""))[:15],
+            str(ubicacion.get("cantidad", 0)),
+            fecha_str
         ])
     
     # Crear tabla

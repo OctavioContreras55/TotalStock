@@ -32,8 +32,8 @@ async def crear_movimiento_dialog(page, callback_actualizar=None):
             print(f"Error al cargar productos: {e}")
             # Datos de ejemplo
             productos_disponibles = [
-                {"modelo": "LAP001", "nombre": "Laptop Dell", "stock_act": 10},
-                {"modelo": "MOU002", "nombre": "Mouse Logitech", "stock_act": 25}
+                {"modelo": "LAP001", "nombre": "Laptop Dell", "cantidad": 10},
+                {"modelo": "MOU002", "nombre": "Mouse Logitech", "cantidad": 25}
             ]
     
     async def cargar_ubicaciones_disponibles():
@@ -83,7 +83,7 @@ async def crear_movimiento_dialog(page, callback_actualizar=None):
         options=[
             ft.dropdown.Option(
                 key=p.get('modelo', ''),
-                text=f"{p.get('modelo', '')} - {p.get('nombre', '')} (Stock: {p.get('stock_act', 0)})"
+                text=f"{p.get('modelo', '')} - {p.get('nombre', '')} (Stock: {p.get('cantidad', 0)})"
             ) for p in productos_disponibles
         ]
     )

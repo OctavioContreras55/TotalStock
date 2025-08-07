@@ -97,6 +97,52 @@ async def vista_inventario(nombre_seccion, contenido, page):
         except Exception as error:
             print(f"Error al abrir ventana: {error}")
     
+    async def sincronizar_inventario_manual():
+        """Sincronización manual del inventario con ubicaciones"""
+        try:
+            from app.utils.sincronizacion_inventario import sincronizar_inventario_completo
+            tema = GestorTemas.obtener_tema()
+            
+            # Mostrar loading
+            contenido.content = vista_carga("Sincronizando cantidades con ubicaciones...", 18)
+            page.update()
+            
+            # Ejecutar sincronización
+            resultado = await sincronizar_inventario_completo(mostrar_resultados=True)
+            
+            # Mostrar resultado al usuario
+            if resultado['exito']:
+                mensaje = f"✅ Sincronización completada: {resultado['productos_actualizados']} productos actualizados"
+                if resultado['productos_sin_ubicacion'] > 0:
+                    mensaje += f"\n⚠️ {resultado['productos_sin_ubicacion']} productos sin ubicaciones asignadas"
+                if resultado['modelos_nuevos']:
+                    mensaje += f"\n🆕 Modelos en ubicaciones no encontrados en inventario: {', '.join(resultado['modelos_nuevos'])}"
+                
+                page.open(ft.SnackBar(
+                    content=ft.Text(mensaje, color=tema.TEXT_COLOR),
+                    bgcolor=tema.SUCCESS_COLOR,
+                    duration=8000
+                ))
+            else:
+                page.open(ft.SnackBar(
+                    content=ft.Text(f"❌ Error en sincronización: {'; '.join(resultado['errores'])}", color=tema.TEXT_COLOR),
+                    bgcolor=tema.ERROR_COLOR,
+                    duration=5000
+                ))
+            
+            # Actualizar tabla con datos frescos
+            await actualizar_tabla_productos(forzar_refresh=True)
+            
+        except Exception as e:
+            tema = GestorTemas.obtener_tema()
+            page.open(ft.SnackBar(
+                content=ft.Text(f"❌ Error al sincronizar: {str(e)}", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
+            ))
+            # Mostrar tabla actual aunque haya error
+            contenido.content = construir_vista_inventario(productos_actuales)
+            page.update()
+    
             
     def construir_vista_inventario(productos):
         tema = GestorTemas.obtener_tema()
@@ -145,6 +191,15 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                         padding=ft.padding.symmetric(horizontal=5, vertical=20)
                                     ),
                                     ft.Container(
+                                        content=ft.IconButton(
+                                            ft.Icons.REFRESH,
+                                            icon_color=tema.SECONDARY_TEXT_COLOR,
+                                            on_click=lambda e: page.run_task(actualizar_tabla_productos),
+                                            tooltip="Actualizar lista"
+                                        ),
+                                        padding=ft.padding.symmetric(horizontal=5, vertical=20)
+                                    ),
+                                    ft.Container(
                                         content=ft.ElevatedButton(
                                             content=ft.Row([
                                                 ft.Icon(ft.Icons.ADD, color=tema.ICON_BTN_COLOR),
@@ -175,7 +230,23 @@ async def vista_inventario(nombre_seccion, contenido, page):
                                                 color=tema.BUTTON_TEXT,
                                                 shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                             ),
-                                            on_click=lambda e: on_click_importar_archivo(page),
+                                            on_click=lambda e: on_click_importar_archivo(page, actualizar_tabla_productos),
+                                        ),
+                                        width=ancho_boton,  # Ancho responsivo
+                                        padding=ft.padding.symmetric(horizontal=5, vertical=20)
+                                    ),
+                                    ft.Container(
+                                        content=ft.ElevatedButton(
+                                            content=ft.Row([
+                                                ft.Icon(ft.Icons.SYNC, color=tema.ICON_BTN_COLOR),
+                                                ft.Text("Sincronizar cantidades", color=tema.BUTTON_TEXT)
+                                            ]),
+                                            style=ft.ButtonStyle(
+                                                bgcolor=ft.Colors.ORANGE_700,
+                                                color=tema.BUTTON_TEXT,
+                                                shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                            ),
+                                            on_click=lambda e: page.run_task(sincronizar_inventario_manual),
                                         ),
                                         width=ancho_boton,  # Ancho responsivo
                                         padding=ft.padding.symmetric(horizontal=5, vertical=20)
@@ -206,7 +277,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
                             ft.Column(
                                 controls=[
                                     ft.Container(
-                                        content=mostrar_tabla_productos(page, productos, actualizar_tabla_productos),
+                                        content=mostrar_tabla_productos(page, productos, actualizar_tabla_productos, contenido),
                                         padding=ft.padding.symmetric(horizontal=5, vertical=20),
                                         bgcolor=tema.CARD_COLOR,
                                         border_radius=tema.BORDER_RADIUS,

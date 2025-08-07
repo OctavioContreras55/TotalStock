@@ -276,20 +276,21 @@ class GestorHistorial:
                 fecha_hoy = datetime.now().strftime("%Y-%m-%d")
                 estadisticas = {}
                 
-                print(f"📊 [DEBUG] Fecha hoy: {fecha_hoy}")
-                print(f"📊 [DEBUG] Total actividades leídas: {len(actividades)}")
+                # Comentar debug para limpiar terminal
+                # print(f"📊 [DEBUG] Fecha hoy: {fecha_hoy}")
+                # print(f"📊 [DEBUG] Total actividades leídas: {len(actividades)}")
                 
                 for actividad in actividades:
                     # Verificar si es del día actual (usando startswith para fechas ISO)
                     fecha_actividad = actividad.get('fecha', '')
                     tipo_actividad = actividad.get('tipo', 'otro')
-                    print(f"📊 [DEBUG] Actividad: fecha={fecha_actividad}, tipo={tipo_actividad}")
+                    # print(f"📊 [DEBUG] Actividad: fecha={fecha_actividad}, tipo={tipo_actividad}")
                     
                     if fecha_actividad.startswith(fecha_hoy):
                         estadisticas[tipo_actividad] = estadisticas.get(tipo_actividad, 0) + 1
-                        print(f"✅ [DEBUG] Contada: {tipo_actividad} = {estadisticas[tipo_actividad]}")
+                        # print(f"✅ [DEBUG] Contada: {tipo_actividad} = {estadisticas[tipo_actividad]}")
                 
-                print(f"📊 [DEBUG] Estadísticas finales: {estadisticas}")
+                # print(f"📊 [DEBUG] Estadísticas finales: {estadisticas}")
                 return estadisticas
             except Exception as error:
                 print(f"Error al obtener estadísticas locales: {error}")

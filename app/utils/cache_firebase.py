@@ -13,8 +13,12 @@ class CacheFirebase:
     def __init__(self): # Funcion para inicializar el cache
         self._cache_productos: List[Dict] = []
         self._cache_usuarios: List[Dict] = []
+        self._cache_ubicaciones: List[Dict] = []
+        self._cache_movimientos: List[Dict] = []
         self._ultimo_update_productos: Optional[datetime] = None
         self._ultimo_update_usuarios: Optional[datetime] = None
+        self._ultimo_update_ubicaciones: Optional[datetime] = None
+        self._ultimo_update_movimientos: Optional[datetime] = None
         self._duracion_cache = timedelta(minutes=5)  # Cache válido por 5 minutos
     
     def _cache_valido(self, ultimo_update: Optional[datetime]) -> bool:
@@ -138,7 +142,10 @@ class CacheFirebase:
             self._cache_usuarios = lista_usuarios
             self._ultimo_update_usuarios = datetime.now()
             
-            print(f"✅ Cache de usuarios actualizado con {len(lista_usuarios)} usuarios")
+            if mostrar_loading:
+                print(f"✅ Cache de usuarios actualizado con {len(lista_usuarios)} usuarios")
+            else:
+                print(f"🔄 Cache usuarios actualizado silenciosamente: {len(lista_usuarios)} usuarios")
             return lista_usuarios.copy()
             
         except Exception as e:
@@ -157,12 +164,128 @@ class CacheFirebase:
         self._ultimo_update_usuarios = None
         print("🔄 Cache de usuarios invalidado")
     
+    def tiene_ubicaciones_en_cache(self) -> bool:
+        """Verifica si hay ubicaciones válidas en cache SIN hacer consultas"""
+        return (len(self._cache_ubicaciones) > 0 and 
+                self._cache_valido(self._ultimo_update_ubicaciones))
+    
+    def obtener_ubicaciones_inmediato(self) -> List[Dict]:
+        """
+        Obtiene ubicaciones inmediatamente desde cache si están disponibles.
+        NO hace consultas a Firebase. Útil para carga instantánea de UI.
+        """
+        if self.tiene_ubicaciones_en_cache():
+            print(f"⚡ CACHE INMEDIATO UBICACIONES: {len(self._cache_ubicaciones)} ubicaciones (0ms)")
+            return self._cache_ubicaciones.copy()
+        return []
+    
+    async def obtener_ubicaciones(self, forzar_refresh: bool = False, mostrar_loading: bool = True) -> List[Dict]:
+        """
+        Obtiene ubicaciones con cache inteligente y ultra-rápido.
+        Solo consulta Firebase si es necesario.
+        
+        Args:
+            forzar_refresh: Fuerza actualización desde Firebase
+            mostrar_loading: Si mostrar mensajes de loading (útil para UI)
+        """
+        # CACHE HIT: Retorno inmediato sin delays
+        if not forzar_refresh and self._cache_valido(self._ultimo_update_ubicaciones):
+            if mostrar_loading:
+                print(f"⚡ CACHE HIT UBICACIONES INMEDIATO: {len(self._cache_ubicaciones)} ubicaciones (0ms, 0 consultas Firebase)")
+            
+            # Retorno inmediato sin awaits innecesarios
+            return self._cache_ubicaciones.copy()
+        
+        # CACHE MISS: Consultar Firebase
+        if mostrar_loading:
+            print("📡 CACHE MISS UBICACIONES: Consultando Firebase para ubicaciones...")
+            
+        try:
+            referencia_ubicaciones = db.collection('ubicaciones')
+            ubicaciones = referencia_ubicaciones.stream()
+            
+            lista_ubicaciones = []
+            count_docs = 0
+            for ubicacion in ubicaciones:
+                data = ubicacion.to_dict()
+                data['firebase_id'] = ubicacion.id
+                # Asegurar campos requeridos
+                data['modelo'] = data.get('modelo', 'Sin modelo')
+                data['almacen'] = data.get('almacen', 'Sin almacén')
+                data['estanteria'] = data.get('estanteria', 'Sin estantería')
+                data['cantidad'] = data.get('cantidad', 1)
+                data['observaciones'] = data.get('observaciones', 'Sin observaciones')
+                data['fecha_asignacion'] = data.get('fecha_asignacion', 'Sin fecha')
+                lista_ubicaciones.append(data)
+                count_docs += 1
+            
+            # Registrar en el monitor
+            monitor_firebase.registrar_consulta(
+                tipo='lectura',
+                coleccion='ubicaciones',
+                descripcion=f'Cache miss - consulta completa ubicaciones',
+                cantidad_docs=count_docs
+            )
+            
+            # Actualizar cache
+            self._cache_ubicaciones = lista_ubicaciones
+            self._ultimo_update_ubicaciones = datetime.now()
+            
+            if mostrar_loading:
+                print(f"✅ Cache ubicaciones actualizado con {len(lista_ubicaciones)} ubicaciones")
+            return lista_ubicaciones.copy()
+            
+        except Exception as e:
+            print(f"❌ Error al obtener ubicaciones: {str(e)}")
+            # Si hay error, devolver cache anterior si existe
+            if self._cache_ubicaciones:
+                print("🔄 Devolviendo datos del cache anterior por error")
+                return self._cache_ubicaciones.copy()
+            return []
+    
+    def invalidar_cache_ubicaciones(self):
+        """Invalida el cache de ubicaciones para forzar actualización"""
+        self._ultimo_update_ubicaciones = None
+        print("🔄 Cache de ubicaciones invalidado")
+    
+    def invalidar_cache_movimientos(self):
+        """Invalida el cache de movimientos para forzar actualización"""
+        self._ultimo_update_movimientos = None
+        print("🔄 Cache de movimientos invalidado")
+    
+    async def obtener_movimientos(self, forzar_refresh: bool = False) -> List[Dict]:
+        """Obtiene movimientos con cache inteligente"""
+        if not forzar_refresh and self._cache_valido(self._ultimo_update_movimientos):
+            print(f"⚡ CACHE MOVIMIENTOS: {len(self._cache_movimientos)} registros")
+            return self._cache_movimientos.copy()
+        
+        print(f"📡 Consultando movimientos desde Firebase... (forzar_refresh={forzar_refresh})")
+        from app.crud_movimientos.create_movimiento import obtener_movimientos_firebase
+        
+        try:
+            self._cache_movimientos = await obtener_movimientos_firebase()
+            self._ultimo_update_movimientos = datetime.now()
+            print(f"✅ MOVIMIENTOS ACTUALIZADOS: {len(self._cache_movimientos)} registros")
+            
+            # Log detallado de los movimientos para debug
+            if len(self._cache_movimientos) > 0:
+                print(f"   📋 Últimos movimientos: {[m.get('tipo', 'N/A') for m in self._cache_movimientos[:3]]}")
+            
+            return self._cache_movimientos.copy()
+        except Exception as e:
+            print(f"❌ Error al obtener movimientos: {e}")
+            return []
+    
     def limpiar_cache(self):
         """Limpia todo el cache"""
         self._cache_productos.clear()
         self._cache_usuarios.clear()
+        self._cache_ubicaciones.clear()
+        self._cache_movimientos.clear()
         self._ultimo_update_productos = None
         self._ultimo_update_usuarios = None
+        self._ultimo_update_ubicaciones = None
+        self._ultimo_update_movimientos = None
         print("🧹 Cache completo limpiado")
 
 # Instancia global del cache

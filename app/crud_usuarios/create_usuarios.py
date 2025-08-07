@@ -21,12 +21,16 @@ def crear_usuario_firebase(nombre, contrasena, es_admin=False): # Función para 
         # Agregar el usuario a Firebase
         doc_ref = referencia_usuarios.add(nuevo_usuario)
         
+        # Crear objeto completo del usuario con firebase_id para devolverlo
+        usuario_creado = nuevo_usuario.copy()
+        usuario_creado['firebase_id'] = doc_ref[1].id
+        
         print(f"Usuario '{nombre}' creado exitosamente con ID: {doc_ref[1].id}")
-        return True, doc_ref[1].id
+        return usuario_creado  # Devolver el objeto completo del usuario
         
     except Exception as e:
         print(f"Error al crear usuario: {str(e)}")
-        return False, str(e)
+        return False
 
 async def obtener_usuarios_firebase(): # Función para obtener todos los usuarios de Firebase
     try:
@@ -108,13 +112,13 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
             return
             
         # Crear usuario
-        exito, resultado = crear_usuario_firebase(
+        resultado = crear_usuario_firebase(
             campo_nombre.value,
             campo_contrasena.value,
             campo_es_admin.value
         )
         
-        if exito:
+        if resultado and isinstance(resultado, dict):
             # Registrar actividad en el historial
             gestor_historial = GestorHistorial()
             usuario_actual = SesionManager.obtener_usuario_actual()
@@ -149,14 +153,21 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                 page.controls.clear()
                 page.controls.extend(contenido_original)
                 page.update()
-                # Actualizar la tabla si se proporciona el callback
+                
+                # ACTUALIZACIÓN AUTOMÁTICA: Recargar tabla después de crear usuario
                 if callback_actualizar_tabla:
-                    await callback_actualizar_tabla()
+                    print("⚡ Ejecutando actualización automática después de crear usuario")
+                    try:
+                        await callback_actualizar_tabla(True)  # Forzar refresh desde Firebase
+                    except Exception as e:
+                        print(f"Error en actualización automática: {e}")
+                else:
+                    print("⚠️ No hay callback de actualización disponible")
 
             # Usar página run_task con una corrutina
             page.run_task(restaurar_vista)
         else:
-            mensaje_estado.value = f"Error: {resultado}"
+            mensaje_estado.value = f"Error al crear usuario"
             mensaje_estado.color = tema.ERROR_COLOR
             page.update()
     

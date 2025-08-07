@@ -16,7 +16,7 @@ async def on_click_editar_producto(page, producto_id, actualizar_tabla):
     ancho_ventana = page.window.width or 1200
     alto_ventana = page.window.height or 800
     ancho_dialog = min(450, ancho_ventana * 0.85)   # Máximo 450px o 85% del ancho
-    alto_dialog = min(450, alto_ventana * 0.7)      # Máximo 450px o 70% del alto
+    alto_dialog = min(350, alto_ventana * 0.6)      # Máximo 350px o 60% del alto (reducido)
     
     # Obtener datos actuales del producto
     try:
@@ -80,21 +80,10 @@ async def on_click_editar_producto(page, producto_id, actualizar_tabla):
         label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
     )
     
-    campo_cantidad = ft.TextField(
-        label="Cantidad", 
-        value=str(producto_data.get('cantidad', 0)),
-        bgcolor=tema.INPUT_BG, 
-        color=tema.TEXT_COLOR,
-        border_color=tema.INPUT_BORDER, 
-        focused_border_color=tema.PRIMARY_COLOR,
-        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
-    )
-    
     async def guardar_cambios(e):
-        # Validar campos
+        # Validar campos (sin cantidad)
         if not all([campo_modelo.value.strip(), campo_tipo.value.strip(), 
-                   campo_nombre.value.strip(), campo_precio.value.strip(), 
-                   campo_cantidad.value.strip()]):
+                   campo_nombre.value.strip(), campo_precio.value.strip()]):
             page.open(ft.SnackBar(
                 content=ft.Text("Por favor, complete todos los campos", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
@@ -103,23 +92,52 @@ async def on_click_editar_producto(page, producto_id, actualizar_tabla):
         
         try:
             precio = float(campo_precio.value.strip())
-            cantidad = int(campo_cantidad.value.strip())
         except ValueError:
             page.open(ft.SnackBar(
-                content=ft.Text("Precio y cantidad deben ser números válidos", color=tema.TEXT_COLOR),
+                content=ft.Text("El precio debe ser un número válido", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
             return
         
         try:
-            # Actualizar en Firebase
+            nuevo_modelo = campo_modelo.value.strip()
+            modelo_original = producto_data.get('modelo', '')
+            
+            # Solo verificar duplicados si el modelo cambió
+            modelo_original_str = str(modelo_original) if modelo_original else ''
+            if nuevo_modelo.lower() != modelo_original_str.lower():
+                print(f"🔍 Verificando si el nuevo modelo '{nuevo_modelo}' ya existe...")
+                
+                # Obtener productos existentes desde cache
+                from app.utils.cache_firebase import cache_firebase
+                productos_existentes = await cache_firebase.obtener_productos()
+                
+                # Buscar si el nuevo modelo ya existe (case insensitive)
+                modelo_normalizado = nuevo_modelo.lower()
+                for producto in productos_existentes:
+                    try:
+                        modelo_existente = producto.get('modelo', '')
+                        if modelo_existente and isinstance(modelo_existente, str):
+                            if (modelo_existente.strip().lower() == modelo_normalizado and 
+                                producto.get('firebase_id') != producto_id):
+                                page.open(ft.SnackBar(
+                                    content=ft.Text(f"❌ El modelo '{nuevo_modelo}' ya existe en el inventario. No se permiten modelos duplicados.", color=tema.TEXT_COLOR),
+                                    bgcolor=tema.ERROR_COLOR
+                                ))
+                                return
+                    except Exception as ex:
+                        print(f"Error al procesar producto en edición: {ex}")
+                        continue
+                        
+                print(f"✅ Nuevo modelo '{nuevo_modelo}' disponible - procediendo con la actualización...")
+            
+            # Actualizar en Firebase (sin cantidad)
             doc_ref = db.collection("productos").document(producto_id)
             doc_ref.update({
-                'modelo': campo_modelo.value.strip(),
+                'modelo': nuevo_modelo,
                 'tipo': campo_tipo.value.strip(),
                 'nombre': campo_nombre.value.strip(),
-                'precio': precio,
-                'cantidad': cantidad
+                'precio': precio
             })
             
             # Invalidar cache para forzar actualización inmediata
@@ -159,7 +177,6 @@ async def on_click_editar_producto(page, producto_id, actualizar_tabla):
                 campo_tipo,
                 campo_nombre,
                 campo_precio,
-                campo_cantidad,
             ], scroll=ft.ScrollMode.AUTO),
             width=ancho_dialog,  # Ancho responsivo
             height=alto_dialog,  # Alto responsivo

@@ -8,6 +8,10 @@ from app.funciones.sesiones import SesionManager
 import asyncio
 
 def cargar_archivo_excel(ruta_archivo):
+    """
+    Cargar archivo Excel para inventario - SIN CANTIDAD.
+    La cantidad se calcula automáticamente desde ubicaciones.
+    """
     archivo = pl.read_excel(ruta_archivo)
     productos = []
     for row in archivo.iter_rows(named=True):
@@ -16,7 +20,7 @@ def cargar_archivo_excel(ruta_archivo):
             "tipo": row["Tipo"],
             "nombre": row["Nombre"],
             "precio": row["Precio"],
-            "cantidad": row["Cantidad"]
+            "cantidad": 0  # Cantidad inicial 0 - se calcula desde ubicaciones
         }
         productos.append(producto)
     return productos
@@ -24,27 +28,37 @@ def cargar_archivo_excel(ruta_archivo):
 async def guardar_productos_en_firebase(productos, page):
     tema = GestorTemas.obtener_tema()
     
+    print(f"🚨 DEBUG: Iniciando guardar_productos_en_firebase con {len(productos)} productos")
+    
+    # Mostrar progreso INMEDIATAMENTE
     mensaje_cargando = ft.AlertDialog(
-        title=ft.Text("Aviso", color=tema.TEXT_COLOR),
+        title=ft.Text("Importando productos", color=tema.TEXT_COLOR),
         bgcolor=tema.CARD_COLOR,
         content= ft.Container(
             content=ft.Row(
                 controls=[
-                    ft.Text("Importando productos...", color=tema.TEXT_COLOR),
-                    ft.ProgressRing(width=14, height=14, stroke_width=2, color=tema.PRIMARY_COLOR)
+                    ft.ProgressRing(width=16, height=16, stroke_width=2, color=tema.PRIMARY_COLOR),
+                    ft.Text(f"Procesando {len(productos)} productos...", color=tema.TEXT_COLOR)
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=10,
             ),
-            padding=ft.Padding(20, 20, 10, 20),
+            padding=ft.Padding(15, 10, 15, 10),
         ),
         modal=True,
-        
     )
-    page.open(mensaje_cargando)
-    page.update()
     
+    print("🚨 DEBUG: AlertDialog creado, intentando abrir...")
+    page.open(mensaje_cargando)
+    print("🚨 DEBUG: page.open() ejecutado")
+    page.update()
+    print("🚨 DEBUG: page.update() ejecutado - AlertDialog debería estar visible")
+    
+    # Delay mínimo para que el AlertDialog sea visible
+    await asyncio.sleep(1.0)  # 1 segundo mínimo
+    
+    # Mensaje de éxito
     mensaje_exito = ft.AlertDialog(
         title=ft.Text("Productos importados correctamente", color=tema.TEXT_COLOR),
         bgcolor=tema.CARD_COLOR,
@@ -54,10 +68,10 @@ async def guardar_productos_en_firebase(productos, page):
         modal=True,
     )
     
-    
     try:
         referencia_productos = db.collection("productos")
-        productos_importados_count = 0
+        productos_nuevos_count = 0
+        productos_actualizados_count = 0
         
         for producto in productos:
             try:
@@ -65,17 +79,25 @@ async def guardar_productos_en_firebase(productos, page):
                 doc_ref = referencia_productos.document(id_documento)
                 doc_snapshot = doc_ref.get()
                 if not all(key in producto for key in ["modelo", "tipo", "nombre", "precio", "cantidad"]):
-                    print(f"Producto {producto} no tiene todos los campos requeridos.")
                     continue
+                
                 if doc_snapshot.exists:
-                    print(f"El producto con ID: {id_documento} ya existe en Firebase. Se actualizará.")
+                    # Producto ya existe - actualizar
                     doc_ref.set(producto)
+                    productos_actualizados_count += 1
                 else:
+                    # Producto nuevo - crear
                     doc_ref.set(producto)
-                productos_importados_count += 1
+                    productos_nuevos_count += 1
+                
+                # Pequeño delay para hacer visible el progreso
+                if (productos_nuevos_count + productos_actualizados_count) % 10 == 0:  # Cada 10 productos
+                    await asyncio.sleep(0.1)  # 100ms para mostrar progreso
 
             except Exception as e:
-                print(f"Error al guardar el producto {producto['modelo']}: {e}")
+                pass
+        
+        productos_total_count = productos_nuevos_count + productos_actualizados_count
         
         # Registrar actividad en el historial
         gestor_historial = GestorHistorial()
@@ -83,25 +105,61 @@ async def guardar_productos_en_firebase(productos, page):
         
         await gestor_historial.agregar_actividad(
             tipo="importar_productos",
-            descripcion=f"Importó {productos_importados_count} productos desde archivo Excel",
+            descripcion=f"Importó {productos_total_count} productos desde archivo Excel - {productos_nuevos_count} nuevos, {productos_actualizados_count} actualizados",
             usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
         )
         
+        # 🔄 SINCRONIZACIÓN AUTOMÁTICA después de importar productos
+        try:
+            from app.utils.sincronizacion_inventario import sincronizar_inventario_completo
+            resultado = await sincronizar_inventario_completo(mostrar_resultados=True)
+            
+            # Invalidar cache para refrescar datos
+            from app.utils.cache_firebase import cache_firebase
+            cache_firebase.invalidar_cache_productos()
+            
+            # Crear mensaje detallado de importación
+            mensaje_detalle = f"✅ {productos_nuevos_count} productos nuevos\n✏️ {productos_actualizados_count} productos actualizados"
+            
+            sync_mensaje = ""
+            if resultado['productos_actualizados'] > 0:
+                sync_mensaje = f"\n🔄 {resultado['productos_actualizados']} cantidades sincronizadas desde ubicaciones"
+            
+            mensaje_exito.title = ft.Text("Importación completada", color=tema.TEXT_COLOR)
+            mensaje_exito.content = ft.Text(f"{mensaje_detalle}{sync_mensaje}", color=tema.TEXT_COLOR)
+            
+        except Exception as sync_error:
+            # Si falla la sincronización, mostrar solo los datos de importación
+            mensaje_detalle = f"✅ {productos_nuevos_count} productos nuevos\n✏️ {productos_actualizados_count} productos actualizados"
+            mensaje_exito.title = ft.Text("Productos importados correctamente", color=tema.TEXT_COLOR)
+            mensaje_exito.content = ft.Text(mensaje_detalle, color=tema.TEXT_COLOR)
+        
+        print("🚨 DEBUG: Cerrando AlertDialog de carga y mostrando éxito...")
+        # Delay mínimo antes de cerrar para asegurar visibilidad
+        await asyncio.sleep(0.5)  # Medio segundo adicional
         page.close(mensaje_cargando)
         page.open(mensaje_exito)
     except Exception as e:
-        print(f"Error al conectar con Firebase: {e}")
+        print(f"🚨 DEBUG: Error en guardar_productos_en_firebase: {e}")
+        page.close(mensaje_cargando)
         return False
 
-def on_click_importar_archivo(page):
+def on_click_importar_archivo(page, callback_actualizar_tabla=None):
     tema = GestorTemas.obtener_tema()
 
     productos_importados = []
     
     async def importar_productos_handler(e, page, ventana, productos_importados):
         """Handler para importar productos de forma asíncrona"""
+        print("🚨 DEBUG: importar_productos_handler iniciado")
         page.close(ventana)
+        print("🚨 DEBUG: Ventana de selección cerrada, llamando guardar_productos_en_firebase")
         await guardar_productos_en_firebase(productos_importados, page)
+        
+        # Actualizar la tabla después de la importación
+        if callback_actualizar_tabla:
+            print("🔄 DEBUG: Actualizando tabla después de importación...")
+            await callback_actualizar_tabla(forzar_refresh=True)
     
     def picked_file(e: ft.FilePickerResultEvent):
 
@@ -198,92 +256,92 @@ def on_click_importar_archivo(page):
 
 
 def cargar_archivo_excel_ubicaciones(ruta_archivo):
-    """Cargar archivo Excel específico para ubicaciones usando Polars"""
+    """
+    Cargar archivo Excel específico para UBICACIONES.
+    Formato esperado: Modelo, Almacen, Estanteria, Cantidad, Comentarios (opcional)
+    """
     try:
-        print(f"[DEBUG] Intentando cargar archivo: {ruta_archivo}")
-        print(f"[DEBUG] Tipo de ruta_archivo: {type(ruta_archivo)}")
-        
         # Leer archivo Excel con Polars
         df = pl.read_excel(ruta_archivo)
-        print(f"[DEBUG] DataFrame cargado exitosamente")
-        print(f"[DEBUG] Tipo de df: {type(df)}")
-        print(f"[DEBUG] Shape del DataFrame: {df.shape}")
         
         ubicaciones = []
         
-        print(f"Columnas encontradas en el archivo: {df.columns}")
-        
-        # Debug: mostrar los nombres exactos de las columnas para diagnosis
-        print(f"[DEBUG] Columnas exactas: {list(df.columns)}")
-        for i, col in enumerate(df.columns):
-            print(f"[DEBUG] Columna {i}: '{col}' (tipo: {type(col)})")
-        
-        # Iterar sobre las filas con Polars
+        # Iterar sobre las filas
         for row in df.iter_rows(named=True):
-            print(f"Procesando fila: {row}")
-            print(f"[DEBUG] Claves disponibles en row: {list(row.keys())}")
-            
-            # Obtener valores con múltiples opciones de nombre de columna
-            # Primero verificar valores directos
-            modelo_directo = row.get("Modelo") or row.get("Material")  # Agregar "Material"
-            modelo_minuscula = row.get("modelo") or row.get("material")  # Agregar "material"
-            print(f"[DEBUG] Modelo directo: '{modelo_directo}' (tipo: {type(modelo_directo)})")
-            print(f"[DEBUG] Modelo minúscula: '{modelo_minuscula}' (tipo: {type(modelo_minuscula)})")
-            
-            # Usar el nombre del material directamente como modelo
+            # 1. MODELO (requerido) - La información del producto
             modelo = None
-            if modelo_directo and str(modelo_directo).strip() and str(modelo_directo).strip().lower() != 'none':
-                modelo = str(modelo_directo).strip()
-                print(f"[DEBUG] Usando modelo directo: '{modelo}'")
-            elif modelo_minuscula and str(modelo_minuscula).strip() and str(modelo_minuscula).strip().lower() != 'none':
-                modelo = str(modelo_minuscula).strip()
-                print(f"[DEBUG] Usando modelo minúscula: '{modelo}'")
-            else:
-                modelo = f"MOD{len(ubicaciones)+1:03d}"
-                print(f"[DEBUG] Generando código automático: '{modelo}'")
+            modelo_opciones = ["Modelo", "modelo", "Material", "material", "Producto", "producto"]
+            for opcion in modelo_opciones:
+                if row.get(opcion) and str(row.get(opcion)).strip() and str(row.get(opcion)).strip().lower() != 'none':
+                    modelo = str(row.get(opcion)).strip()
+                    break
             
-            print(f"[DEBUG] Modelo final: '{modelo}'")
+            if not modelo:
+                # Si no hay modelo, generar uno automático
+                modelo = f"UBICACION{len(ubicaciones)+1:03d}"
             
-            almacen = (row.get("Almacen") or row.get("Almacén") or 
-                      row.get("almacen") or row.get("almacén") or "Sin asignar")
-            estanteria = (row.get("Estanteria") or row.get("Estantería") or 
-                         row.get("estanteria") or row.get("estantería") or 
-                         row.get("Ubicacion") or row.get("Ubicación") or 
-                         row.get("ubicacion") or row.get("ubicación") or "Sin asignar")
-            observaciones = (row.get("Observaciones") or row.get("observaciones") or 
-                           row.get("Notas") or row.get("notas") or "Sin observaciones")
+            # 2. ALMACÉN (requerido)
+            almacen = None
+            almacen_opciones = ["Almacen", "Almacén", "almacen", "almacén", "Deposito", "deposito"]
+            for opcion in almacen_opciones:
+                if row.get(opcion) and str(row.get(opcion)).strip():
+                    almacen = str(row.get(opcion)).strip()
+                    break
             
-            # Obtener cantidad si está disponible
-            cantidad = 1  # Valor por defecto
-            cantidad_raw = (row.get("Cantidad") or row.get("cantidad") or 
-                           row.get("Qty") or row.get("qty") or "1")
-            try:
-                cantidad = int(cantidad_raw) if cantidad_raw else 1
-            except (ValueError, TypeError):
-                cantidad = 1
+            if not almacen:
+                almacen = "Almacén Principal"  # Valor por defecto
             
-            # Convertir a tipos apropiados y crear estructura para nuevo sistema
-            # Polars maneja nulos de forma diferente, usamos verificación directa
+            # 3. ESTANTERÍA (requerido)
+            estanteria = None
+            estanteria_opciones = ["Estanteria", "Estantería", "estanteria", "estantería", 
+                                 "Ubicacion", "Ubicación", "ubicacion", "ubicación", 
+                                 "Pasillo", "pasillo", "Rack", "rack"]
+            for opcion in estanteria_opciones:
+                if row.get(opcion) and str(row.get(opcion)).strip():
+                    estanteria = str(row.get(opcion)).strip()
+                    break
+            
+            if not estanteria:
+                estanteria = "A1"  # Valor por defecto
+            
+            # 4. CANTIDAD (requerido, default 1)
+            cantidad = 1
+            cantidad_opciones = ["Cantidad", "cantidad", "Qty", "qty", "Stock", "stock"]
+            for opcion in cantidad_opciones:
+                if row.get(opcion):
+                    try:
+                        cantidad = int(float(str(row.get(opcion))))  # Convertir a float primero por si hay decimales
+                        if cantidad <= 0:
+                            cantidad = 1  # Cantidad mínima 1
+                        break
+                    except (ValueError, TypeError):
+                        continue
+            
+            # 5. COMENTARIOS (opcional)
+            comentarios = "Sin observaciones"
+            comentarios_opciones = ["Comentarios", "comentarios", "Observaciones", "observaciones", 
+                                   "Notas", "notas", "Comentario", "comentario"]
+            for opcion in comentarios_opciones:
+                if row.get(opcion) and str(row.get(opcion)).strip():
+                    comentarios = str(row.get(opcion)).strip()
+                    break
+            
+            # Crear registro de ubicación
             ubicacion = {
-                "modelo": str(modelo) if modelo is not None else "Sin modelo",
-                "almacen": str(almacen) if almacen is not None else "Sin asignar",
-                "estanteria": str(estanteria) if estanteria is not None else "Sin asignar",
+                "modelo": modelo,
+                "almacen": almacen,
+                "estanteria": estanteria,
                 "cantidad": cantidad,
+                "observaciones": comentarios,
                 "fecha_asignacion": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "observaciones": str(observaciones) if observaciones is not None else "Sin observaciones"
+                "usuario_asignacion": "Sistema de importación"
             }
             
-            print(f"Ubicación procesada: {ubicacion}")
             ubicaciones.append(ubicacion)
         
-        print(f"Total ubicaciones procesadas: {len(ubicaciones)}")
         return ubicaciones
         
     except Exception as e:
-        print(f"Error al cargar archivo Excel de ubicaciones: {e}")
-        print(f"[DEBUG] Tipo del error: {type(e)}")
-        import traceback
-        print(f"[DEBUG] Traceback completo: {traceback.format_exc()}")
         return []
 
 
@@ -291,15 +349,51 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
     """Guardar ubicaciones masivamente en Firebase"""
     tema = GestorTemas.obtener_tema()
     
+    print(f"🚨 DEBUG: Iniciando guardar_ubicaciones_en_firebase con {len(ubicaciones)} ubicaciones")
+    
+    # Mostrar progreso INMEDIATAMENTE
+    mensaje_cargando = ft.AlertDialog(
+        title=ft.Text("Importando ubicaciones", color=tema.TEXT_COLOR),
+        bgcolor=tema.CARD_COLOR,
+        content= ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.ProgressRing(width=16, height=16, stroke_width=2, color=tema.PRIMARY_COLOR),
+                    ft.Text(f"Procesando {len(ubicaciones)} ubicaciones...", color=tema.TEXT_COLOR)
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=10,
+            ),
+            padding=ft.Padding(15, 10, 15, 10),
+        ),
+        modal=True,
+    )
+    
+    print("🚨 DEBUG: AlertDialog ubicaciones creado, intentando abrir...")
+    page.open(mensaje_cargando)
+    print("🚨 DEBUG: page.open() ejecutado para ubicaciones")
+    page.update()
+    print("🚨 DEBUG: page.update() ejecutado para ubicaciones - AlertDialog debería estar visible")
+    
+    # Delay mínimo para que el AlertDialog sea visible
+    await asyncio.sleep(1.0)  # 1 segundo mínimo
+    
+    # Mensaje de éxito
+    mensaje_exito = ft.AlertDialog(
+        title=ft.Text("Ubicaciones importadas correctamente", color=tema.TEXT_COLOR),
+        bgcolor=tema.CARD_COLOR,
+        actions=[ft.TextButton("Aceptar", 
+                               style=ft.ButtonStyle(color=tema.PRIMARY_COLOR),
+                               on_click=lambda e: page.close(mensaje_exito))],
+        modal=True,
+    )
+    
     try:
         from conexiones.firebase import db
         from app.utils.historial import GestorHistorial
         from app.funciones.sesiones import SesionManager
         
-        print(f"Guardando {len(ubicaciones)} ubicaciones en Firebase...")
-        
-        # Mostrar progreso
-        total = len(ubicaciones)
         guardados = 0
         errores = 0
         
@@ -308,11 +402,13 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
                 # Guardar en colección 'ubicaciones'
                 db.collection('ubicaciones').add(ubicacion)
                 guardados += 1
-                print(f"Ubicación guardada: {ubicacion.get('modelo', 'Sin modelo')} -> {ubicacion.get('almacen', 'Sin almacen')} / {ubicacion.get('estanteria', 'Sin estanteria')}")
+                
+                # Pequeño delay para hacer visible el progreso
+                if guardados % 5 == 0:  # Cada 5 ubicaciones
+                    await asyncio.sleep(0.1)  # 100ms para mostrar progreso
                 
             except Exception as e:
                 errores += 1
-                print(f"Error al guardar ubicación {ubicacion.get('modelo', 'Sin modelo')}: {e}")
         
         # Registrar en historial
         gestor_historial = GestorHistorial()
@@ -324,28 +420,47 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
             usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
         )
         
-        # Mostrar resultado
+        # 🔄 SINCRONIZACIÓN AUTOMÁTICA después de importar ubicaciones
         if guardados > 0:
-            page.open(ft.SnackBar(
-                content=ft.Text(f"✅ {guardados} ubicaciones importadas exitosamente", color=tema.TEXT_COLOR),
-                bgcolor=tema.SUCCESS_COLOR
-            ))
+            try:
+                # Invalidar cache de ubicaciones
+                from app.utils.cache_firebase import cache_firebase
+                cache_firebase.invalidar_cache_ubicaciones()
+                
+                # Ejecutar sincronización completa
+                from app.utils.sincronizacion_inventario import sincronizar_inventario_completo
+                resultado = await sincronizar_inventario_completo(mostrar_resultados=True)
+                
+                # Invalidar cache de productos también
+                cache_firebase.invalidar_cache_productos()
+                
+                # Mensaje combinado de éxito
+                sync_mensaje = ""
+                if resultado['productos_actualizados'] > 0:
+                    sync_mensaje = f" | {resultado['productos_actualizados']} cantidades sincronizadas"
+                
+                mensaje_exito.title = ft.Text(f"Ubicaciones importadas y sincronizadas{sync_mensaje}", color=tema.TEXT_COLOR)
+                
+            except Exception as sync_error:
+                pass
         
-        if errores > 0:
-            page.open(ft.SnackBar(
-                content=ft.Text(f"⚠️ {errores} ubicaciones tuvieron errores", color=tema.TEXT_COLOR),
-                bgcolor=tema.WARNING_COLOR
-            ))
-            
+        print("🚨 DEBUG: Cerrando AlertDialog de ubicaciones y mostrando éxito...")
+        # Delay mínimo antes de cerrar para asegurar visibilidad
+        await asyncio.sleep(0.5)  # Medio segundo adicional
+        page.close(mensaje_cargando)
+        page.open(mensaje_exito)
+        
+        return True
+        
     except Exception as e:
-        print(f"Error al guardar ubicaciones en Firebase: {e}")
+        print(f"🚨 DEBUG: Error en guardar_ubicaciones_en_firebase: {e}")
+        page.close(mensaje_cargando)
         page.open(ft.SnackBar(
-            content=ft.Text(f"Error al importar ubicaciones: {str(e)}", color=tema.TEXT_COLOR),
+            content=ft.Text(f"Error al importar ubicaciones: {e}"),
             bgcolor=tema.ERROR_COLOR
         ))
-
-
-def on_click_importar_archivo_ubicaciones(page):
+        return False
+async def on_click_importar_archivo_ubicaciones(page, callback_actualizar=None):
     """Importar archivo Excel específico para ubicaciones"""
     tema = GestorTemas.obtener_tema()
     archivo_seleccionado = None
@@ -363,6 +478,7 @@ def on_click_importar_archivo_ubicaciones(page):
     texto_archivo = ft.Text("No se ha seleccionado ningún archivo", color=tema.TEXT_COLOR)
 
     async def procesar_archivo_ubicaciones(e):
+        print("🚨 DEBUG: procesar_archivo_ubicaciones iniciado")
         if not archivo_seleccionado:
             page.open(ft.SnackBar(
                 content=ft.Text("Por favor selecciona un archivo", color=tema.TEXT_COLOR),
@@ -371,6 +487,7 @@ def on_click_importar_archivo_ubicaciones(page):
             return
 
         try:
+            print("🚨 DEBUG: Procesando archivo de ubicaciones...")
             # Usar directamente la ruta del archivo seleccionado
             ruta_archivo = archivo_seleccionado.path
             
@@ -378,8 +495,13 @@ def on_click_importar_archivo_ubicaciones(page):
             ubicaciones = cargar_archivo_excel_ubicaciones(ruta_archivo)
             
             if ubicaciones:
+                print("🚨 DEBUG: Ubicaciones cargadas, cerrando ventana y llamando guardar...")
                 page.close(ventana_ubicaciones)
-                await guardar_ubicaciones_en_firebase(ubicaciones, page)
+                exito = await guardar_ubicaciones_en_firebase(ubicaciones, page)
+                
+                # Actualizar tabla si se proporcionó callback y la importación fue exitosa
+                if exito and callback_actualizar:
+                    await callback_actualizar(forzar_refresh=True)
             else:
                 page.open(ft.SnackBar(
                     content=ft.Text("Error al procesar el archivo de ubicaciones", color=tema.TEXT_COLOR),
@@ -387,7 +509,7 @@ def on_click_importar_archivo_ubicaciones(page):
                 ))
                 
         except Exception as e:
-            print(f"Error al procesar archivo de ubicaciones: {e}")
+            print(f"🚨 DEBUG: Error al procesar archivo de ubicaciones: {e}")
             page.open(ft.SnackBar(
                 content=ft.Text(f"Error: {str(e)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR

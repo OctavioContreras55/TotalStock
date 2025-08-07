@@ -37,10 +37,37 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
     # Campo de búsqueda y selección de producto
     producto_seleccionado_modelo = None
     
-    # Campo de búsqueda por texto
+    # Crear lista de modelos disponibles para el dropdown
+    modelos_disponibles = []
+    if productos_disponibles:
+        modelos_unicos = set()
+        for producto in productos_disponibles:
+            modelo = producto.get('modelo', '')
+            if modelo and modelo not in modelos_unicos:
+                modelos_unicos.add(modelo)
+        # Convertir todos los modelos a string antes de ordenar para evitar errores de tipo
+        modelos_disponibles = sorted(list(modelos_unicos), key=lambda x: str(x))
+    
+    # Dropdown con modelos disponibles
+    dropdown_modelos = ft.Dropdown(
+        label="📦 Seleccionar modelo del inventario",
+        options=[
+            ft.dropdown.Option(modelo, modelo) for modelo in modelos_disponibles
+        ],
+        width=400,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        focused_border_color=tema.PRIMARY_COLOR,
+        label_style=ft.TextStyle(color=tema.TEXT_SECONDARY),
+        text_style=ft.TextStyle(color=tema.TEXT_COLOR, size=14),
+        on_change=lambda e: setattr(campo_buscar_tipo, 'value', e.control.value) or campo_buscar_tipo.update()
+    )
+    
+    # Campo de búsqueda por texto (ahora como alternativa)
     campo_buscar_tipo = ft.TextField(
-        label="🔍 Buscar o escribir tipo de producto",
-        hint_text="Escriba el tipo de producto (modelo) a asignar",
+        label="🔍 O escribir modelo manualmente",
+        hint_text="Escriba el modelo de producto a asignar",
         width=400,
         bgcolor=tema.INPUT_BG,
         color=tema.TEXT_COLOR,
@@ -51,7 +78,7 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
             size=14,
             weight=ft.FontWeight.W_500
         ),
-        helper_text="Puede escribir un tipo nuevo o buscar uno existente"
+        helper_text="Solo se permiten modelos que ya existan en el inventario"
     )
     
     # Campo para almacén
@@ -123,8 +150,12 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
     
     def validar_campos():
         """Validar que los campos requeridos estén completos"""
-        if not campo_buscar_tipo.value or not campo_buscar_tipo.value.strip():
-            return False, "Debe especificar el tipo de producto"
+        # Verificar que se haya seleccionado o escrito un modelo
+        tiene_modelo_dropdown = dropdown_modelos.value and dropdown_modelos.value.strip()
+        tiene_modelo_texto = campo_buscar_tipo.value and campo_buscar_tipo.value.strip()
+        
+        if not tiene_modelo_dropdown and not tiene_modelo_texto:
+            return False, "Debe seleccionar o escribir un modelo de producto"
         
         if not campo_almacen.value or not campo_almacen.value.strip():
             return False, "Debe especificar el almacén"
@@ -139,7 +170,9 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
         try:
             ubicaciones_existentes = await obtener_ubicaciones_productos_firebase()
             for ubicacion in ubicaciones_existentes:
-                if ubicacion.get('modelo', '').lower() == tipo_producto.lower():
+                # Convertir modelo a string antes de hacer lower() para evitar errores con tipos int
+                modelo_ubicacion = str(ubicacion.get('modelo', '')).lower()
+                if modelo_ubicacion == tipo_producto.lower():
                     return True, ubicacion
             return False, None
         except Exception as e:
@@ -156,8 +189,40 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
             ))
             return
         
-        # Obtener el tipo de producto desde el campo de texto
-        tipo_producto = campo_buscar_tipo.value.strip()
+        # Obtener el tipo de producto desde el dropdown o campo de texto
+        tipo_producto = ""
+        if dropdown_modelos.value and dropdown_modelos.value.strip():
+            tipo_producto = dropdown_modelos.value.strip()
+        elif campo_buscar_tipo.value and campo_buscar_tipo.value.strip():
+            tipo_producto = campo_buscar_tipo.value.strip()
+        
+        if not tipo_producto:
+            page.open(ft.SnackBar(
+                content=ft.Text("Debe seleccionar o escribir un modelo de producto", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
+            ))
+            return
+        
+        # NUEVA VALIDACIÓN: Verificar que el modelo existe en el inventario
+        modelo_existe_en_inventario = False
+        for producto in productos_disponibles:
+            # Convertir modelo a string antes de hacer lower() para evitar errores con tipos int
+            modelo_producto = str(producto.get('modelo', '')).lower()
+            if modelo_producto == tipo_producto.lower():
+                modelo_existe_en_inventario = True
+                break
+        
+        if not modelo_existe_en_inventario:
+            page.open(ft.SnackBar(
+                content=ft.Text(
+                    f"❌ El modelo '{tipo_producto}' no existe en el inventario.\n"
+                    f"Solo puede asignar ubicaciones a productos que ya estén registrados en el sistema.",
+                    color=tema.TEXT_COLOR
+                ),
+                bgcolor=tema.ERROR_COLOR,
+                duration=5000
+            ))
+            return
         
         # Verificar si el tipo ya existe en ubicaciones
         existe, ubicacion_existente = await verificar_tipo_existe_en_ubicaciones(tipo_producto)
@@ -204,6 +269,14 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
             # Guardar en Firebase en colección 'ubicaciones'
             db.collection("ubicaciones").add(ubicacion_producto)
             
+            # Invalidar cache para refrescar datos
+            from app.utils.cache_firebase import cache_firebase
+            cache_firebase.invalidar_cache_ubicaciones()
+            
+            # Sincronizar automáticamente las cantidades en el inventario
+            from app.utils.sincronizacion_inventario import sincronizar_modelo
+            await sincronizar_modelo(tipo_producto)
+            
             # Registrar actividad
             gestor_historial = GestorHistorial()
             usuario_actual = SesionManager.obtener_usuario_actual()
@@ -235,17 +308,20 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
         bgcolor=tema.CARD_COLOR,
         content=ft.Container(
             content=ft.Column([
-                ft.Text("Basado en estructura: Tipo → Almacén → Estantería", 
+                ft.Text("Basado en estructura: Modelo → Almacén → Estantería", 
                         color=tema.TEXT_SECONDARY, size=12),
+                ft.Text("Solo se pueden asignar ubicaciones a modelos que ya existan en el inventario", 
+                        color=tema.WARNING_COLOR, size=11, weight=ft.FontWeight.W_500),
                 ft.Divider(color=tema.DIVIDER_COLOR),
-                campo_buscar_tipo,  # Campo de búsqueda de tipo
+                dropdown_modelos,  # Dropdown con modelos disponibles
+                campo_buscar_tipo,  # Campo alternativo de búsqueda de tipo
                 campo_almacen,
                 campo_estanteria,
                 campo_cantidad,
                 campo_observaciones,
-            ], spacing=20),
+            ], spacing=15),
             width=520,
-            height=480,  # Altura ajustada para mejor proporción
+            height=550,  # Altura ajustada para incluir dropdown
             padding=ft.Padding(25, 25, 25, 25)
         ),
         actions=[
@@ -271,36 +347,33 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
     page.update()
 
 async def obtener_ubicaciones_productos_firebase():
-    """Obtener todas las ubicaciones de productos desde Firebase"""
+    """Obtener todas las ubicaciones de productos desde Firebase con cache optimizado"""
     try:
-        ubicaciones_ref = db.collection('ubicaciones')
-        ubicaciones = ubicaciones_ref.stream()
+        from app.utils.cache_firebase import cache_firebase
         
-        ubicaciones_data = []
-        for ubicacion in ubicaciones:
-            data = ubicacion.to_dict()
-            data['firebase_id'] = ubicacion.id
-            ubicaciones_data.append(data)
-        
-        return ubicaciones_data
+        # Usar cache optimizado
+        ubicaciones = await cache_firebase.obtener_ubicaciones()
+        return ubicaciones
         
     except Exception as e:
         print(f"Error al obtener ubicaciones de productos: {e}")
-        # Datos de ejemplo basados en tu Excel
+        # Datos de ejemplo como fallback
         return [
             {
                 'firebase_id': '1',
                 'modelo': 'Cadena 25',
                 'almacen': 'Almacén Principal',
                 'estanteria': '2A',
+                'cantidad': 5,
                 'fecha_asignacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 'observaciones': 'Asignación inicial'
             },
             {
-                'firebase_id': '2',
+                'firebase_id': '2', 
                 'modelo': 'Rodamiento 6204',
                 'almacen': 'Almacén Secundario',
                 'estanteria': '1B',
+                'cantidad': 3,
                 'fecha_asignacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 'observaciones': 'Stock de repuesto'
             }
@@ -309,8 +382,25 @@ async def obtener_ubicaciones_productos_firebase():
 async def eliminar_ubicacion_producto_firebase(ubicacion_id, page):
     """Eliminar ubicación de producto de Firebase"""
     try:
+        # Primero obtener el modelo antes de eliminar
+        doc_ref = db.collection("ubicaciones").document(ubicacion_id)
+        doc = doc_ref.get()
+        modelo_eliminado = None
+        
+        if doc.exists:
+            modelo_eliminado = doc.to_dict().get('modelo')
+        
         # Eliminar de Firebase
-        db.collection("ubicaciones").document(ubicacion_id).delete()
+        doc_ref.delete()
+        
+        # Invalidar cache para refrescar datos
+        from app.utils.cache_firebase import cache_firebase
+        cache_firebase.invalidar_cache_ubicaciones()
+        
+        # Sincronizar automáticamente las cantidades en el inventario
+        if modelo_eliminado:
+            from app.utils.sincronizacion_inventario import sincronizar_modelo
+            await sincronizar_modelo(modelo_eliminado)
         
         # Registrar actividad
         gestor_historial = GestorHistorial()

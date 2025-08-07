@@ -3,13 +3,14 @@ from conexiones.firebase import db
 from app.utils.temas import GestorTemas
 from app.utils.historial import GestorHistorial
 from app.funciones.sesiones import SesionManager
+from datetime import datetime
 import asyncio
 
 def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None):
-    """Mostrar diálogo para editar un usuario"""
+    """Mostrar diálogo para editar un usuario - Solo nombre, contraseña y admin"""
     tema = GestorTemas.obtener_tema()
     
-    # Campos del formulario
+    # Campo nombre
     campo_nombre = ft.TextField(
         label="Nombre completo",
         value=usuario_data.get('nombre', ''),
@@ -20,43 +21,7 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
         focused_border_color=tema.PRIMARY_COLOR
     )
     
-    campo_username = ft.TextField(
-        label="Username",
-        value=usuario_data.get('username', ''),
-        width=300,
-        bgcolor=tema.INPUT_BG,
-        color=tema.TEXT_COLOR,
-        border_color=tema.INPUT_BORDER,
-        focused_border_color=tema.PRIMARY_COLOR
-    )
-    
-    campo_email = ft.TextField(
-        label="Email",
-        value=usuario_data.get('email', ''),
-        width=300,
-        bgcolor=tema.INPUT_BG,
-        color=tema.TEXT_COLOR,
-        border_color=tema.INPUT_BORDER,
-        focused_border_color=tema.PRIMARY_COLOR
-    )
-    
-    # Dropdown para rol
-    dropdown_rol = ft.Dropdown(
-        label="Rol",
-        value=usuario_data.get('rol', 'usuario'),
-        width=300,
-        bgcolor=tema.INPUT_BG,
-        color=tema.TEXT_COLOR,
-        border_color=tema.INPUT_BORDER,
-        focused_border_color=tema.PRIMARY_COLOR,
-        options=[
-            ft.dropdown.Option("admin", "Administrador"),
-            ft.dropdown.Option("usuario", "Usuario"),
-            ft.dropdown.Option("supervisor", "Supervisor")
-        ]
-    )
-    
-    # Campo para nueva contraseña (opcional)
+    # Campo contraseña (opcional)
     campo_password = ft.TextField(
         label="Nueva contraseña (opcional)",
         width=300,
@@ -68,33 +33,19 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
         focused_border_color=tema.PRIMARY_COLOR
     )
     
-    # Estado activo/inactivo
-    switch_activo = ft.Switch(
-        label="Usuario activo",
-        value=usuario_data.get('activo', True),
+    # Switch para admin
+    switch_admin = ft.Switch(
+        label="Es Administrador",
+        value=usuario_data.get('es_admin', False),
         active_color=tema.PRIMARY_COLOR
     )
     
     async def guardar_cambios(e):
-        """Guardar los cambios del usuario"""
-        # Validaciones básicas
+        """Guardar los cambios del usuario - Solo nombre, contraseña y admin"""
+        # Validación básica
         if not campo_nombre.value.strip():
             page.open(ft.SnackBar(
                 content=ft.Text("El nombre es obligatorio", color=tema.TEXT_COLOR),
-                bgcolor=tema.ERROR_COLOR
-            ))
-            return
-            
-        if not campo_username.value.strip():
-            page.open(ft.SnackBar(
-                content=ft.Text("El username es obligatorio", color=tema.TEXT_COLOR),
-                bgcolor=tema.ERROR_COLOR
-            ))
-            return
-            
-        if not campo_email.value.strip():
-            page.open(ft.SnackBar(
-                content=ft.Text("El email es obligatorio", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
             return
@@ -120,34 +71,44 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
             # Preparar datos actualizados
             datos_actualizados = {
                 'nombre': campo_nombre.value.strip(),
-                'username': campo_username.value.strip(),
-                'email': campo_email.value.strip(),
-                'rol': dropdown_rol.value,
-                'activo': switch_activo.value,
-                'fecha_modificacion': ft.DateTime.now().isoformat()
+                'es_admin': switch_admin.value,
+                'fecha_modificacion': datetime.now().isoformat()
             }
             
             # Agregar contraseña si se proporcionó
             if campo_password.value.strip():
-                # En un sistema real, aquí deberías hashear la contraseña
                 datos_actualizados['password'] = campo_password.value.strip()
             
-            # Actualizar en Firebase usando el ID del usuario
-            usuario_id = usuario_data.get('id')
-            if usuario_id:
-                db.collection('usuarios').document(usuario_id).update(datos_actualizados)
+            # Actualizar en Firebase usando el firebase_id del usuario
+            firebase_id = usuario_data.get('firebase_id')
+            if firebase_id:
+                db.collection('usuarios').document(firebase_id).update(datos_actualizados)
+                print(f"✅ Usuario {firebase_id} actualizado en Firebase")
             else:
-                # Si no hay ID, buscar por username original
-                usuarios_ref = db.collection('usuarios')
-                query = usuarios_ref.where('username', '==', usuario_data.get('username', ''))
-                docs = query.get()
-                
-                if docs:
-                    for doc in docs:
-                        doc.reference.update(datos_actualizados)
+                raise Exception("ID de usuario no encontrado")
+
+            # ACTUALIZACIÓN OPTIMISTA: Actualizar datos localmente para UI inmediata
+            usuario_data_actualizada = usuario_data.copy()
+            usuario_data_actualizada.update(datos_actualizados)
+            
+            # Invalidar cache para futuras consultas
+            from app.utils.cache_firebase import cache_firebase
+            
+            # Actualizar el usuario específico en el cache
+            try:
+                usuarios_cache = cache_firebase._cache_usuarios
+                for i, usuario in enumerate(usuarios_cache):
+                    if usuario.get('firebase_id') == firebase_id:
+                        usuarios_cache[i] = usuario_data_actualizada
                         break
-                else:
-                    raise Exception("Usuario no encontrado en la base de datos")
+                print("⚡ Cache actualizado optimísticamente")
+            except Exception as e:
+                print(f"Error al actualizar cache optimísticamente: {e}")
+                # Si falla, invalidar completamente el cache
+                cache_firebase._cache_usuarios = []
+                cache_firebase._ultimo_update_usuarios = None
+            
+            print("🔄 Preparando actualización silenciosa")
             
             # Registrar en historial
             gestor_historial = GestorHistorial()
@@ -155,7 +116,7 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
             
             await gestor_historial.agregar_actividad(
                 tipo="editar_usuario",
-                descripcion=f"Editó el usuario: {campo_username.value}",
+                descripcion=f"Editó el usuario: {campo_nombre.value}",
                 usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
             )
             
@@ -168,9 +129,17 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
                 bgcolor=tema.SUCCESS_COLOR
             ))
             
-            # Actualizar tabla si se proporcionó callback
+            # Actualizar tabla automáticamente después de editar
             if actualizar_callback:
-                await actualizar_callback()
+                print("⚡ Ejecutando actualización automática después de editar usuario")
+                try:
+                    await actualizar_callback(True)  # Forzar refresh desde Firebase
+                except Exception as e:
+                    print(f"Error en actualización automática: {e}")
+                    page.update()
+            else:
+                print("⚠️ No hay callback de actualización disponible")
+                page.update()
                 
         except Exception as error:
             # Cerrar indicador de carga
@@ -179,25 +148,20 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
             page.open(ft.SnackBar(
                 content=ft.Text(f"Error al actualizar usuario: {str(error)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
-            ))
-    
-    # Diálogo principal
+            ))    # Diálogo principal
     dialogo_editar = ft.AlertDialog(
-        title=ft.Text(f"Editar Usuario: {usuario_data.get('username', '')}", color=tema.TEXT_COLOR),
+        title=ft.Text(f"Editar Usuario: {usuario_data.get('nombre', '')}", color=tema.TEXT_COLOR),
         bgcolor=tema.CARD_COLOR,
         content=ft.Container(
             content=ft.Column([
                 campo_nombre,
-                campo_username,
-                campo_email,
-                dropdown_rol,
                 campo_password,
                 ft.Row([
-                    switch_activo,
+                    switch_admin,
                 ], alignment=ft.MainAxisAlignment.START)
             ], spacing=15, scroll=ft.ScrollMode.AUTO),
             width=400,
-            height=450,
+            height=300,  # Altura reducida
             padding=ft.Padding(10, 10, 10, 10)
         ),
         actions=[

@@ -62,6 +62,36 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
         on_click=validar_busqueda
     )
 
+    async def recargar_tabla(e, callback_actualizar_tabla, dialogo):
+        """Recargar la tabla completa con todos los productos"""
+        try:
+            # Cerrar el diálogo de búsqueda
+            page.close(dialogo)
+            
+            # Mostrar mensaje de recarga
+            page.open(ft.SnackBar(
+                content=ft.Text("🔄 Recargando tabla completa...", color=tema.TEXT_COLOR),
+                bgcolor=tema.PRIMARY_COLOR,
+                duration=2000
+            ))
+            
+            # Obtener todos los productos desde cache/Firebase
+            from app.utils.cache_firebase import cache_firebase
+            todos_productos = await cache_firebase.obtener_productos()
+            
+            # Actualizar tabla con todos los productos
+            if callback_actualizar_tabla:
+                await callback_actualizar_tabla(todos_productos)
+                
+            print(f"✅ Tabla recargada con {len(todos_productos)} productos")
+            
+        except Exception as error:
+            print(f"Error al recargar tabla: {error}")
+            page.open(ft.SnackBar(
+                content=ft.Text("❌ Error al recargar tabla", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
+            ))
+
     dialogo_busqueda = ft.AlertDialog(
         title=ft.Text("Buscar Producto", color=tema.TEXT_COLOR),
         bgcolor=tema.CARD_COLOR,
@@ -70,7 +100,13 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
                 ft.Row(
                     controls=[
                         campo_buscar,
-                        boton_buscar
+                        boton_buscar,
+                        ft.IconButton(
+                            ft.Icons.REFRESH,
+                            icon_color=tema.SECONDARY_TEXT_COLOR,
+                            on_click=lambda e: recargar_tabla(e, mostrar_productos_filtrados, dialogo_busqueda),
+                            tooltip="Recargar tabla completa"
+                        )
                     ]
                 ),
                 contenedor_carga

@@ -7,6 +7,272 @@ from conexiones.firebase import db
 from datetime import datetime
 import uuid
 
+async def crear_movimiento_ubicacion_dialog(page, callback_actualizar=None):
+    """Crear diálogo específico SOLO para traslados físicos entre ubicaciones"""
+    tema = GestorTemas.obtener_tema()
+    
+    # Variables para ubicaciones disponibles
+    ubicaciones_disponibles = []
+    
+    async def cargar_ubicaciones_disponibles():
+        """Cargar ubicaciones desde Firebase"""
+        nonlocal ubicaciones_disponibles
+        try:
+            ubicaciones_ref = db.collection('ubicaciones')
+            ubicaciones = ubicaciones_ref.stream()
+            
+            ubicaciones_disponibles = []
+            for ubicacion in ubicaciones:
+                data = ubicacion.to_dict()
+                data['firebase_id'] = ubicacion.id
+                ubicaciones_disponibles.append(data)
+        except Exception as e:
+            print(f"Error al cargar ubicaciones: {e}")
+            ubicaciones_disponibles = []
+    
+    await cargar_ubicaciones_disponibles()
+    
+    # Texto informativo
+    texto_info = ft.Text(
+        "🔄 Traslado físico entre ubicaciones\n" +
+        "Mueva productos de una ubicación a otra sin cambiar la cantidad total de inventario",
+        size=14,
+        color=tema.TEXT_SECONDARY,
+        text_align=ft.TextAlign.CENTER
+    )
+    
+    # Dropdown para seleccionar ubicación origen
+    dropdown_ubicacion_origen = ft.Dropdown(
+        label="Ubicación de origen",
+        width=400,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        helper_text="Seleccione de dónde trasladar el producto",
+        options=[
+            ft.dropdown.Option(
+                key=u.get('firebase_id', ''),
+                text=f"{u.get('modelo', '')} - Alm.{u.get('almacen', '')}/{u.get('estanteria', '')} (Stock: {u.get('cantidad', 0)})"
+            ) for u in ubicaciones_disponibles if u.get('cantidad', 0) > 0
+        ]
+    )
+    
+    # Campos para nueva ubicación destino
+    campo_nuevo_almacen = ft.Dropdown(
+        label="Almacén destino",
+        width=400,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        helper_text="Almacén donde colocar el producto",
+        options=[
+            ft.dropdown.Option(key="1", text="Almacén 1"),
+            ft.dropdown.Option(key="2", text="Almacén 2"),
+            ft.dropdown.Option(key="3", text="Almacén 3"),
+        ]
+    )
+    
+    campo_nueva_estanteria = ft.TextField(
+        label="Estantería destino",
+        width=400,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        helper_text="Ejemplo: A1, B2, C3..."
+    )
+    
+    campo_cantidad_mover = ft.TextField(
+        label="Cantidad a trasladar",
+        width=200,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        helper_text="Cantidad que desea mover"
+    )
+    
+    campo_motivo = ft.TextField(
+        label="Motivo del traslado",
+        width=400,
+        bgcolor=tema.INPUT_BG,
+        color=tema.TEXT_COLOR,
+        border_color=tema.INPUT_BORDER,
+        multiline=True,
+        max_lines=2,
+        helper_text="Reorganización, optimización de espacio, etc."
+    )
+    
+    async def ejecutar_movimiento_ubicacion(e):
+        """Ejecutar el movimiento entre ubicaciones"""
+        try:
+            # Validaciones
+            if not dropdown_ubicacion_origen.value:
+                page.open(ft.SnackBar(
+                    content=ft.Text("❌ Debe seleccionar una ubicación origen", color=tema.TEXT_COLOR),
+                    bgcolor=tema.ERROR_COLOR
+                ))
+                return
+            
+            if not campo_nuevo_almacen.value or not campo_nueva_estanteria.value:
+                page.open(ft.SnackBar(
+                    content=ft.Text("❌ Debe especificar almacén y estantería de destino", color=tema.TEXT_COLOR),
+                    bgcolor=tema.ERROR_COLOR
+                ))
+                return
+            
+            if not campo_cantidad_mover.value:
+                page.open(ft.SnackBar(
+                    content=ft.Text("❌ Debe especificar la cantidad a mover", color=tema.TEXT_COLOR),
+                    bgcolor=tema.ERROR_COLOR
+                ))
+                return
+            
+            # Obtener datos de la ubicación origen
+            ubicacion_origen_id = dropdown_ubicacion_origen.value
+            ubicacion_origen = next((u for u in ubicaciones_disponibles if u.get('firebase_id') == ubicacion_origen_id), None)
+            
+            if not ubicacion_origen:
+                page.open(ft.SnackBar(
+                    content=ft.Text("❌ Ubicación origen no encontrada", color=tema.TEXT_COLOR),
+                    bgcolor=tema.ERROR_COLOR
+                ))
+                return
+            
+            cantidad_a_mover = int(campo_cantidad_mover.value)
+            cantidad_actual = ubicacion_origen.get('cantidad', 0)
+            
+            if cantidad_a_mover <= 0 or cantidad_a_mover > cantidad_actual:
+                page.open(ft.SnackBar(
+                    content=ft.Text(f"❌ Cantidad inválida. Disponible: {cantidad_actual}", color=tema.TEXT_COLOR),
+                    bgcolor=tema.ERROR_COLOR
+                ))
+                return
+            
+            # Crear nueva ubicación destino
+            nueva_ubicacion = {
+                "modelo": ubicacion_origen.get('modelo', ''),
+                "nombre_producto": ubicacion_origen.get('nombre_producto', ''),
+                "tipo_producto": ubicacion_origen.get('tipo_producto', ''),
+                "almacen": campo_nuevo_almacen.value.strip(),
+                "estanteria": campo_nueva_estanteria.value.strip(),
+                "cantidad": cantidad_a_mover,
+                "observaciones": campo_motivo.value.strip() if campo_motivo.value else f"Movido desde {ubicacion_origen.get('almacen', '')}/{ubicacion_origen.get('estanteria', '')}",
+                "fecha_asignacion": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "usuario_asignacion": SesionManager.obtener_usuario_actual().get('username', 'Usuario') if SesionManager.obtener_usuario_actual() else 'Sistema'
+            }
+            
+            # Registrar movimiento en colección de movimientos
+            movimiento = {
+                "tipo": "movimiento_ubicacion",
+                "modelo": ubicacion_origen.get('modelo', ''),
+                "cantidad": cantidad_a_mover,
+                "ubicacion_origen": f"{ubicacion_origen.get('almacen', '')}/{ubicacion_origen.get('estanteria', '')}",
+                "ubicacion_destino": f"{campo_nuevo_almacen.value}/{campo_nueva_estanteria.value}",
+                "motivo": campo_motivo.value.strip() if campo_motivo.value else "Traslado entre ubicaciones",
+                "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "usuario": SesionManager.obtener_usuario_actual().get('username', 'Usuario') if SesionManager.obtener_usuario_actual() else 'Sistema'
+            }
+            
+            # Guardar nueva ubicación
+            db.collection("ubicaciones").add(nueva_ubicacion)
+            
+            # Guardar registro de movimiento
+            db.collection("movimientos").add(movimiento)
+            
+            # *** INVALIDAR CACHE PARA FORZAR ACTUALIZACIÓN ***
+            from app.utils.cache_firebase import cache_firebase
+            cache_firebase.invalidar_cache_ubicaciones()
+            cache_firebase.invalidar_cache_movimientos()  # ¡IMPORTANTE! Invalidar movimientos para que aparezcan en la vista
+            
+            # Actualizar ubicación origen
+            doc_ref = db.collection('ubicaciones').document(ubicacion_origen_id)
+            nueva_cantidad = cantidad_actual - cantidad_a_mover
+            
+            if nueva_cantidad > 0:
+                doc_ref.update({
+                    'cantidad': nueva_cantidad,
+                    'fecha_modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+            else:
+                # Si se movió todo, eliminar ubicación original
+                doc_ref.delete()
+            
+            # Invalidar caches
+            from app.utils.cache_firebase import cache_firebase
+            cache_firebase.invalidar_cache_ubicaciones()
+            cache_firebase.invalidar_cache_movimientos()  # ¡IMPORTANTE! Invalidar movimientos para que aparezcan en la vista
+            
+            # Registrar en historial
+            gestor_historial = GestorHistorial()
+            usuario_actual = SesionManager.obtener_usuario_actual()
+            
+            await gestor_historial.agregar_actividad(
+                tipo="movimiento_ubicacion",
+                descripcion=f"Movió {cantidad_a_mover}x {ubicacion_origen.get('modelo', '')} de {ubicacion_origen.get('almacen', '')}/{ubicacion_origen.get('estanteria', '')} → {campo_nuevo_almacen.value}/{campo_nueva_estanteria.value}",
+                usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
+            )
+            
+            page.close(dialogo_movimiento)
+            page.open(ft.SnackBar(
+                content=ft.Text("✅ Movimiento realizado exitosamente", color=tema.TEXT_COLOR),
+                bgcolor=tema.SUCCESS_COLOR
+            ))
+            
+            # Actualizar vistas
+            if callback_actualizar:
+                await callback_actualizar()
+                
+        except Exception as error:
+            print(f"Error al realizar movimiento: {error}")
+            page.open(ft.SnackBar(
+                content=ft.Text(f"❌ Error al realizar movimiento: {str(error)}", color=tema.TEXT_COLOR),
+                bgcolor=tema.ERROR_COLOR
+            ))
+    
+    # Diálogo de movimiento
+    dialogo_movimiento = ft.AlertDialog(
+        title=ft.Text("Traslado entre Ubicaciones", color=tema.TEXT_COLOR),
+        bgcolor=tema.CARD_COLOR,
+        content=ft.Container(
+            content=ft.Column([
+                texto_info,
+                ft.Divider(color=tema.DIVIDER_COLOR),
+                dropdown_ubicacion_origen,
+                ft.Container(height=10),
+                ft.Text("Ubicación destino:", color=tema.TEXT_COLOR, weight=ft.FontWeight.BOLD),
+                campo_nuevo_almacen,
+                campo_nueva_estanteria,
+                campo_cantidad_mover,
+                campo_motivo,
+                ft.Container(height=20),  # Espacio adicional antes de los botones
+            ], spacing=15),
+            width=450,
+            height=500,  # Aumentamos la altura para evitar superposición
+            padding=ft.Padding(20, 20, 20, 20)
+        ),
+        actions=[
+            ft.ElevatedButton(
+                "Realizar Movimiento",
+                style=ft.ButtonStyle(
+                    bgcolor=tema.BUTTON_SUCCESS_BG,
+                    color=tema.BUTTON_TEXT,
+                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                ),
+                on_click=ejecutar_movimiento_ubicacion
+            ),
+            ft.TextButton(
+                "Cancelar",
+                style=ft.ButtonStyle(color=tema.TEXT_SECONDARY),
+                on_click=lambda e: page.close(dialogo_movimiento)
+            ),
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,  # Alinear botones a la derecha
+        modal=True,
+    )
+    
+    page.open(dialogo_movimiento)
+    page.update()
+
 async def crear_movimiento_dialog(page, callback_actualizar=None):
     """Crear diálogo para registrar movimiento de productos"""
     tema = GestorTemas.obtener_tema()
@@ -31,8 +297,8 @@ async def crear_movimiento_dialog(page, callback_actualizar=None):
             print(f"Error al cargar productos: {e}")
             # Datos de ejemplo
             productos_disponibles = [
-                {"modelo": "LAP001", "nombre": "Laptop Dell", "stock_act": 10},
-                {"modelo": "MOU002", "nombre": "Mouse Logitech", "stock_act": 25}
+                {"modelo": "LAP001", "nombre": "Laptop Dell", "cantidad": 10},
+                {"modelo": "MOU002", "nombre": "Mouse Logitech", "cantidad": 25}
             ]
     
     async def cargar_ubicaciones_disponibles():
@@ -69,7 +335,7 @@ async def crear_movimiento_dialog(page, callback_actualizar=None):
         options=[
             ft.dropdown.Option(
                 key=p.get('modelo', ''),
-                text=f"{p.get('modelo', '')} - {p.get('nombre', '')} (Stock: {p.get('stock_act', 0)})"
+                text=f"{p.get('modelo', '')} - {p.get('nombre', '')} (Stock: {p.get('cantidad', 0)})"
             ) for p in productos_disponibles
         ]
     )
@@ -159,8 +425,8 @@ async def crear_movimiento_dialog(page, callback_actualizar=None):
         
         # Verificar stock disponible
         producto_data = next((p for p in productos_disponibles if p.get('modelo') == dropdown_producto.value), None)
-        if producto_data and cantidad > producto_data.get('stock_act', 0):
-            return False, f"Stock insuficiente. Disponible: {producto_data.get('stock_act', 0)}"
+        if producto_data and cantidad > producto_data.get('cantidad', 0):
+            return False, f"Stock insuficiente. Disponible: {producto_data.get('cantidad', 0)}"
         
         return True, "OK"
     
@@ -200,6 +466,11 @@ async def crear_movimiento_dialog(page, callback_actualizar=None):
             
             # Guardar en Firebase
             db.collection("movimientos").add(movimiento)
+            
+            # *** INVALIDAR CACHE PARA FORZAR ACTUALIZACIÓN ***
+            from app.utils.cache_firebase import cache_firebase
+            cache_firebase.invalidar_cache_ubicaciones()
+            cache_firebase.invalidar_cache_movimientos()  # ¡IMPORTANTE! Invalidar movimientos para que aparezcan en la vista
             
             # Registrar en historial
             gestor_historial = GestorHistorial()
@@ -268,31 +539,42 @@ async def crear_movimiento_dialog(page, callback_actualizar=None):
 async def obtener_movimientos_firebase():
     """Obtener historial de movimientos desde Firebase"""
     try:
-        movimientos_ref = db.collection('movimientos').order_by('fecha_movimiento', direction='DESCENDING')
+        # Obtener TODOS los movimientos sin filtros problemáticos
+        print("🔍 Consultando TODOS los movimientos de Firebase...")
+        movimientos_ref = db.collection('movimientos')
         movimientos = movimientos_ref.stream()
         
         movimientos_data = []
+        tipos_encontrados = []
+        
         for movimiento in movimientos:
             data = movimiento.to_dict()
             data['firebase_id'] = movimiento.id
+            
+            # Normalizar el formato de fecha para consistencia
+            if 'fecha' in data and 'fecha_movimiento' not in data:
+                data['fecha_movimiento'] = data['fecha']
+            elif 'fecha_movimiento' in data and 'fecha' not in data:
+                data['fecha'] = data['fecha_movimiento']
+            
+            # Log para debug
+            tipo_mov = data.get('tipo', 'sin_tipo')
+            if tipo_mov not in tipos_encontrados:
+                tipos_encontrados.append(tipo_mov)
+                
             movimientos_data.append(data)
+        
+        # Ordenar por fecha después de obtener todos los datos
+        try:
+            movimientos_data.sort(key=lambda x: x.get('fecha_movimiento', ''), reverse=True)
+        except Exception as e:
+            print(f"⚠️ No se pudo ordenar movimientos: {e}")
+        
+        print(f"📊 MOVIMIENTOS ENCONTRADOS: {len(movimientos_data)} registros")
+        print(f"📋 TIPOS DETECTADOS: {tipos_encontrados}")
         
         return movimientos_data
         
     except Exception as e:
-        print(f"Error al obtener movimientos: {e}")
-        # Datos de ejemplo
-        return [
-            {
-                'firebase_id': '1',
-                'producto_modelo': 'LAP001',
-                'cantidad': 5,
-                'ubicacion_origen': {'almacen': 'Almacén Principal', 'ubicacion': 'Estante A-3'},
-                'ubicacion_destino': {'almacen': 'Almacén Secundario', 'ubicacion': 'Estante B-1'},
-                'tipo_movimiento': 'Traslado',
-                'motivo': 'Reorganización de inventario',
-                'fecha_movimiento': '2025-01-15T10:30:00',
-                'estado': 'Completado',
-                'usuario': 'admin'
-            }
-        ]
+        print(f"❌ Error al obtener movimientos: {e}")
+        return []

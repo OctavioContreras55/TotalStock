@@ -20,60 +20,55 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
     # Establecer referencia de página para selección múltiple
     ui_tabla_usuarios.set_page_reference(page)
     
-    # Establecer callback de actualización
-    ui_tabla_usuarios.set_actualizar_tabla_callback(None)  # Se establecerá después
-    
     usuarios_actuales = []
-    
-    # Crear referencia al botón eliminar para control directo
-    boton_eliminar_ref = None
     
     # Dimensiones responsivas
     ancho_ventana = page.window.width or 1200
     alto_ventana = page.window.height or 800
     
-    # CARGA OPTIMIZADA con cache
-    print("📡 Consultando usuarios con cache optimizado...")
-    contenido.content = vista_carga("Cargando usuarios...", 18)
-    page.update()
-    
-    try:
-        usuarios_actuales = await cache_firebase.obtener_usuarios()
-        print(f"👥 Vista usuarios cargada con {len(usuarios_actuales)} usuarios")
-    except Exception as e:
-        print(f"Error al obtener usuarios iniciales: {e}")
-        usuarios_actuales = []
+    # CARGA INMEDIATA desde cache si está disponible
+    usuarios_cache = cache_firebase.obtener_usuarios_inmediato()
+    if usuarios_cache:
+        print("⚡ CARGA INSTANTÁNEA USUARIOS desde cache - Saltando loading screen")
+        usuarios_actuales = usuarios_cache
+    else:
+        print("📡 No hay cache usuarios - Mostrando loading y consultando Firebase")
+        contenido.content = vista_carga("Cargando usuarios...", 18)
+        page.update()
+        
+        try:
+            usuarios_iniciales = await obtener_usuarios_firebase()
+            usuarios_actuales = usuarios_iniciales if usuarios_iniciales else []
+            print(f"👥 Vista usuarios cargada con {len(usuarios_actuales)} usuarios")
+        except Exception as e:
+            print(f"Error al obtener usuarios iniciales: {e}")
+            usuarios_actuales = []
 
     async def actualizar_tabla_usuarios(forzar_refresh=False):
-        """Actualizar tabla con estrategia optimista - sin parpadeo"""
+        """Actualizar tabla con carga optimizada"""
         nonlocal usuarios_actuales
         try:
             if forzar_refresh:
-                print("🔄 REFRESH TRADICIONAL: Consultando Firebase")
-                # Solo para casos donde realmente necesitamos recargar desde Firebase
-                from app.utils.cache_firebase import cache_firebase
-                cache_firebase._cache_usuarios = []
-                cache_firebase._ultimo_update_usuarios = None
-                usuarios_actuales = await cache_firebase.obtener_usuarios(forzar_refresh=True, mostrar_loading=False)
-                print(f"   → Refresh completado: {len(usuarios_actuales)} usuarios")
-            else:
-                # Usar cache optimizado para usuarios
-                print("📡 Cache usuarios - Consultando con sistema optimizado")
-                from app.utils.cache_firebase import cache_firebase
-                usuarios_actuales = await cache_firebase.obtener_usuarios(mostrar_loading=False)
-                print(f"   → Actualización normal completada: {len(usuarios_actuales)} usuarios")
-                
-            # Actualizar solo la tabla, no toda la vista
-            if hasattr(contenido.content, 'controls') and len(contenido.content.controls) >= 4:
-                nueva_tabla = ui_tabla_usuarios.mostrar_tabla_usuarios(
-                    page, usuarios_actuales, actualizar_tabla_usuarios
-                )
-                contenido.content.controls[-1].content = nueva_tabla
-                page.update()
-            else:
-                contenido.content = construir_vista_usuarios(usuarios_actuales)
+                print("🔄 ACTUALIZANDO TABLA USUARIOS - Refresh forzado (post-operación)")
+                contenido.content = vista_carga("Actualizando usuarios...", 16)
                 page.update()
                 
+                usuarios_actuales = await cache_firebase.obtener_usuarios(forzar_refresh=True)
+                print(f"   → Refresh usuarios forzado completado: {len(usuarios_actuales)} usuarios")
+            else:
+                usuarios_cache_rapido = cache_firebase.obtener_usuarios_inmediato()
+                if usuarios_cache_rapido:
+                    print("⚡ ACTUALIZACIÓN INMEDIATA USUARIOS desde cache")
+                    usuarios_actuales = usuarios_cache_rapido
+                else:
+                    print("📡 Cache usuarios expirado - Consultando Firebase")
+                    contenido.content = vista_carga("Actualizando usuarios...", 16)
+                    page.update()
+                    usuarios_actuales = await cache_firebase.obtener_usuarios()
+                print(f"   → Actualización usuarios normal completada: {len(usuarios_actuales)} usuarios")
+                
+            contenido.content = construir_vista_usuarios(usuarios_actuales)
+            page.update()
         except Exception as e:
             print(f"Error al actualizar tabla usuarios: {e}")
             usuarios_actuales = []
@@ -204,28 +199,6 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
 
     def construir_vista_usuarios(usuarios):
         """Construye la vista completa de usuarios"""
-        nonlocal boton_eliminar_ref
-        
-        # Crear botón eliminar con referencia
-        boton_eliminar_ref = ft.ElevatedButton(
-            content=ft.Row([
-                ft.Icon(ft.Icons.DELETE_SWEEP, color="#FFFFFF", size=16),
-                ft.Text("Eliminar Selec.", color="#FFFFFF", size=12)
-            ], spacing=5),
-            style=ft.ButtonStyle(
-                bgcolor=tema.ERROR_COLOR,
-                color="#FFFFFF",
-                shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-            ),
-            on_click=lambda e: page.run_task(ui_tabla_usuarios.eliminar_usuarios_seleccionados, page, lambda: actualizar_tabla_usuarios(forzar_refresh=True)),
-            width=170,
-            visible=False,  # Se mostrará cuando haya selecciones
-            data="btn_eliminar_usuarios_seleccionados"  # ID para encontrarlo después
-        )
-        
-        # Establecer referencia en el módulo de tabla
-        ui_tabla_usuarios.set_boton_eliminar_reference(boton_eliminar_ref)
-        
         return ft.Container(
             content=ft.Column([
                 # Header con título
@@ -281,16 +254,10 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                             sugerencias_container
                         ], spacing=5),
                         
-                        # Fila de botones de acción - Agregar Usuario a la derecha
+                        # Fila de botones de acción - Centrados
                         ft.Container(
                             content=ft.Row([
-                                # Botón Eliminar Seleccionados - A la izquierda (usar la referencia)
-                                boton_eliminar_ref,
-                                
-                                # Espaciador para empujar el botón agregar a la derecha
-                                ft.Container(expand=True),
-                                
-                                # Botón Agregar Usuario - A la derecha
+                                # Botón Agregar Usuario
                                 ft.ElevatedButton(
                                     content=ft.Row([
                                         ft.Icon(ft.Icons.ADD, color=tema.ICON_BTN_COLOR, size=16),
@@ -304,8 +271,25 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                                     on_click=abrir_ventana_crear_usuario,
                                     width=180
                                 ),
-                            ], spacing=15, alignment=ft.MainAxisAlignment.START),
-                            alignment=ft.alignment.center_left  # Alineación general a la izquierda
+                                
+                                # Botón Eliminar Seleccionados
+                                ft.ElevatedButton(
+                                    content=ft.Row([
+                                        ft.Icon(ft.Icons.DELETE_SWEEP, color="#FFFFFF", size=16),
+                                        ft.Text("Eliminar Selec.", color="#FFFFFF", size=12)
+                                    ], spacing=5),
+                                    style=ft.ButtonStyle(
+                                        bgcolor=tema.ERROR_COLOR,
+                                        color="#FFFFFF",
+                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                    ),
+                                    on_click=lambda e: page.run_task(ui_tabla_usuarios.eliminar_usuarios_seleccionados, page, actualizar_tabla_usuarios),
+                                    width=170,
+                                    visible=False,  # Se mostrará cuando haya selecciones
+                                    data="btn_eliminar_usuarios_seleccionados"  # ID para encontrarlo después
+                                ),
+                            ], spacing=15, alignment=ft.MainAxisAlignment.CENTER),
+                            alignment=ft.alignment.center
                         ),
                     ], spacing=15),
                     width=ancho_ventana * 0.95,
@@ -334,7 +318,6 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                     ),
                     alignment=ft.alignment.top_center,  # Centrado horizontal y pegado arriba
                     width=ancho_ventana * 0.99,  # Container padre ocupa casi todo el ancho
-                    height=alto_ventana * 0.7,  # Altura responsiva para dejar espacio para botones
                 )     
             ],
             alignment=ft.MainAxisAlignment.START,
@@ -346,8 +329,4 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
 
     # Cargar datos iniciales y mostrar vista
     contenido.content = construir_vista_usuarios(usuarios_actuales) 
-    
-    # Establecer callback de actualización después de construir la vista
-    ui_tabla_usuarios.set_actualizar_tabla_callback(actualizar_tabla_usuarios)
-    
     page.update()

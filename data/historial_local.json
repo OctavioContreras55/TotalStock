@@ -1,5 +1,613 @@
 [
   {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'prueba4' (ID: D0K1IvkehAY9y63wAqv4)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T03:10:53.825807",
+    "timestamp": "2025-08-07T03:10:53.825817",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'prueba233' (Admin: No)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T03:10:41.331741",
+    "timestamp": "2025-08-07T03:10:41.331755",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'prueba2' (ID: 15LSsstebljM9BFz9nEc)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T03:03:26.466860",
+    "timestamp": "2025-08-07T03:03:26.466869",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: prueba2",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T03:03:20.753864",
+    "timestamp": "2025-08-07T03:03:20.753872",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'prueba2' (Admin: No)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T03:03:03.804755",
+    "timestamp": "2025-08-07T03:03:03.804766",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'prueba5' (ID: OqijTXH1YjXGsc1iOIpD)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:58:39.484957",
+    "timestamp": "2025-08-07T02:58:39.484968",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: admin",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:58:26.474363",
+    "timestamp": "2025-08-07T02:58:26.474372",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'Aldair' (ID: k9RORodUWYeKCXrakLDQ)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:51:33.054714",
+    "timestamp": "2025-08-07T02:51:33.054725",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: admin",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:51:25.470626",
+    "timestamp": "2025-08-07T02:51:25.470636",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'KanekiKen' (ID: aXhzoJcfe9sLRbrRvoe9) - Archivos limpiados: 1",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:45:00.138447",
+    "timestamp": "2025-08-07T02:45:00.138456",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: admin",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:44:44.145779",
+    "timestamp": "2025-08-07T02:44:44.145789",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'Diego' (ID: YHE0MuOYPOyf4v4UJTfI)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:36:16.787826",
+    "timestamp": "2025-08-07T02:36:16.787840",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: admin",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:33:38.906396",
+    "timestamp": "2025-08-07T02:33:38.906409",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: admin",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:33:01.810243",
+    "timestamp": "2025-08-07T02:33:01.810251",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: admin",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:32:54.743427",
+    "timestamp": "2025-08-07T02:32:54.743436",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_usuario",
+    "descripcion": "Creó nuevo usuario 'prueba4' (Admin: Sí)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:29:39.696479",
+    "timestamp": "2025-08-07T02:29:39.696486",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_usuario",
+    "descripcion": "Eliminó usuario 'Adrian' (ID: cvYmWA6h5I33IpjQCrUx)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T02:29:09.536029",
+    "timestamp": "2025-08-07T02:29:09.536040",
+    "detalles": {}
+  },
+  {
+    "tipo": "movimiento_ubicacion",
+    "descripcion": "Movió 3x 123 de 3/A3 → 2/B2",
+    "usuario": "Octavio",
+    "fecha": "2025-08-07T01:50:14.213668",
+    "timestamp": "2025-08-07T01:50:14.213680",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 5 productos desde archivo Excel - 5 nuevos, 0 actualizados",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T22:18:23.082260",
+    "timestamp": "2025-08-06T22:18:23.082269",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 0 productos desde archivo Excel - 0 nuevos, 0 actualizados",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T22:17:51.555036",
+    "timestamp": "2025-08-06T22:17:51.555047",
+    "detalles": {}
+  },
+  {
+    "tipo": "movimiento_ubicacion",
+    "descripcion": "Movió 5x Cadena 35 de 1/2A → 2/2B",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T21:20:09.288296",
+    "timestamp": "2025-08-06T21:20:09.288306",
+    "detalles": {}
+  },
+  {
+    "tipo": "movimiento_ubicacion",
+    "descripcion": "Movió 3x Cadena 80 de 1/1B → 2/B3",
+    "usuario": "Sistema",
+    "fecha": "2025-08-06T21:18:43.829272",
+    "timestamp": "2025-08-06T21:18:43.829290",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó ubicación: 100B20 de de/ded",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:58:53.813990",
+    "timestamp": "2025-08-06T20:58:53.814003",
+    "detalles": {}
+  },
+  {
+    "tipo": "asignar_ubicacion",
+    "descripcion": "Asignó ubicación: 100B20 → Almacén de, Estantería ded",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:58:48.698826",
+    "timestamp": "2025-08-06T20:58:48.698834",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 1 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:54:47.665605",
+    "timestamp": "2025-08-06T20:54:47.665614",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó ubicación: 100B19 de 121/121",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:54:26.756584",
+    "timestamp": "2025-08-06T20:54:26.756592",
+    "detalles": {}
+  },
+  {
+    "tipo": "asignar_ubicacion",
+    "descripcion": "Asignó ubicación: 100B19 → Almacén 121, Estantería 121",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:54:22.929976",
+    "timestamp": "2025-08-06T20:54:22.929987",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 1 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:53:59.340459",
+    "timestamp": "2025-08-06T20:53:59.340467",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó ubicación: 100B17 de 12/12",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:53:31.718645",
+    "timestamp": "2025-08-06T20:53:31.718652",
+    "detalles": {}
+  },
+  {
+    "tipo": "asignar_ubicacion",
+    "descripcion": "Asignó ubicación: 100B17 → Almacén 12, Estantería 12",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:53:19.890845",
+    "timestamp": "2025-08-06T20:53:19.890855",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_ubicaciones",
+    "descripcion": "Exportó 14 ubicaciones a Excel: ubicaciones_20250806_203912.xlsx",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:39:12.664173",
+    "timestamp": "2025-08-06T20:39:12.664197",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_ubicaciones",
+    "descripcion": "Exportó 14 ubicaciones a PDF: ubicaciones_20250806_203849.pdf",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:38:49.098039",
+    "timestamp": "2025-08-06T20:38:49.098054",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_ubicaciones",
+    "descripcion": "Exportó 14 ubicaciones a PDF: ubicaciones_20250806_201831.pdf",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:18:31.358158",
+    "timestamp": "2025-08-06T20:18:31.358171",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_productos_multiple",
+    "descripcion": "Eliminó 4 productos (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:17:53.029503",
+    "timestamp": "2025-08-06T20:17:53.029511",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_producto",
+    "descripcion": "Eliminó producto 'barra' (ID: 543)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:17:27.646428",
+    "timestamp": "2025-08-06T20:17:27.646437",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_producto",
+    "descripcion": "Editó producto 'barra' (ID: 543)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T20:17:09.345251",
+    "timestamp": "2025-08-06T20:17:09.345264",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 5 productos desde archivo Excel - 5 nuevos, 0 actualizados",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:56:17.018156",
+    "timestamp": "2025-08-06T19:56:17.018165",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_productos_multiple",
+    "descripcion": "Eliminó 5 productos (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:54:02.321079",
+    "timestamp": "2025-08-06T19:54:02.321090",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 5 productos desde archivo Excel - 0 nuevos, 5 actualizados",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:52:58.668211",
+    "timestamp": "2025-08-06T19:52:58.668222",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 5 productos desde archivo Excel - 5 nuevos, 0 actualizados",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:52:05.269148",
+    "timestamp": "2025-08-06T19:52:05.269158",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_productos_multiple",
+    "descripcion": "Eliminó 5 productos (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:49:39.219522",
+    "timestamp": "2025-08-06T19:49:39.219535",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 5 productos desde archivo Excel - 5 nuevos, 0 actualizados",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:48:45.710158",
+    "timestamp": "2025-08-06T19:48:45.710166",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_productos_multiple",
+    "descripcion": "Eliminó 5 productos (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:48:24.012898",
+    "timestamp": "2025-08-06T19:48:24.012910",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 5 productos desde archivo Excel - 0 nuevos, 5 actualizados",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:47:32.092793",
+    "timestamp": "2025-08-06T19:47:32.092804",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_productos",
+    "descripcion": "Exportó 266 productos a Excel (productos_20250806_194324.xlsx)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:43:24.076560",
+    "timestamp": "2025-08-06T19:43:24.076568",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_productos",
+    "descripcion": "Exportó 266 productos a JSON (productos_20250806_194119.json)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:41:19.809923",
+    "timestamp": "2025-08-06T19:41:19.809935",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_productos",
+    "descripcion": "Exportó 266 productos a Excel (productos_20250806_193911.xlsx)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:39:11.368823",
+    "timestamp": "2025-08-06T19:39:11.368831",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_productos",
+    "descripcion": "Exportó 266 productos a PDF (productos_20250806_193635.pdf)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:36:36.030036",
+    "timestamp": "2025-08-06T19:36:36.030051",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_productos",
+    "descripcion": "Exportó 266 productos a PDF (productos_20250806_193121.pdf)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:31:21.875439",
+    "timestamp": "2025-08-06T19:31:21.875449",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_productos_multiple",
+    "descripcion": "Eliminó 2 productos (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:13:25.032679",
+    "timestamp": "2025-08-06T19:13:25.032686",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_producto",
+    "descripcion": "Creó producto 'prueba' (Modelo: Prueba12)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:13:09.640630",
+    "timestamp": "2025-08-06T19:13:09.640640",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_producto",
+    "descripcion": "Creó producto 'p' (Modelo: Prueba1)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:12:44.359736",
+    "timestamp": "2025-08-06T19:12:44.359746",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_productos_multiple",
+    "descripcion": "Eliminó 1 productos (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:09:21.404784",
+    "timestamp": "2025-08-06T19:09:21.404792",
+    "detalles": {}
+  },
+  {
+    "tipo": "crear_producto",
+    "descripcion": "Creó producto 'prueba1' (Modelo: Prueba1)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T19:08:54.060761",
+    "timestamp": "2025-08-06T19:08:54.060775",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_productos_multiple",
+    "descripcion": "Eliminó 2 productos (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T18:57:31.554506",
+    "timestamp": "2025-08-06T18:57:31.554517",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:20:31.664145",
+    "timestamp": "2025-08-06T17:20:31.664153",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 14 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:17:22.117392",
+    "timestamp": "2025-08-06T17:17:22.117405",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:17:12.802572",
+    "timestamp": "2025-08-06T17:17:12.802581",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 14 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:17:03.736237",
+    "timestamp": "2025-08-06T17:17:03.736246",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:13:30.170587",
+    "timestamp": "2025-08-06T17:13:30.170595",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 14 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:13:22.569320",
+    "timestamp": "2025-08-06T17:13:22.569328",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:07:51.431387",
+    "timestamp": "2025-08-06T17:07:51.431399",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 14 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:07:43.240576",
+    "timestamp": "2025-08-06T17:07:43.240584",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:03:43.604554",
+    "timestamp": "2025-08-06T17:03:43.604563",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 14 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:03:36.590434",
+    "timestamp": "2025-08-06T17:03:36.590442",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:01:40.754365",
+    "timestamp": "2025-08-06T17:01:40.754373",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 14 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T17:01:28.320082",
+    "timestamp": "2025-08-06T17:01:28.320090",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_productos",
+    "descripcion": "Importó 5 productos desde archivo Excel (sin cantidades)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T16:51:43.170125",
+    "timestamp": "2025-08-06T16:51:43.170134",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T16:48:34.823862",
+    "timestamp": "2025-08-06T16:48:34.823873",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 14 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T16:48:25.479249",
+    "timestamp": "2025-08-06T16:48:25.479257",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T16:41:44.276313",
+    "timestamp": "2025-08-06T16:41:44.276324",
+    "detalles": {}
+  },
+  {
+    "tipo": "eliminar_ubicacion",
+    "descripcion": "Eliminó 14 ubicaciones masivamente (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T16:41:31.131665",
+    "timestamp": "2025-08-06T16:41:31.131673",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 14 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T16:21:43.001268",
+    "timestamp": "2025-08-06T16:21:43.001282",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 262 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T16:12:32.432610",
+    "timestamp": "2025-08-06T16:12:32.432619",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 262 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T16:06:27.599658",
+    "timestamp": "2025-08-06T16:06:27.599667",
+    "detalles": {}
+  },
+  {
+    "tipo": "importar_ubicaciones",
+    "descripcion": "Importó 262 ubicaciones desde Excel (Errores: 0)",
+    "usuario": "Octavio",
+    "fecha": "2025-08-06T15:19:05.543179",
+    "timestamp": "2025-08-06T15:19:05.543189",
+    "detalles": {}
+  },
+  {
     "tipo": "eliminar_ubicacion",
     "descripcion": "Eliminó ubicación: Cadena 105 de 3/3A",
     "usuario": "Octavio",
@@ -189,166 +797,6 @@
     "usuario": "Octavio",
     "fecha": "2025-08-03T16:04:37.918350",
     "timestamp": "2025-08-03T16:04:37.918359",
-    "detalles": {}
-  },
-  {
-    "tipo": "crear_producto",
-    "descripcion": "Creó producto 'prueba' (Modelo: Prueba2)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:02:49.478717",
-    "timestamp": "2025-08-03T16:02:49.478726",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_producto",
-    "descripcion": "Eliminó producto 'Si' (ID: 5432)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T13:47:49.839803",
-    "timestamp": "2025-08-03T13:47:49.839816",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'Pepe' (ID: fSI9xSkHNVz68v75DvTM)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T13:47:29.346896",
-    "timestamp": "2025-08-03T13:47:29.346910",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'nrh546' (ID: jjagJ0WQf6j9AbiiSZ5i)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-02T21:54:52.139327",
-    "timestamp": "2025-08-02T21:54:52.139337",
-    "detalles": {}
-  },
-  {
-    "tipo": "crear_producto",
-    "descripcion": "Creó producto 'Prueba' (Modelo: Prueba4)",
-    "usuario": "prueba3",
-    "fecha": "2025-08-01T21:10:30.967763",
-    "timestamp": "2025-08-01T21:10:30.968315",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario '34t3t' (ID: gMOombQ2ApPic5PO2jdG)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T20:45:04.882873",
-    "timestamp": "2025-08-01T20:45:04.882885",
-    "detalles": {}
-  },
-  {
-    "tipo": "crear_usuario",
-    "descripcion": "Creó nuevo usuario 'Pepe' (Admin: No)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:51:38.869055",
-    "timestamp": "2025-08-01T15:51:38.869066",
-    "detalles": {}
-  },
-  {
-    "tipo": "crear_usuario",
-    "descripcion": "Creó nuevo usuario 'admin' (Admin: Sí)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:43:12.532046",
-    "timestamp": "2025-08-01T15:43:12.532057",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'admin' (ID: nsGsFfI9hnTGnNw1JTNN)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:21:20.860205",
-    "timestamp": "2025-08-01T15:21:20.860217",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'admin' (ID: Yjo9FeNIQioz7ODOKyxb)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:21:17.822056",
-    "timestamp": "2025-08-01T15:21:17.822077",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'admin' (ID: 6sL28S02T9AO8HGz5rq2)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:21:13.672972",
-    "timestamp": "2025-08-01T15:21:13.673013",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'admin' (ID: 0svRlV9vw8KqXoS4KyMS)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:15:42.712683",
-    "timestamp": "2025-08-01T15:15:42.712697",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'admin' (ID: 1BGMkqMqIv09ovx7m7Ei)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:15:39.973788",
-    "timestamp": "2025-08-01T15:15:39.973809",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'admin' (ID: UzpL6jL4OwA1ISHSGkqp)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:15:37.138628",
-    "timestamp": "2025-08-01T15:15:37.138648",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_producto",
-    "descripcion": "Eliminó producto 'prueba' (ID: HonV2OvFkl3DmjL86r1E)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:14:28.751653",
-    "timestamp": "2025-08-01T15:14:28.751680",
-    "detalles": {}
-  },
-  {
-    "tipo": "crear_producto",
-    "descripcion": "Creó producto 'prueba' (Modelo: Prueba1)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:14:07.545438",
-    "timestamp": "2025-08-01T15:14:07.545446",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_producto",
-    "descripcion": "Eliminó producto 'prueba' (ID: XEc5h6IZjQdIGNGekBeS)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:02:48.817460",
-    "timestamp": "2025-08-01T15:02:48.817467",
-    "detalles": {}
-  },
-  {
-    "tipo": "crear_producto",
-    "descripcion": "Creó producto 'prueba' (Modelo: prueba1)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:02:34.433659",
-    "timestamp": "2025-08-01T15:02:34.433673",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 'usuario' (ID: U3u4r70s)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:00:45.587140",
-    "timestamp": "2025-08-01T15:00:45.587162",
-    "detalles": {}
-  },
-  {
-    "tipo": "eliminar_usuario",
-    "descripcion": "Eliminó usuario 't43t43' (ID: vDAUsk3JNp5EgcdtQSIO)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-01T15:00:39.054837",
-    "timestamp": "2025-08-01T15:00:39.054854",
     "detalles": {}
   }
 ]

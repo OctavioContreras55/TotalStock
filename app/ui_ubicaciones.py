@@ -12,9 +12,18 @@ import asyncio
 
 async def vista_ubicaciones(nombre_seccion, contenido, page):
     """Vista de ubicaciones de productos - Similar a inventario pero con almacén y ubicación"""
+    from app.utils.cache_firebase import cache_firebase
+    
     tema = GestorTemas.obtener_tema()
     
-    # Variables para mantener estado
+    print("🏢 ENTRANDO A UBICACIONES - Optimizando carga...")
+    
+    if page is None:
+        page = contenido.page
+    
+    # Establecer referencia de página para selección múltiple
+    ui_tabla_ubicaciones.set_page_reference(page)
+    
     ubicaciones_actuales = []
     
     # Dimensiones responsivas
@@ -30,30 +39,71 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
         ancho_boton = 220
 
     async def cargar_ubicaciones_firebase():
-        """Cargar ubicaciones de productos desde Firebase"""
+        """Cargar ubicaciones de productos desde Firebase con cache optimizado"""
         try:
-            print("[DEBUG] Cargando ubicaciones desde Firebase...")
-            ubicaciones = await obtener_ubicaciones_productos_firebase()
+            print("[DEBUG] Cargando ubicaciones desde Firebase con cache...")
+            ubicaciones = await cache_firebase.obtener_ubicaciones()
             print(f"[DEBUG] Ubicaciones obtenidas: {len(ubicaciones) if ubicaciones else 0}")
             return ubicaciones
         except Exception as e:
             print(f"[DEBUG] Error al cargar desde Firebase: {e}")
             return []
 
-    async def actualizar_tabla_ubicaciones():
-        """Actualiza la tabla de ubicaciones"""
+    # CARGA INMEDIATA desde cache si está disponible
+    ubicaciones_cache = cache_firebase.obtener_ubicaciones_inmediato()
+    if ubicaciones_cache:
+        # Mostrar datos inmediatamente sin loading screen
+        print("⚡ CARGA INSTANTÁNEA UBICACIONES desde cache - Saltando loading screen")
+        ubicaciones_actuales = ubicaciones_cache
+        # Continuar directamente sin mostrar barra de carga
+    else:
+        # Solo mostrar loading si no hay cache
+        print("📡 No hay cache ubicaciones - Mostrando loading y consultando Firebase")
+        contenido.content = vista_carga("Cargando ubicaciones...", 18)
+        page.update()
+        
+        # Obtener ubicaciones iniciales desde Firebase
+        try:
+            ubicaciones_iniciales = await cargar_ubicaciones_firebase()
+            ubicaciones_actuales = ubicaciones_iniciales if ubicaciones_iniciales else []
+            print(f"📍 Vista ubicaciones cargada con {len(ubicaciones_actuales)} ubicaciones")
+        except Exception as e:
+            print(f"Error al obtener ubicaciones iniciales: {e}")
+            ubicaciones_actuales = []
+
+    async def actualizar_tabla_ubicaciones(forzar_refresh=False):
+        """
+        Actualizar tabla con carga optimizada.
+        """
         nonlocal ubicaciones_actuales
         try:
-            print("Actualizando tabla de ubicaciones")
-            contenido.content = vista_carga()
-            page.update()
-            
-            ubicaciones_actuales = await cargar_ubicaciones_firebase()
+            if forzar_refresh:
+                print("🔄 ACTUALIZANDO TABLA UBICACIONES - Refresh forzado (post-operación)")
+                contenido.content = vista_carga("Actualizando ubicaciones...", 16)
+                page.update()
+                
+                # Forzar consulta a Firebase (ej: después de crear/editar)
+                ubicaciones_actuales = await cache_firebase.obtener_ubicaciones(forzar_refresh=True)
+                print(f"   → Refresh ubicaciones forzado completado: {len(ubicaciones_actuales)} ubicaciones")
+            else:
+                # Carga optimizada normal
+                ubicaciones_cache_rapido = cache_firebase.obtener_ubicaciones_inmediato()
+                if ubicaciones_cache_rapido:
+                    print("⚡ ACTUALIZACIÓN INMEDIATA UBICACIONES desde cache")
+                    ubicaciones_actuales = ubicaciones_cache_rapido
+                else:
+                    print("📡 Cache ubicaciones expirado - Consultando Firebase")
+                    contenido.content = vista_carga("Actualizando ubicaciones...", 16)
+                    page.update()
+                    ubicaciones_actuales = await cache_firebase.obtener_ubicaciones()
+                print(f"   → Actualización ubicaciones normal completada: {len(ubicaciones_actuales)} ubicaciones")
+                
             contenido.content = construir_vista_ubicaciones(ubicaciones_actuales)
             page.update()
-            
         except Exception as e:
-            print(f"Error al actualizar tabla de ubicaciones: {e}")
+            print(f"Error al actualizar tabla ubicaciones: {e}")
+            ubicaciones_actuales = []
+            contenido.content = construir_vista_ubicaciones([])
             page.update()
 
     async def mostrar_ubicaciones_filtradas(ubicaciones_filtradas):
@@ -125,9 +175,9 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
         
         # Buscar coincidencias en ubicaciones actuales
         for ubicacion in ubicaciones_actuales[:5]:  # Limitar a 5 sugerencias
-            modelo = ubicacion.get('modelo', '').lower()
+            modelo = str(ubicacion.get('modelo', '')).lower()  # Convertir a string para evitar errores con int
             almacen = str(ubicacion.get('almacen', '')).lower()
-            estanteria = ubicacion.get('estanteria', '').lower()
+            estanteria = str(ubicacion.get('estanteria', '')).lower()  # Convertir a string por consistencia
             
             if (texto_lower in modelo or 
                 texto_lower in almacen or 
@@ -219,7 +269,7 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
                 ft.Container(
                     height=3,
                     bgcolor=tema.DIVIDER_COLOR,
-                    margin=ft.margin.only(bottom=20, top=5),
+                    margin=ft.margin.only(bottom=15, top=5),
                 ),
                 
                 # Barra de búsqueda y botones de acción - Responsiva
@@ -268,6 +318,23 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
                                     width=180
                                 ),
                                 
+                                # Botón Eliminar Seleccionados
+                                ft.ElevatedButton(
+                                    content=ft.Row([
+                                        ft.Icon(ft.Icons.DELETE_SWEEP, color="#FFFFFF", size=16),
+                                        ft.Text("Eliminar Selec.", color="#FFFFFF", size=12)
+                                    ], spacing=5),
+                                    style=ft.ButtonStyle(
+                                        bgcolor=tema.ERROR_COLOR,
+                                        color="#FFFFFF",
+                                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                                    ),
+                                    on_click=lambda e: page.run_task(ui_tabla_ubicaciones.eliminar_ubicaciones_seleccionadas, page, actualizar_tabla_ubicaciones),
+                                    width=170,
+                                    visible=False,  # Se mostrará cuando haya selecciones
+                                    data="btn_eliminar_seleccionados"  # ID para encontrarlo después
+                                ),
+                                
                                 # Botón Importar Excel
                                 ft.ElevatedButton(
                                     content=ft.Row([
@@ -279,7 +346,7 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
                                         color=tema.BUTTON_TEXT,
                                         shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                     ),
-                                    on_click=lambda e: on_click_importar_archivo_ubicaciones(page),
+                                    on_click=lambda e: page.run_task(on_click_importar_archivo_ubicaciones, page, actualizar_tabla_ubicaciones),
                                     width=160
                                 ),
                                 
@@ -302,25 +369,40 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
                         ),
                     ], spacing=15),
                     width=ancho_ventana * 0.95,
-                    padding=ft.padding.symmetric(horizontal=10, vertical=15)
+                    padding=ft.padding.symmetric(horizontal=10, vertical=10)
                 ),
                 
-                # Tabla de ubicaciones - Contenedor responsivo
+                # Separador adicional entre botones y tabla
+                ft.Container(height=5),
+                
+                # Tabla de ubicaciones - Contenedor responsivo centrado y optimizado
                 ft.Container(
-                    content=mostrar_tabla_ubicaciones(page, ubicaciones, actualizar_tabla_ubicaciones),
-                    width=ancho_ventana * 0.95,  # Más responsivo
-                    padding=ft.padding.symmetric(horizontal=10, vertical=20),
-                    bgcolor=tema.CARD_COLOR,
-                    border_radius=tema.BORDER_RADIUS,
-                    alignment=ft.alignment.center,
+                    content=ft.Container(
+                        content=mostrar_tabla_ubicaciones(page, ubicaciones, actualizar_tabla_ubicaciones),
+                        width=ancho_ventana * 0.96,  # Más ancho para aprovechar mejor el espacio
+                        padding=ft.padding.symmetric(horizontal=15, vertical=20),  # Padding reducido para más espacio
+                        margin=ft.margin.only(top=10, bottom=100),  # Pegado más arriba
+                        bgcolor=tema.CARD_COLOR,
+                        border_radius=tema.BORDER_RADIUS,
+                        alignment=ft.alignment.top_center,  # Alineación superior y centrada
+                        shadow=ft.BoxShadow(
+                            spread_radius=1,
+                            blur_radius=8,
+                            color=ft.Colors.BLACK12,
+                            offset=ft.Offset(0, 3)
+                        )
+                    ),
+                    alignment=ft.alignment.top_center,  # Centrado horizontal y pegado arriba
+                    width=ancho_ventana * 0.99,  # Container padre ocupa casi todo el ancho
                 )     
             ],
             alignment=ft.MainAxisAlignment.START,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.padding.only(bottom=40),
+            padding=ft.padding.only(bottom=150),  # Mucho más padding para separación visible
             bgcolor=tema.BG_COLOR,
         )
 
     # Cargar datos iniciales y mostrar vista
-    await actualizar_tabla_ubicaciones()
+    contenido.content = construir_vista_ubicaciones(ubicaciones_actuales) 
+    page.update()
