@@ -53,12 +53,12 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
     ubicaciones_cache = cache_firebase.obtener_ubicaciones_inmediato()
     if ubicaciones_cache:
         # Mostrar datos inmediatamente sin loading screen
-        print("⚡ CARGA INSTANTÁNEA UBICACIONES desde cache - Saltando loading screen")
+        print("[RAPIDO] CARGA INSTANTÁNEA UBICACIONES desde cache - Saltando loading screen")
         ubicaciones_actuales = ubicaciones_cache
         # Continuar directamente sin mostrar barra de carga
     else:
         # Solo mostrar loading si no hay cache
-        print("📡 No hay cache ubicaciones - Mostrando loading y consultando Firebase")
+        print("[CONSULTA] No hay cache ubicaciones - Mostrando loading y consultando Firebase")
         contenido.content = vista_carga("Cargando ubicaciones...", 18)
         page.update()
         
@@ -78,7 +78,7 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
         nonlocal ubicaciones_actuales
         try:
             if forzar_refresh:
-                print("🔄 ACTUALIZANDO TABLA UBICACIONES - Refresh forzado (post-operación)")
+                print("[PROCESO] ACTUALIZANDO TABLA UBICACIONES - Refresh forzado (post-operación)")
                 contenido.content = vista_carga("Actualizando ubicaciones...", 16)
                 page.update()
                 
@@ -89,10 +89,10 @@ async def vista_ubicaciones(nombre_seccion, contenido, page):
                 # Carga optimizada normal
                 ubicaciones_cache_rapido = cache_firebase.obtener_ubicaciones_inmediato()
                 if ubicaciones_cache_rapido:
-                    print("⚡ ACTUALIZACIÓN INMEDIATA UBICACIONES desde cache")
+                    print("[RAPIDO] ACTUALIZACIÓN INMEDIATA UBICACIONES desde cache")
                     ubicaciones_actuales = ubicaciones_cache_rapido
                 else:
-                    print("📡 Cache ubicaciones expirado - Consultando Firebase")
+                    print("[CONSULTA] Cache ubicaciones expirado - Consultando Firebase")
                     contenido.content = vista_carga("Actualizando ubicaciones...", 16)
                     page.update()
                     ubicaciones_actuales = await cache_firebase.obtener_ubicaciones()

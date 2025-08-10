@@ -185,7 +185,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
             
         elif tipo_seleccionado == "ajuste":
             # AJUSTE: Correcciones de inventario
-            texto_info.value = "🔧 Ajuste de inventario: Corrija diferencias por conteo físico"
+            texto_info.value = "[CONFIG] Ajuste de inventario: Corrija diferencias por conteo físico"
             texto_info.color = tema.PRIMARY_COLOR
             
             # Campos para ajuste
@@ -214,7 +214,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
             tipo = dropdown_tipo.value
             if not tipo:
                 page.open(ft.SnackBar(
-                    content=ft.Text("⚠️ Seleccione un tipo de movimiento", color=tema.TEXT_COLOR),
+                    content=ft.Text("[WARN] Seleccione un tipo de movimiento", color=tema.TEXT_COLOR),
                     bgcolor=tema.WARNING_COLOR
                 ))
                 return
@@ -223,7 +223,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
             cantidad = campo_cantidad.value
             if not cantidad or not cantidad.isdigit() or int(cantidad) <= 0:
                 page.open(ft.SnackBar(
-                    content=ft.Text("⚠️ Ingrese una cantidad válida", color=tema.TEXT_COLOR),
+                    content=ft.Text("[WARN] Ingrese una cantidad válida", color=tema.TEXT_COLOR),
                     bgcolor=tema.WARNING_COLOR
                 ))
                 return
@@ -242,7 +242,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         except Exception as e:
             print(f"Error en movimiento: {e}")
             page.open(ft.SnackBar(
-                content=ft.Text(f"❌ Error: {str(e)}", color=tema.TEXT_COLOR),
+                content=ft.Text(f"[ERROR] Error: {str(e)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
     
@@ -255,7 +255,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         
         if not all([producto_id, almacen, estanteria]):
             page.open(ft.SnackBar(
-                content=ft.Text("⚠️ Complete todos los campos obligatorios", color=tema.TEXT_COLOR),
+                content=ft.Text("[WARN] Complete todos los campos obligatorios", color=tema.TEXT_COLOR),
                 bgcolor=tema.WARNING_COLOR
             ))
             return
@@ -264,7 +264,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         producto = next((p for p in productos_disponibles if p.get('firebase_id') == producto_id), None)
         if not producto:
             page.open(ft.SnackBar(
-                content=ft.Text("❌ Producto no encontrado", color=tema.TEXT_COLOR),
+                content=ft.Text("[ERROR] Producto no encontrado", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
             return
@@ -326,7 +326,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         cache_firebase.invalidar_cache_movimientos()  # ¡IMPORTANTE! Invalidar movimientos para que aparezcan en la vista
         
         page.open(ft.SnackBar(
-            content=ft.Text(f"✅ Entrada registrada: +{cantidad} {producto.get('modelo')}", color=tema.TEXT_COLOR),
+            content=ft.Text(f"[OK] Entrada registrada: +{cantidad} {producto.get('modelo')}", color=tema.TEXT_COLOR),
             bgcolor=tema.SUCCESS_COLOR
         ))
         
@@ -341,7 +341,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         
         if not ubicacion_id:
             page.open(ft.SnackBar(
-                content=ft.Text("⚠️ Seleccione una ubicación de origen", color=tema.TEXT_COLOR),
+                content=ft.Text("[WARN] Seleccione una ubicación de origen", color=tema.TEXT_COLOR),
                 bgcolor=tema.WARNING_COLOR
             ))
             return
@@ -350,7 +350,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         ubicacion = next((u for u in ubicaciones_disponibles if u.get('firebase_id') == ubicacion_id), None)
         if not ubicacion:
             page.open(ft.SnackBar(
-                content=ft.Text("❌ Ubicación no encontrada", color=tema.TEXT_COLOR),
+                content=ft.Text("[ERROR] Ubicación no encontrada", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
             return
@@ -358,7 +358,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         stock_actual = ubicacion.get('cantidad', 0)
         if cantidad > stock_actual:
             page.open(ft.SnackBar(
-                content=ft.Text(f"❌ Stock insuficiente. Disponible: {stock_actual}", color=tema.TEXT_COLOR),
+                content=ft.Text(f"[ERROR] Stock insuficiente. Disponible: {stock_actual}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
             return
@@ -400,7 +400,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         cache_firebase.invalidar_cache_movimientos()  # ¡IMPORTANTE! Invalidar movimientos para que aparezcan en la vista
         
         page.open(ft.SnackBar(
-            content=ft.Text(f"✅ Salida registrada: -{cantidad} {ubicacion.get('modelo')}", color=tema.TEXT_COLOR),
+            content=ft.Text(f"[OK] Salida registrada: -{cantidad} {ubicacion.get('modelo')}", color=tema.TEXT_COLOR),
             bgcolor=tema.SUCCESS_COLOR
         ))
         
@@ -415,7 +415,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         
         if not ubicacion_id:
             page.open(ft.SnackBar(
-                content=ft.Text("⚠️ Seleccione una ubicación a ajustar", color=tema.TEXT_COLOR),
+                content=ft.Text("[WARN] Seleccione una ubicación a ajustar", color=tema.TEXT_COLOR),
                 bgcolor=tema.WARNING_COLOR
             ))
             return
@@ -424,7 +424,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         ubicacion = next((u for u in ubicaciones_disponibles if u.get('firebase_id') == ubicacion_id), None)
         if not ubicacion:
             page.open(ft.SnackBar(
-                content=ft.Text("❌ Ubicación no encontrada", color=tema.TEXT_COLOR),
+                content=ft.Text("[ERROR] Ubicación no encontrada", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
             return
@@ -471,7 +471,7 @@ async def crear_movimiento_inventario_dialog(page, callback_actualizar=None):
         
         tipo_ajuste = "+" if diferencia > 0 else ""
         page.open(ft.SnackBar(
-            content=ft.Text(f"✅ Ajuste registrado: {tipo_ajuste}{diferencia} {ubicacion.get('modelo')}", color=tema.TEXT_COLOR),
+            content=ft.Text(f"[OK] Ajuste registrado: {tipo_ajuste}{diferencia} {ubicacion.get('modelo')}", color=tema.TEXT_COLOR),
             bgcolor=tema.SUCCESS_COLOR
         ))
         

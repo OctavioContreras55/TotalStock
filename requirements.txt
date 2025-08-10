@@ -5,5 +5,9 @@ firebase-admin>=6.2.0
 # Para manipulación de archivos Excel - usando solo Polars (más rápido que Pandas)
 polars>=0.20.0
 openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+
+# Para exportación a PDF
+reportlab>=4.0.0
 
 # Nota: asyncio y datetime son módulos estándar de Python

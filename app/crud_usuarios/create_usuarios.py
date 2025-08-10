@@ -123,7 +123,7 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
             from app.utils.cache_firebase import cache_firebase
             cache_firebase._cache_usuarios = []
             cache_firebase._ultimo_update_usuarios = None
-            print("🗑️ Cache de usuarios invalidado después de crear")
+            print("[ELIMINAR] Cache de usuarios invalidado después de crear")
             
             # Registrar actividad en el historial
             gestor_historial = GestorHistorial()
@@ -141,9 +141,9 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                 from app.utils.actualizador_dashboard import actualizar_dashboard
                 try:
                     await actualizar_dashboard()
-                    print("✅ Dashboard actualizado automáticamente")
+                    print("[OK] Dashboard actualizado automáticamente")
                 except Exception as e:
-                    print(f"⚠️ Error al actualizar dashboard: {e}")
+                    print(f"[WARN] Error al actualizar dashboard: {e}")
                     # No fallar si el dashboard no se puede actualizar
                 
             except Exception as e:
@@ -162,13 +162,13 @@ def mostrar_ventana_crear_usuario(page, callback_actualizar_tabla=None): # Funci
                 
                 # ACTUALIZACIÓN AUTOMÁTICA: Recargar tabla después de crear usuario
                 if callback_actualizar_tabla:
-                    print("⚡ Ejecutando actualización automática después de crear usuario")
+                    print("[RAPIDO] Ejecutando actualización automática después de crear usuario")
                     try:
                         await callback_actualizar_tabla(forzar_refresh=True)  # Forzar refresh desde Firebase
                     except Exception as e:
                         print(f"Error en actualización automática: {e}")
                 else:
-                    print("⚠️ No hay callback de actualización disponible")
+                    print("[WARN] No hay callback de actualización disponible")
 
             # Usar página run_task con una corrutina
             page.run_task(restaurar_vista)

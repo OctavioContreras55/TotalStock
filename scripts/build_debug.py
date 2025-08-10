@@ -12,7 +12,7 @@ from pathlib import Path
 def build_debug():
     """Crear ejecutable con información de debug para desarrollo"""
     
-    print("🎯 TotalStock - Compilación Debug")
+    print("[DART] TotalStock - Compilación Debug")
     print("=" * 50)
     print("🐛 Optimizado para desarrollo y depuración...")
     
@@ -25,9 +25,9 @@ def build_debug():
     for carpeta in ["dist", "build"]:
         if os.path.exists(carpeta):
             shutil.rmtree(carpeta)
-            print(f"🧹 Limpiando: {carpeta}/")
+            print(f"[LIMPIEZA] Limpiando: {carpeta}/")
     
-    print("\n🔍 Creando versión debug...")
+    print("\n[BUSCAR] Creando versión debug...")
     
     # Comando PyInstaller con información de debug
     comando = [
@@ -64,7 +64,7 @@ def build_debug():
         comando.extend(["--icon", "assets/logo.ico"])
     
     try:
-        print("⏳ Construyendo ejecutable debug (puede tomar más tiempo)...")
+        print("[ESPERA] Construyendo ejecutable debug (puede tomar más tiempo)...")
         resultado = subprocess.run(comando, check=True)
         
         exe_path = Path("dist/TotalStock_Debug/TotalStock_Debug.exe")
@@ -75,38 +75,38 @@ def build_debug():
             tamaño_total = sum(f.stat().st_size for f in carpeta_dist.rglob('*') if f.is_file())
             tamaño_mb = tamaño_total / (1024 * 1024)
             
-            print(f"\n✅ ¡Compilación debug completada!")
-            print(f"📁 Ubicación: {exe_path.absolute()}")
-            print(f"📊 Tamaño: {tamaño_mb:.1f} MB")
+            print(f"\n[OK] ¡Compilación debug completada!")
+            print(f"[FOLDER] Ubicación: {exe_path.absolute()}")
+            print(f"[CHART] Tamaño: {tamaño_mb:.1f} MB")
             
             print(f"\n🐛 CARACTERÍSTICAS DEBUG:")
-            print("   • ✅ Consola visible para logs")
-            print("   • ✅ Información de debug completa")
-            print("   • ✅ Archivos temporales conservados")
-            print("   • ✅ Log level: DEBUG")
+            print("   • [OK] Consola visible para logs")
+            print("   • [OK] Información de debug completa")
+            print("   • [OK] Archivos temporales conservados")
+            print("   • [OK] Log level: DEBUG")
             
-            print(f"\n📋 INSTRUCCIONES DE USO:")
+            print(f"\n[LISTA] INSTRUCCIONES DE USO:")
             print("🏃‍♂️ Para ejecutar:")
             print(f"   cd {carpeta_dist}")
             print("   ./TotalStock_Debug.exe")
-            print("\n💡 La consola mostrará información detallada de depuración")
+            print("\n[IDEA] La consola mostrará información detallada de depuración")
             
             return True
         else:
-            print("❌ Ejecutable no encontrado")
+            print("[ERROR] Ejecutable no encontrado")
             return False
             
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error en PyInstaller: {e}")
+        print(f"[ERROR] Error en PyInstaller: {e}")
         return False
 
 if __name__ == "__main__":
     success = build_debug()
     
     if success:
-        print("\n🎉 ¡Compilación debug lista!")
+        print("\n[SUCCESS] ¡Compilación debug lista!")
         print("🐛 Perfecta para desarrollo y solución de problemas")
     else:
-        print("\n❌ Hubo problemas en la compilación.")
+        print("\n[ERROR] Hubo problemas en la compilación.")
     
     input("\nPresiona Enter para continuar...")

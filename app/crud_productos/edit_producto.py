@@ -106,7 +106,7 @@ async def on_click_editar_producto(page, producto_id, actualizar_tabla):
             # Solo verificar duplicados si el modelo cambió
             modelo_original_str = str(modelo_original) if modelo_original else ''
             if nuevo_modelo.lower() != modelo_original_str.lower():
-                print(f"🔍 Verificando si el nuevo modelo '{nuevo_modelo}' ya existe...")
+                print(f"[BUSCAR] Verificando si el nuevo modelo '{nuevo_modelo}' ya existe...")
                 
                 # Obtener productos existentes desde cache
                 from app.utils.cache_firebase import cache_firebase
@@ -121,7 +121,7 @@ async def on_click_editar_producto(page, producto_id, actualizar_tabla):
                             if (modelo_existente.strip().lower() == modelo_normalizado and 
                                 producto.get('firebase_id') != producto_id):
                                 page.open(ft.SnackBar(
-                                    content=ft.Text(f"❌ El modelo '{nuevo_modelo}' ya existe en el inventario. No se permiten modelos duplicados.", color=tema.TEXT_COLOR),
+                                    content=ft.Text(f"[ERROR] El modelo '{nuevo_modelo}' ya existe en el inventario. No se permiten modelos duplicados.", color=tema.TEXT_COLOR),
                                     bgcolor=tema.ERROR_COLOR
                                 ))
                                 return
@@ -129,7 +129,7 @@ async def on_click_editar_producto(page, producto_id, actualizar_tabla):
                         print(f"Error al procesar producto en edición: {ex}")
                         continue
                         
-                print(f"✅ Nuevo modelo '{nuevo_modelo}' disponible - procediendo con la actualización...")
+                print(f"[OK] Nuevo modelo '{nuevo_modelo}' disponible - procediendo con la actualización...")
             
             # Actualizar en Firebase (sin cantidad)
             doc_ref = db.collection("productos").document(producto_id)

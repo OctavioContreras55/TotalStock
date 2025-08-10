@@ -34,13 +34,13 @@ def limpiar_archivos_usuario(id_usuario, nombre_usuario=None):
             if os.path.exists(archivo):
                 os.remove(archivo)
                 archivos_eliminados.append(archivo)
-                print(f"✅ Archivo eliminado: {archivo}")
+                print(f"[OK] Archivo eliminado: {archivo}")
             else:
-                print(f"ℹ️  Archivo no encontrado: {archivo}")
+                print(f"[INFO]️  Archivo no encontrado: {archivo}")
         except Exception as e:
             error_msg = f"Error al eliminar {archivo}: {str(e)}"
             errores.append(error_msg)
-            print(f"❌ {error_msg}")
+            print(f"[ERROR] {error_msg}")
     
     # Intentar limpiar archivos con nombre de usuario como ID (para retrocompatibilidad)
     if nombre_usuario:
@@ -54,11 +54,11 @@ def limpiar_archivos_usuario(id_usuario, nombre_usuario=None):
                 if os.path.exists(archivo):
                     os.remove(archivo)
                     archivos_eliminados.append(archivo)
-                    print(f"✅ Archivo legacy eliminado: {archivo}")
+                    print(f"[OK] Archivo legacy eliminado: {archivo}")
             except Exception as e:
                 error_msg = f"Error al eliminar archivo legacy {archivo}: {str(e)}"
                 errores.append(error_msg)
-                print(f"❌ {error_msg}")
+                print(f"[ERROR] {error_msg}")
     
     resultado = {
         "archivos_eliminados": archivos_eliminados,
@@ -83,16 +83,16 @@ async def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_elimin
             usuario_data = doc.to_dict()
             usuario_nombre = usuario_data.get('nombre', 'usuario')
         else:
-            print(f"❌ Usuario con ID {id_usuario} no encontrado en Firebase")
+            print(f"[ERROR] Usuario con ID {id_usuario} no encontrado en Firebase")
             return False
         
         # Limpiar archivos relacionados con el usuario ANTES de eliminarlo de Firebase
-        print(f"🧹 Limpiando archivos del usuario '{usuario_nombre}' (ID: {id_usuario})...")
+        print(f"[LIMPIEZA] Limpiando archivos del usuario '{usuario_nombre}' (ID: {id_usuario})...")
         resultado_limpieza = limpiar_archivos_usuario(id_usuario, usuario_nombre)
         
         # Eliminar el usuario de Firebase
         doc_ref.delete()
-        print(f"✅ Usuario '{usuario_nombre}' eliminado de Firebase")
+        print(f"[OK] Usuario '{usuario_nombre}' eliminado de Firebase")
         
         # Registrar actividad en el historial con información de limpieza
         gestor_historial = GestorHistorial()
@@ -111,8 +111,8 @@ async def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_elimin
         )
         
         # Mostrar resumen de la limpieza
-        print(f"📊 Resumen de eliminación:")
-        print(f"   - Usuario eliminado de Firebase: ✅")
+        print(f"[CHART] Resumen de eliminación:")
+        print(f"   - Usuario eliminado de Firebase: [OK]")
         print(f"   - Archivos eliminados: {resultado_limpieza['total_eliminados']}")
         print(f"   - Errores en limpieza: {resultado_limpieza['total_errores']}")
         
@@ -122,34 +122,34 @@ async def eliminar_usuario_firebase(id_usuario): #Se manda a llamar en on_elimin
         return True
         
     except Exception as e:
-        print(f"❌ Error al eliminar usuario: {str(e)}")
+        print(f"[ERROR] Error al eliminar usuario: {str(e)}")
         return False
     
     
 async def on_eliminar_click(e, page, id_usuario, actualizar_tabla): #Se manda a llamar desde el botón de eliminar en la tabla de usuarios
     if await eliminar_usuario_firebase(id_usuario):
-        print("✅ Usuario eliminado exitosamente.")
+        print("[OK] Usuario eliminado exitosamente.")
         
         # Invalidar cache para futuras consultas
         from app.utils.cache_firebase import cache_firebase
         cache_firebase._cache_usuarios = []
         cache_firebase._ultimo_update_usuarios = None
-        print("🗑️ Cache de usuarios invalidado")
+        print("[ELIMINAR] Cache de usuarios invalidado")
         
         # ACTUALIZACIÓN AUTOMÁTICA: Recargar tabla después de eliminar
         if actualizar_tabla:
-            print("⚡ Ejecutando actualización automática después de eliminar usuario")
+            print("[RAPIDO] Ejecutando actualización automática después de eliminar usuario")
             try:
                 await actualizar_tabla(forzar_refresh=True)  # Forzar refresh desde Firebase
             except Exception as e:
                 print(f"Error en actualización automática: {e}")
         else:
-            print("⚠️ No hay callback de actualización disponible")
+            print("[WARN] No hay callback de actualización disponible")
             page.update()
         
         page.open(ft.SnackBar(ft.Text("Usuario eliminado exitosamente."), duration=2000))
     else:
-        print("❌ Error al eliminar usuario.")
+        print("[ERROR] Error al eliminar usuario.")
         page.open(ft.SnackBar(ft.Text("Error al eliminar usuario."), duration=2000))
 
 
@@ -170,7 +170,7 @@ def mensaje_confirmacion(page, id_usuario, actualizar_tabla): # Se manda a llama
         
     dialog = ft.AlertDialog(
         modal=True, 
-        title=ft.Text("⚠️ Confirmación de eliminación", color=tema.ERROR_COLOR, weight=ft.FontWeight.BOLD),
+        title=ft.Text("[WARN] Confirmación de eliminación", color=tema.ERROR_COLOR, weight=ft.FontWeight.BOLD),
         content=ft.Column([
             ft.Text("¿Estás seguro de eliminar este usuario?", color=tema.TEXT_COLOR, weight=ft.FontWeight.BOLD),
             ft.Text("Esta acción eliminará:", color=tema.TEXT_SECONDARY, size=14),
@@ -188,7 +188,7 @@ def mensaje_confirmacion(page, id_usuario, actualizar_tabla): # Se manda a llama
                     ft.Text("Pendientes personales", color=tema.TEXT_SECONDARY, size=12)
                 ], spacing=5),
             ], spacing=3),
-            ft.Text("⚠️ Esta acción no se puede deshacer", color=tema.ERROR_COLOR, size=12, italic=True),
+            ft.Text("[WARN] Esta acción no se puede deshacer", color=tema.ERROR_COLOR, size=12, italic=True),
         ], 
         spacing=10,
         tight=True

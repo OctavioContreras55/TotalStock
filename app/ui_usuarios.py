@@ -12,7 +12,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
     
     tema = GestorTemas.obtener_tema()
     
-    print("👥 ENTRANDO A USUARIOS - Optimizando carga...")
+    print("[USERS] ENTRANDO A USUARIOS - Optimizando carga...")
     
     if page is None:
         page = contenido.page
@@ -33,13 +33,13 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
     alto_ventana = page.window.height or 800
     
     # CARGA OPTIMIZADA con cache
-    print("📡 Consultando usuarios con cache optimizado...")
+    print("[CONSULTA] Consultando usuarios con cache optimizado...")
     contenido.content = vista_carga("Cargando usuarios...", 18)
     page.update()
     
     try:
         usuarios_actuales = await cache_firebase.obtener_usuarios()
-        print(f"👥 Vista usuarios cargada con {len(usuarios_actuales)} usuarios")
+        print(f"[USERS] Vista usuarios cargada con {len(usuarios_actuales)} usuarios")
     except Exception as e:
         print(f"Error al obtener usuarios iniciales: {e}")
         usuarios_actuales = []
@@ -49,7 +49,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
         nonlocal usuarios_actuales
         try:
             if forzar_refresh:
-                print("🔄 REFRESH TRADICIONAL: Consultando Firebase")
+                print("[PROCESO] REFRESH TRADICIONAL: Consultando Firebase")
                 # Solo para casos donde realmente necesitamos recargar desde Firebase
                 from app.utils.cache_firebase import cache_firebase
                 cache_firebase._cache_usuarios = []
@@ -58,7 +58,7 @@ async def vista_usuarios(nombre_seccion, contenido, page=None):
                 print(f"   → Refresh completado: {len(usuarios_actuales)} usuarios")
             else:
                 # Usar cache optimizado para usuarios
-                print("📡 Cache usuarios - Consultando con sistema optimizado")
+                print("[CONSULTA] Cache usuarios - Consultando con sistema optimizado")
                 from app.utils.cache_firebase import cache_firebase
                 usuarios_actuales = await cache_firebase.obtener_usuarios(mostrar_loading=False)
                 print(f"   → Actualización normal completada: {len(usuarios_actuales)} usuarios")

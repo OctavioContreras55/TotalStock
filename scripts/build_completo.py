@@ -12,9 +12,9 @@ from pathlib import Path
 def build_completo():
     """Crear ejecutable completo con todas las características para producción"""
     
-    print("📦 TotalStock - Compilación Completa (Producción)")
+    print("[PACKAGE] TotalStock - Compilación Completa (Producción)")
     print("=" * 60)
-    print("🚀 Versión completa con todas las optimizaciones...")
+    print("[INICIO] Versión completa con todas las optimizaciones...")
     
     # Obtener la ruta correcta del directorio raíz
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,9 +25,9 @@ def build_completo():
     for carpeta in ["dist", "build"]:
         if os.path.exists(carpeta):
             shutil.rmtree(carpeta)
-            print(f"🧹 Limpiando: {carpeta}/")
+            print(f"[LIMPIEZA] Limpiando: {carpeta}/")
     
-    print("\n🔧 Creando versión completa para producción...")
+    print("\n[CONFIG] Creando versión completa para producción...")
     
     # Comando PyInstaller completo con todas las características
     comando = [
@@ -79,8 +79,8 @@ def build_completo():
         comando.extend(["--icon", "assets/logo.ico"])
     
     try:
-        print("⏳ Construyendo ejecutable completo (puede tomar varios minutos)...")
-        print("💡 Esta versión incluye todas las dependencias y optimizaciones")
+        print("[ESPERA] Construyendo ejecutable completo (puede tomar varios minutos)...")
+        print("[IDEA] Esta versión incluye todas las dependencias y optimizaciones")
         
         resultado = subprocess.run(comando, check=True)
         
@@ -90,19 +90,19 @@ def build_completo():
             # Calcular tamaño
             tamaño_mb = exe_path.stat().st_size / (1024 * 1024)
             
-            print(f"\n✅ ¡Compilación completa exitosa!")
-            print(f"📁 Ubicación: {exe_path.absolute()}")
-            print(f"📊 Tamaño: {tamaño_mb:.1f} MB")
+            print(f"\n[OK] ¡Compilación completa exitosa!")
+            print(f"[FOLDER] Ubicación: {exe_path.absolute()}")
+            print(f"[CHART] Tamaño: {tamaño_mb:.1f} MB")
             
-            print(f"\n🚀 CARACTERÍSTICAS DE PRODUCCIÓN:")
-            print("   • ✅ Archivo único portátil")
-            print("   • ✅ Todas las dependencias incluidas")
-            print("   • ✅ Optimizado para distribución")
-            print("   • ✅ Sin dependencias externas")
-            print("   • ✅ Máxima compatibilidad")
+            print(f"\n[INICIO] CARACTERÍSTICAS DE PRODUCCIÓN:")
+            print("   • [OK] Archivo único portátil")
+            print("   • [OK] Todas las dependencias incluidas")
+            print("   • [OK] Optimizado para distribución")
+            print("   • [OK] Sin dependencias externas")
+            print("   • [OK] Máxima compatibilidad")
             
-            print(f"\n📋 INSTRUCCIONES DE DISTRIBUCIÓN:")
-            print("🚀 Listo para distribuir:")
+            print(f"\n[LISTA] INSTRUCCIONES DE DISTRIBUCIÓN:")
+            print("[INICIO] Listo para distribuir:")
             print("   1. Copia el archivo TotalStock_Produccion.exe")
             print("   2. Envía o instala en cualquier PC Windows")
             print("   3. Ejecuta directamente - no necesita instalación")
@@ -113,11 +113,11 @@ def build_completo():
             
             return True
         else:
-            print("❌ Ejecutable no encontrado")
+            print("[ERROR] Ejecutable no encontrado")
             return False
             
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error en PyInstaller: {e}")
+        print(f"[ERROR] Error en PyInstaller: {e}")
         return False
 
 def crear_acceso_produccion(exe_path):
@@ -125,8 +125,8 @@ def crear_acceso_produccion(exe_path):
     try:
         bat_content = f'''@echo off
 title TotalStock - Versión de Producción
-echo 🚀 Iniciando TotalStock (Versión de Producción)...
-echo 📦 Ejecutable: {exe_path.absolute()}
+echo [INICIO] Iniciando TotalStock (Versión de Producción)...
+echo [PACKAGE] Ejecutable: {exe_path.absolute()}
 echo.
 "{exe_path.absolute()}"
 '''
@@ -134,19 +134,19 @@ echo.
         with open("TotalStock_PRODUCCION.bat", "w", encoding="utf-8") as f:
             f.write(bat_content)
             
-        print("✅ Acceso rápido creado: TotalStock_PRODUCCION.bat")
+        print("[OK] Acceso rápido creado: TotalStock_PRODUCCION.bat")
         
     except Exception as e:
-        print(f"⚠️  Error creando acceso rápido: {e}")
+        print(f"[WARN]  Error creando acceso rápido: {e}")
 
 if __name__ == "__main__":
     success = build_completo()
     
     if success:
         print("\n🎊 ¡Compilación completa lista!")
-        print("📦 Perfecta para distribución y producción")
-        print("🌟 Incluye todas las características y optimizaciones")
+        print("[PACKAGE] Perfecta para distribución y producción")
+        print("[STAR] Incluye todas las características y optimizaciones")
     else:
-        print("\n❌ Hubo problemas en la compilación.")
+        print("\n[ERROR] Hubo problemas en la compilación.")
     
     input("\nPresiona Enter para continuar...")

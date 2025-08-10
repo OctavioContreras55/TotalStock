@@ -1,5 +1,61 @@
 [
   {
+    "tipo": "exportar_reporte",
+    "descripcion": "Exportó reporte 'inventario' con 3 registros a PDF: reporte_inventario_20250807_202139.pdf",
+    "usuario": "Sistema",
+    "fecha": "2025-08-07T20:21:40.013982",
+    "timestamp": "2025-08-07T20:21:40.013997",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_reporte",
+    "descripcion": "Exportó reporte 'inventario' con 3 registros a Excel: reporte_inventario_20250807_202139.xlsx",
+    "usuario": "Sistema",
+    "fecha": "2025-08-07T20:21:39.974867",
+    "timestamp": "2025-08-07T20:21:39.974877",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_reporte",
+    "descripcion": "Exportó reporte 'inventario' con 3 registros a JSON: reporte_inventario_20250807_202139.json",
+    "usuario": "Sistema",
+    "fecha": "2025-08-07T20:21:39.256293",
+    "timestamp": "2025-08-07T20:21:39.256298",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_reporte",
+    "descripcion": "Exportó reporte 'inventario' con 3 registros a PDF: reporte_inventario_20250807_201833.pdf",
+    "usuario": "Sistema",
+    "fecha": "2025-08-07T20:18:33.188751",
+    "timestamp": "2025-08-07T20:18:33.188762",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_reporte",
+    "descripcion": "Exportó reporte 'inventario' con 3 registros a JSON: reporte_inventario_20250807_201833.json",
+    "usuario": "Sistema",
+    "fecha": "2025-08-07T20:18:33.158945",
+    "timestamp": "2025-08-07T20:18:33.158954",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_reporte",
+    "descripcion": "Exportó reporte 'inventario' con 3 registros a PDF: reporte_inventario_20250807_201823.pdf",
+    "usuario": "Sistema",
+    "fecha": "2025-08-07T20:18:23.619590",
+    "timestamp": "2025-08-07T20:18:23.619600",
+    "detalles": {}
+  },
+  {
+    "tipo": "exportar_reporte",
+    "descripcion": "Exportó reporte 'inventario' con 3 registros a JSON: reporte_inventario_20250807_201823.json",
+    "usuario": "Sistema",
+    "fecha": "2025-08-07T20:18:23.594973",
+    "timestamp": "2025-08-07T20:18:23.594980",
+    "detalles": {}
+  },
+  {
     "tipo": "crear_usuario",
     "descripcion": "Creó nuevo usuario 'Prueba3' (Admin: No)",
     "usuario": "Octavio",
@@ -741,62 +797,6 @@
     "usuario": "Octavio",
     "fecha": "2025-08-05T14:36:00.283772",
     "timestamp": "2025-08-05T14:36:00.283781",
-    "detalles": {}
-  },
-  {
-    "tipo": "importar_ubicaciones",
-    "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-05T11:40:06.941575",
-    "timestamp": "2025-08-05T11:40:06.941600",
-    "detalles": {}
-  },
-  {
-    "tipo": "importar_ubicaciones",
-    "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-05T11:26:14.900102",
-    "timestamp": "2025-08-05T11:26:14.900127",
-    "detalles": {}
-  },
-  {
-    "tipo": "importar_ubicaciones",
-    "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-05T11:13:37.347499",
-    "timestamp": "2025-08-05T11:13:37.347509",
-    "detalles": {}
-  },
-  {
-    "tipo": "importar_ubicaciones",
-    "descripcion": "Importó 13 ubicaciones desde Excel (Errores: 0)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T17:43:14.124025",
-    "timestamp": "2025-08-03T17:43:14.124038",
-    "detalles": {}
-  },
-  {
-    "tipo": "importar_productos",
-    "descripcion": "Importó 5 productos desde archivo Excel",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:34:09.326380",
-    "timestamp": "2025-08-03T16:34:09.326389",
-    "detalles": {}
-  },
-  {
-    "tipo": "exportar_productos",
-    "descripcion": "Exportó 267 productos a JSON (productos_20250803_163301.json)",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:33:01.633098",
-    "timestamp": "2025-08-03T16:33:01.633109",
-    "detalles": {}
-  },
-  {
-    "tipo": "importar_productos",
-    "descripcion": "Importó 262 productos desde archivo Excel",
-    "usuario": "Octavio",
-    "fecha": "2025-08-03T16:29:32.434936",
-    "timestamp": "2025-08-03T16:29:32.434944",
     "detalles": {}
   }
 ]

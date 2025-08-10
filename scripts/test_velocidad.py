@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🚀 TEST DE VELOCIDAD - TotalStock
+[INICIO] TEST DE VELOCIDAD - TotalStock
 Compara tiempos de inicio entre versiones
 """
 
@@ -15,7 +15,7 @@ def medir_tiempo_inicio(ejecutable_path, nombre_version):
     print(f"📍 Ruta: {ejecutable_path}")
     
     if not os.path.exists(ejecutable_path):
-        print(f"❌ No encontrado: {ejecutable_path}")
+        print(f"[ERROR] No encontrado: {ejecutable_path}")
         return None
     
     try:
@@ -40,15 +40,15 @@ def medir_tiempo_inicio(ejecutable_path, nombre_version):
         except:
             proceso.kill()
         
-        print(f"✅ {nombre_version}: {tiempo_transcurrido:.2f} segundos")
+        print(f"[OK] {nombre_version}: {tiempo_transcurrido:.2f} segundos")
         return tiempo_transcurrido
         
     except Exception as e:
-        print(f"❌ Error probando {nombre_version}: {e}")
+        print(f"[ERROR] Error probando {nombre_version}: {e}")
         return None
 
 def main():
-    print("🚀 TEST DE VELOCIDAD - TotalStock")
+    print("[INICIO] TEST DE VELOCIDAD - TotalStock")
     print("=" * 50)
     
     # Obtener la ruta correcta del directorio raíz
@@ -76,7 +76,7 @@ def main():
     
     # Mostrar comparación
     if len(resultados) >= 2:
-        print("\n📊 COMPARACIÓN DE RENDIMIENTO:")
+        print("\n[CHART] COMPARACIÓN DE RENDIMIENTO:")
         print("=" * 50)
         
         tiempo_onefile = resultados.get("onefile", 0)
@@ -86,19 +86,19 @@ def main():
         factor = tiempo_onefile / tiempo_onedir if tiempo_onedir > 0 else 0
         
         print(f"🐌 --onefile:  {tiempo_onefile:.2f} segundos")
-        print(f"⚡ --onedir:   {tiempo_onedir:.2f} segundos")
-        print(f"🎯 Mejora:     {mejora:.1f}% más rápido")
-        print(f"🚀 Factor:     {factor:.1f}x más rápido")
+        print(f"[RAPIDO] --onedir:   {tiempo_onedir:.2f} segundos")
+        print(f"[DART] Mejora:     {mejora:.1f}% más rápido")
+        print(f"[INICIO] Factor:     {factor:.1f}x más rápido")
         
         if mejora > 50:
-            print("\n🎉 ¡OPTIMIZACIÓN EXCELENTE!")
+            print("\n[SUCCESS] ¡OPTIMIZACIÓN EXCELENTE!")
         elif mejora > 25:
-            print("\n✅ ¡Buena optimización!")
+            print("\n[OK] ¡Buena optimización!")
         else:
-            print("\n⚠️  Mejora moderada")
+            print("\n[WARN]  Mejora moderada")
     
     print("\n" + "=" * 50)
-    print("📝 Nota: Tiempos aproximados, pueden variar según el sistema")
+    print("[EDIT] Nota: Tiempos aproximados, pueden variar según el sistema")
 
 if __name__ == "__main__":
     main()

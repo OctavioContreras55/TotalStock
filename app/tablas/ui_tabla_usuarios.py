@@ -24,7 +24,7 @@ def set_actualizar_tabla_callback(callback):
     """Establecer referencia a la función de actualización de tabla"""
     global actualizar_tabla_callback
     actualizar_tabla_callback = callback
-    print(f"📋 Callback de actualización establecido: {callback is not None}")
+    print(f"[LISTA] Callback de actualización establecido: {callback is not None}")
 
 def toggle_seleccion_usuario(usuario_id, seleccionado):
     """Toggle selección de un usuario específico"""
@@ -69,12 +69,12 @@ def _actualizar_boton_eliminar():
             # Solo actualizar el botón, no toda la página
             boton_eliminar_ref.update()
         except Exception as e:
-            print(f"❌ Error al actualizar botón eliminar: {e}")
+            print(f"[ERROR] Error al actualizar botón eliminar: {e}")
             # Fallback: actualizar toda la página
             if page_ref:
                 page_ref.update()
     else:
-        print("⚠️ Referencia al botón eliminar no encontrada")
+        print("[WARN] Referencia al botón eliminar no encontrada")
 
 async def eliminar_usuarios_seleccionados(page, callback_actualizar=None):
     """Eliminar usuarios seleccionados"""
@@ -83,7 +83,7 @@ async def eliminar_usuarios_seleccionados(page, callback_actualizar=None):
     
     if not usuarios_seleccionados:
         page.open(ft.SnackBar(
-            content=ft.Text("⚠️ No hay usuarios seleccionados", color=tema.TEXT_COLOR),
+            content=ft.Text("[WARN] No hay usuarios seleccionados", color=tema.TEXT_COLOR),
             bgcolor=tema.WARNING_COLOR
         ))
         return
@@ -145,7 +145,7 @@ async def eliminar_usuarios_seleccionados(page, callback_actualizar=None):
             # Invalidar cache para futuras consultas
             cache_firebase._cache_usuarios = []
             cache_firebase._ultimo_update_usuarios = None
-            print("🗑️ Cache invalidado para futuras consultas")
+            print("[ELIMINAR] Cache invalidado para futuras consultas")
             
             # Registrar en historial
             gestor_historial = GestorHistorial()
@@ -177,14 +177,14 @@ async def eliminar_usuarios_seleccionados(page, callback_actualizar=None):
             
             # ACTUALIZACIÓN AUTOMÁTICA: Recargar tabla después de eliminar
             if callback_a_usar:
-                print(f"⚡ Ejecutando actualización automática después de eliminar {usuarios_eliminados} usuarios")
+                print(f"[RAPIDO] Ejecutando actualización automática después de eliminar {usuarios_eliminados} usuarios")
                 try:
                     await callback_a_usar(forzar_refresh=True)  # Forzar refresh desde Firebase
                 except Exception as e:
                     print(f"Error en actualización automática: {e}")
                     page.update()
             else:
-                print("⚠️ No hay callback de actualización disponible")
+                print("[WARN] No hay callback de actualización disponible")
                 page.update()
                 
         except Exception as e:

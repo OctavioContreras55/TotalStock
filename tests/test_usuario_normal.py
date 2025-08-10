@@ -23,7 +23,7 @@ def crear_usuario_prueba():
         )
         
         if resultado:
-            print("✅ Usuario normal 'UsuarioNormal' creado exitosamente")
+            print("[OK] Usuario normal 'UsuarioNormal' creado exitosamente")
             print("   - Nombre: UsuarioNormal")
             print("   - Contraseña: 123456")
             print("   - Administrador: No")
@@ -34,10 +34,10 @@ def crear_usuario_prueba():
             print("4. Deberías ver el módulo deshabilitado con un candado")
             print("5. Si haces clic, aparecerá el mensaje de acceso denegado")
         else:
-            print("❌ Error al crear el usuario")
+            print("[ERROR] Error al crear el usuario")
             
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] Error: {e}")
 
 if __name__ == "__main__":
     crear_usuario_prueba()

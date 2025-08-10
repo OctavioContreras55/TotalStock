@@ -45,7 +45,7 @@ def on_eliminar_producto_click(page, producto_id, actualizar_tabla):
             # from app.utils.actualizador_dashboard import actualizar_dashboard_sincrono
             # actualizar_dashboard_sincrono()
             
-            print("✅ Producto eliminado - actualización manual con botón refresh")
+            print("[OK] Producto eliminado - actualización manual con botón refresh")
             
             page.open(ft.SnackBar(
                 content=ft.Text("Producto eliminado correctamente.", color=tema.TEXT_COLOR),

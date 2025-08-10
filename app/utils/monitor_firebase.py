@@ -47,14 +47,14 @@ class MonitorFirebase:
             self._contadores['eliminaciones'] += cantidad_docs
         
         # Print inmediato para debugging
-        emoji = {'lectura': '📖', 'escritura': '✏️', 'eliminacion': '🗑️'}.get(tipo, '❓')
+        emoji = {'lectura': '📖', 'escritura': '✏️', 'eliminacion': '[ELIMINAR]'}.get(tipo, '❓')
         print(f"{emoji} FIREBASE: {tipo.upper()} - {coleccion} ({cantidad_docs} docs) - {descripcion}")
         self._mostrar_resumen_rapido()
     
     def _mostrar_resumen_rapido(self):
         """Muestra un resumen rápido después de cada consulta"""
         total = sum(self._contadores.values())
-        print(f"   📊 Total sesión: {total} consultas ({self._contadores['lecturas']}L, {self._contadores['escrituras']}E, {self._contadores['eliminaciones']}D)")
+        print(f"   [CHART] Total sesión: {total} consultas ({self._contadores['lecturas']}L, {self._contadores['escrituras']}E, {self._contadores['eliminaciones']}D)")
         print(f"   ⏱️ Tiempo: {(datetime.now() - self._inicio_sesion).total_seconds():.1f}s")
         print("   " + "="*50)
     
@@ -81,30 +81,30 @@ class MonitorFirebase:
         resumen = self.obtener_resumen_completo()
         
         print("\n" + "="*60)
-        print("📊 REPORTE DETALLADO DE CONSULTAS FIREBASE")
+        print("[CHART] REPORTE DETALLADO DE CONSULTAS FIREBASE")
         print("="*60)
         print(f"⏱️  Tiempo de sesión: {resumen['tiempo_sesion_minutos']:.1f} minutos")
-        print(f"📈 Total consultas: {resumen['total_consultas']}")
+        print(f"[UP] Total consultas: {resumen['total_consultas']}")
         print(f"📖 Lecturas: {resumen['lecturas']} ({resumen['porcentaje_limite_diario_lecturas']:.2f}% del límite diario)")
         print(f"✏️  Escrituras: {resumen['escrituras']} ({resumen['porcentaje_limite_diario_escrituras']:.2f}% del límite diario)")
-        print(f"🗑️  Eliminaciones: {resumen['eliminaciones']}")
-        print(f"⚡ Consultas/minuto: {resumen['consultas_por_minuto']:.1f}")
+        print(f"[ELIMINAR]  Eliminaciones: {resumen['eliminaciones']}")
+        print(f"[RAPIDO] Consultas/minuto: {resumen['consultas_por_minuto']:.1f}")
         
         if resumen['total_consultas'] > 0:
-            print(f"\n🚨 PROYECCIÓN DIARIA:")
+            print(f"\n[ALERT] PROYECCIÓN DIARIA:")
             lecturas_dia = (resumen['lecturas'] / (resumen['tiempo_sesion_minutos'] / (24 * 60)))
             escrituras_dia = (resumen['escrituras'] / (resumen['tiempo_sesion_minutos'] / (24 * 60)))
             print(f"   📖 Lecturas proyectadas/día: {lecturas_dia:.0f} (límite: 50,000)")
             print(f"   ✏️  Escrituras proyectadas/día: {escrituras_dia:.0f} (límite: 20,000)")
             
             if lecturas_dia > 50000:
-                print(f"   ⚠️  ALERTA: Proyección de lecturas excede límite diario")
+                print(f"   [WARN]  ALERTA: Proyección de lecturas excede límite diario")
             if escrituras_dia > 20000:
-                print(f"   ⚠️  ALERTA: Proyección de escrituras excede límite diario")
+                print(f"   [WARN]  ALERTA: Proyección de escrituras excede límite diario")
         
-        print("\n📋 ÚLTIMAS 5 CONSULTAS:")
+        print("\n[LISTA] ÚLTIMAS 5 CONSULTAS:")
         for consulta in self._consultas_sesion[-5:]:
-            emoji = {'lectura': '📖', 'escritura': '✏️', 'eliminacion': '🗑️'}.get(consulta['tipo'], '❓')
+            emoji = {'lectura': '📖', 'escritura': '✏️', 'eliminacion': '[ELIMINAR]'}.get(consulta['tipo'], '❓')
             print(f"   {emoji} {consulta['timestamp']} - {consulta['tipo']} - {consulta['coleccion']} - {consulta['descripcion']}")
         
         print("="*60)
@@ -118,7 +118,7 @@ class MonitorFirebase:
             'eliminaciones': 0
         }
         self._inicio_sesion = datetime.now()
-        print("🔄 Monitor Firebase reiniciado")
+        print("[PROCESO] Monitor Firebase reiniciado")
 
 # Instancia global del monitor
 monitor_firebase = MonitorFirebase()

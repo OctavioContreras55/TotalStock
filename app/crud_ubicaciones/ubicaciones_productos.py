@@ -50,7 +50,7 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
     
     # Dropdown con modelos disponibles
     dropdown_modelos = ft.Dropdown(
-        label="📦 Seleccionar modelo del inventario",
+        label="[PACKAGE] Seleccionar modelo del inventario",
         options=[
             ft.dropdown.Option(modelo, modelo) for modelo in modelos_disponibles
         ],
@@ -66,7 +66,7 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
     
     # Campo de búsqueda por texto (ahora como alternativa)
     campo_buscar_tipo = ft.TextField(
-        label="🔍 O escribir modelo manualmente",
+        label="[BUSCAR] O escribir modelo manualmente",
         hint_text="Escriba el modelo de producto a asignar",
         width=400,
         bgcolor=tema.INPUT_BG,
@@ -113,7 +113,7 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
     
     # Campo para cantidad en esa ubicación (opcional)
     campo_cantidad = ft.TextField(
-        label="📊 Cantidad en esta ubicación",
+        label="[CHART] Cantidad en esta ubicación",
         value="1",  # Valor por defecto
         width=400,
         bgcolor=tema.INPUT_BG,
@@ -131,7 +131,7 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
     
     # Campo para observaciones (opcional)
     campo_observaciones = ft.TextField(
-        label="📝 Observaciones (opcional)",
+        label="[EDIT] Observaciones (opcional)",
         width=400,
         multiline=True,
         min_lines=2,
@@ -215,7 +215,7 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
         if not modelo_existe_en_inventario:
             page.open(ft.SnackBar(
                 content=ft.Text(
-                    f"❌ El modelo '{tipo_producto}' no existe en el inventario.\n"
+                    f"[ERROR] El modelo '{tipo_producto}' no existe en el inventario.\n"
                     f"Solo puede asignar ubicaciones a productos que ya estén registrados en el sistema.",
                     color=tema.TEXT_COLOR
                 ),
@@ -231,7 +231,7 @@ async def crear_ubicacion_producto_dialog(page, callback_actualizar=None):
             # El tipo ya existe, mostrar mensaje y sugerir usar movimiento
             page.open(ft.SnackBar(
                 content=ft.Text(
-                    f"⚠️ El tipo '{tipo_producto}' ya está en la tabla de ubicaciones.\n"
+                    f"[WARN] El tipo '{tipo_producto}' ya está en la tabla de ubicaciones.\n"
                     f"Si desea mover o cambiar la ubicación, use el botón de 'Movimiento' en la tabla.",
                     color=tema.TEXT_COLOR
                 ),

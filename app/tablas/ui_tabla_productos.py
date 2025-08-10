@@ -13,12 +13,12 @@ def toggle_seleccion_todas_productos(seleccionar_todas, productos):
     global productos_seleccionados
     if seleccionar_todas:
         productos_seleccionados = [producto.get('firebase_id', '') for producto in productos if producto.get('firebase_id')]
-        print(f"✅ DEBUG: Seleccionados TODOS los productos. IDs: {productos_seleccionados}")
+        print(f"[OK] DEBUG: Seleccionados TODOS los productos. IDs: {productos_seleccionados}")
     else:
         productos_seleccionados.clear()
-        print(f"❌ DEBUG: Deseleccionados TODOS los productos. Lista vacía.")
+        print(f"[ERROR] DEBUG: Deseleccionados TODOS los productos. Lista vacía.")
     
-    print(f"🔄 Toggle selección todas - Estado: {seleccionar_todas}, Total seleccionados: {len(productos_seleccionados)}")
+    print(f"[PROCESO] Toggle selección todas - Estado: {seleccionar_todas}, Total seleccionados: {len(productos_seleccionados)}")
 
 def set_actualizar_tabla_callback(callback):
     """Establecer referencia a la función de actualización de tabla"""
@@ -81,7 +81,7 @@ def mostrar_tabla_productos(page, productos, actualizar_tabla_productos=None, co
         nonlocal productos_mostrar
         if orden_actual["columna"] == 0:  # Columna modelo
             productos_mostrar = sorted(productos, key=obtener_modelo_seguro, reverse=not orden_actual["ascendente"])
-            print(f"✅ Aplicando ordenamiento: {'ascendente' if orden_actual['ascendente'] else 'descendente'}")
+            print(f"[OK] Aplicando ordenamiento: {'ascendente' if orden_actual['ascendente'] else 'descendente'}")
             
             # Para ordenamiento SÍ necesitamos reconstruir la tabla para mostrar el nuevo orden
             if actualizar_tabla_callback:
@@ -99,12 +99,12 @@ def mostrar_tabla_productos(page, productos, actualizar_tabla_productos=None, co
     
     # Función para eliminar productos seleccionados
     async def eliminar_productos_seleccionados():
-        print(f"🗑️ DEBUG: Función eliminar_productos_seleccionados llamada")
-        print(f"🗑️ DEBUG: productos_seleccionados actual: {productos_seleccionados}")
-        print(f"🗑️ DEBUG: Cantidad a eliminar: {len(productos_seleccionados)}")
+        print(f"[ELIMINAR] DEBUG: Función eliminar_productos_seleccionados llamada")
+        print(f"[ELIMINAR] DEBUG: productos_seleccionados actual: {productos_seleccionados}")
+        print(f"[ELIMINAR] DEBUG: Cantidad a eliminar: {len(productos_seleccionados)}")
         
         if not productos_seleccionados:
-            print("⚠️ DEBUG: No hay productos seleccionados, mostrando SnackBar")
+            print("[WARN] DEBUG: No hay productos seleccionados, mostrando SnackBar")
             page.open(ft.SnackBar(
                 content=ft.Text("No hay productos seleccionados", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
@@ -163,22 +163,22 @@ def mostrar_tabla_productos(page, productos, actualizar_tabla_productos=None, co
             eliminados = 0
             errores = 0
             
-            print(f"🗑️ DEBUG: Iniciando eliminación de {len(productos_seleccionados)} productos")
-            print(f"🗑️ DEBUG: IDs a eliminar: {productos_seleccionados}")
+            print(f"[ELIMINAR] DEBUG: Iniciando eliminación de {len(productos_seleccionados)} productos")
+            print(f"[ELIMINAR] DEBUG: IDs a eliminar: {productos_seleccionados}")
             
             for producto_id in productos_seleccionados:
                 try:
-                    print(f"🗑️ DEBUG: Eliminando producto con ID: {producto_id}")
+                    print(f"[ELIMINAR] DEBUG: Eliminando producto con ID: {producto_id}")
                     db.collection('productos').document(producto_id).delete()
                     eliminados += 1
-                    print(f"✅ DEBUG: Producto {producto_id} eliminado exitosamente")
+                    print(f"[OK] DEBUG: Producto {producto_id} eliminado exitosamente")
                     
                     # Delay para mostrar progreso
                     if eliminados % 5 == 0:
                         await asyncio.sleep(0.1)
                         
                 except Exception as e:
-                    print(f"❌ DEBUG: Error eliminando producto {producto_id}: {e}")
+                    print(f"[ERROR] DEBUG: Error eliminando producto {producto_id}: {e}")
                     errores += 1
             
             # Registrar en historial
@@ -222,17 +222,17 @@ def mostrar_tabla_productos(page, productos, actualizar_tabla_productos=None, co
     # Función para manejar selección de productos (igual que en ubicaciones)
     def manejar_seleccion_producto(e, producto_id):
         global productos_seleccionados  # Usar variable global
-        print(f"🔍 DEBUG: Selección cambiada - Producto: {producto_id}, Estado: {e.control.value}")
+        print(f"[BUSCAR] DEBUG: Selección cambiada - Producto: {producto_id}, Estado: {e.control.value}")
         if e.control.value:  # Checkbox marcado
             if producto_id not in productos_seleccionados:
                 productos_seleccionados.append(producto_id)
-                print(f"✅ Producto agregado a selección. ID: {producto_id}, Total: {len(productos_seleccionados)}")
+                print(f"[OK] Producto agregado a selección. ID: {producto_id}, Total: {len(productos_seleccionados)}")
         else:  # Checkbox desmarcado
             if producto_id in productos_seleccionados:
                 productos_seleccionados.remove(producto_id)
-                print(f"❌ Producto removido de selección. ID: {producto_id}, Total: {len(productos_seleccionados)}")
+                print(f"[ERROR] Producto removido de selección. ID: {producto_id}, Total: {len(productos_seleccionados)}")
         
-        print(f"🔍 DEBUG: Estado actual productos_seleccionados: {productos_seleccionados}")
+        print(f"[BUSCAR] DEBUG: Estado actual productos_seleccionados: {productos_seleccionados}")
         
         # Actualizar visibilidad del botón
         actualizar_boton_eliminar()
@@ -242,7 +242,7 @@ def mostrar_tabla_productos(page, productos, actualizar_tabla_productos=None, co
     
     # Función para actualizar el botón de eliminación
     def actualizar_boton_eliminar():
-        print(f"🔄 Actualizando botón eliminar. Productos seleccionados: {len(productos_seleccionados)}")
+        print(f"[PROCESO] Actualizando botón eliminar. Productos seleccionados: {len(productos_seleccionados)}")
         if len(productos_seleccionados) > 0:
             boton_eliminar_multiple.text = f"Eliminar {len(productos_seleccionados)} Seleccionados"
             boton_eliminar_multiple.visible = True

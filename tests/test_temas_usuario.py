@@ -52,7 +52,7 @@ def crear_usuarios_con_temas():
             )
             
             if resultado:
-                print(f"✅ Usuario '{usuario['nombre']}' creado exitosamente")
+                print(f"[OK] Usuario '{usuario['nombre']}' creado exitosamente")
                 
                 # Configurar tema específico para este usuario
                 # Nota: En una implementación real, necesitaríamos el firebase_id del usuario creado
@@ -64,10 +64,10 @@ def crear_usuarios_con_temas():
                 print(f"   - Administrador: {'Sí' if usuario['es_admin'] else 'No'}")
                 
             else:
-                print(f"❌ Error al crear el usuario '{usuario['nombre']}'")
+                print(f"[ERROR] Error al crear el usuario '{usuario['nombre']}'")
                 
         except Exception as e:
-            print(f"❌ Error con usuario '{usuario['nombre']}': {e}")
+            print(f"[ERROR] Error con usuario '{usuario['nombre']}': {e}")
     
     print("\n" + "="*50)
     print("INSTRUCCIONES DE PRUEBA:")

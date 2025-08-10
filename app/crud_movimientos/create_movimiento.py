@@ -34,7 +34,7 @@ async def crear_movimiento_ubicacion_dialog(page, callback_actualizar=None):
     
     # Texto informativo
     texto_info = ft.Text(
-        "🔄 Traslado físico entre ubicaciones\n" +
+        "[PROCESO] Traslado físico entre ubicaciones\n" +
         "Mueva productos de una ubicación a otra sin cambiar la cantidad total de inventario",
         size=14,
         color=tema.TEXT_SECONDARY,
@@ -108,21 +108,21 @@ async def crear_movimiento_ubicacion_dialog(page, callback_actualizar=None):
             # Validaciones
             if not dropdown_ubicacion_origen.value:
                 page.open(ft.SnackBar(
-                    content=ft.Text("❌ Debe seleccionar una ubicación origen", color=tema.TEXT_COLOR),
+                    content=ft.Text("[ERROR] Debe seleccionar una ubicación origen", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 return
             
             if not campo_nuevo_almacen.value or not campo_nueva_estanteria.value:
                 page.open(ft.SnackBar(
-                    content=ft.Text("❌ Debe especificar almacén y estantería de destino", color=tema.TEXT_COLOR),
+                    content=ft.Text("[ERROR] Debe especificar almacén y estantería de destino", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 return
             
             if not campo_cantidad_mover.value:
                 page.open(ft.SnackBar(
-                    content=ft.Text("❌ Debe especificar la cantidad a mover", color=tema.TEXT_COLOR),
+                    content=ft.Text("[ERROR] Debe especificar la cantidad a mover", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 return
@@ -133,7 +133,7 @@ async def crear_movimiento_ubicacion_dialog(page, callback_actualizar=None):
             
             if not ubicacion_origen:
                 page.open(ft.SnackBar(
-                    content=ft.Text("❌ Ubicación origen no encontrada", color=tema.TEXT_COLOR),
+                    content=ft.Text("[ERROR] Ubicación origen no encontrada", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 return
@@ -143,7 +143,7 @@ async def crear_movimiento_ubicacion_dialog(page, callback_actualizar=None):
             
             if cantidad_a_mover <= 0 or cantidad_a_mover > cantidad_actual:
                 page.open(ft.SnackBar(
-                    content=ft.Text(f"❌ Cantidad inválida. Disponible: {cantidad_actual}", color=tema.TEXT_COLOR),
+                    content=ft.Text(f"[ERROR] Cantidad inválida. Disponible: {cantidad_actual}", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 return
@@ -214,7 +214,7 @@ async def crear_movimiento_ubicacion_dialog(page, callback_actualizar=None):
             
             page.close(dialogo_movimiento)
             page.open(ft.SnackBar(
-                content=ft.Text("✅ Movimiento realizado exitosamente", color=tema.TEXT_COLOR),
+                content=ft.Text("[OK] Movimiento realizado exitosamente", color=tema.TEXT_COLOR),
                 bgcolor=tema.SUCCESS_COLOR
             ))
             
@@ -225,7 +225,7 @@ async def crear_movimiento_ubicacion_dialog(page, callback_actualizar=None):
         except Exception as error:
             print(f"Error al realizar movimiento: {error}")
             page.open(ft.SnackBar(
-                content=ft.Text(f"❌ Error al realizar movimiento: {str(error)}", color=tema.TEXT_COLOR),
+                content=ft.Text(f"[ERROR] Error al realizar movimiento: {str(error)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
     
@@ -540,7 +540,7 @@ async def obtener_movimientos_firebase():
     """Obtener historial de movimientos desde Firebase"""
     try:
         # Obtener TODOS los movimientos sin filtros problemáticos
-        print("🔍 Consultando TODOS los movimientos de Firebase...")
+        print("[BUSCAR] Consultando TODOS los movimientos de Firebase...")
         movimientos_ref = db.collection('movimientos')
         movimientos = movimientos_ref.stream()
         
@@ -568,13 +568,13 @@ async def obtener_movimientos_firebase():
         try:
             movimientos_data.sort(key=lambda x: x.get('fecha_movimiento', ''), reverse=True)
         except Exception as e:
-            print(f"⚠️ No se pudo ordenar movimientos: {e}")
+            print(f"[WARN] No se pudo ordenar movimientos: {e}")
         
-        print(f"📊 MOVIMIENTOS ENCONTRADOS: {len(movimientos_data)} registros")
-        print(f"📋 TIPOS DETECTADOS: {tipos_encontrados}")
+        print(f"[CHART] MOVIMIENTOS ENCONTRADOS: {len(movimientos_data)} registros")
+        print(f"[LISTA] TIPOS DETECTADOS: {tipos_encontrados}")
         
         return movimientos_data
         
     except Exception as e:
-        print(f"❌ Error al obtener movimientos: {e}")
+        print(f"[ERROR] Error al obtener movimientos: {e}")
         return []

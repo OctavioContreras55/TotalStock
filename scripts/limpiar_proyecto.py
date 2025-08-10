@@ -12,7 +12,7 @@ from pathlib import Path
 def limpiar_proyecto():
     """Ejecutar limpieza completa del proyecto"""
     
-    print("🧹 TotalStock - Limpieza Automática del Proyecto")
+    print("[LIMPIEZA] TotalStock - Limpieza Automática del Proyecto")
     print("=" * 50)
     
     # Obtener directorio raíz del proyecto
@@ -42,51 +42,51 @@ def limpiar_proyecto():
     }
     
     # 1. Limpiar directorios principales
-    print("\n🗂️ Limpiando directorios principales...")
+    print("\n[TAB] Limpiando directorios principales...")
     for directorio in elementos_limpieza["directorios"]:
         if os.path.exists(directorio):
             try:
                 shutil.rmtree(directorio)
-                print(f"   ✅ Eliminado: {directorio}/")
+                print(f"   [OK] Eliminado: {directorio}/")
             except Exception as e:
-                print(f"   ❌ Error eliminando {directorio}: {e}")
+                print(f"   [ERROR] Error eliminando {directorio}: {e}")
         else:
             print(f"   ⚪ No existe: {directorio}/")
     
     # 2. Limpiar cache recursivamente
-    print("\n📁 Limpiando cache recursivo...")
+    print("\n[FOLDER] Limpiando cache recursivo...")
     for cache_dir in elementos_limpieza["cache_recursivo"]:
         for root, dirs, files in os.walk("."):
             if cache_dir in dirs:
                 cache_path = os.path.join(root, cache_dir)
                 try:
                     shutil.rmtree(cache_path)
-                    print(f"   ✅ Eliminado: {cache_path}")
+                    print(f"   [OK] Eliminado: {cache_path}")
                 except Exception as e:
-                    print(f"   ❌ Error eliminando {cache_path}: {e}")
+                    print(f"   [ERROR] Error eliminando {cache_path}: {e}")
     
     # 3. Limpiar archivos por patrón
-    print("\n📄 Limpiando archivos temporales...")
+    print("\n[FILE] Limpiando archivos temporales...")
     import glob
     for patron in elementos_limpieza["archivos"]:
         archivos_encontrados = glob.glob(f"**/{patron}", recursive=True)
         for archivo in archivos_encontrados:
             try:
                 os.remove(archivo)
-                print(f"   ✅ Eliminado: {archivo}")
+                print(f"   [OK] Eliminado: {archivo}")
             except Exception as e:
-                print(f"   ❌ Error eliminando {archivo}: {e}")
+                print(f"   [ERROR] Error eliminando {archivo}: {e}")
     
     # 4. Estadísticas finales
-    print("\n📊 Estadísticas de limpieza:")
+    print("\n[CHART] Estadísticas de limpieza:")
     tamano_actual = calcular_tamano_proyecto()
-    print(f"   📁 Tamaño actual del proyecto: {tamano_actual:.2f} MB")
+    print(f"   [FOLDER] Tamaño actual del proyecto: {tamano_actual:.2f} MB")
     
-    print("\n✅ ¡Limpieza completada!")
-    print("🎯 El proyecto está listo para:")
-    print("   • 🚀 Nueva compilación")
-    print("   • 📤 Distribución") 
-    print("   • 🔄 Control de versiones")
+    print("\n[OK] ¡Limpieza completada!")
+    print("[DART] El proyecto está listo para:")
+    print("   • [INICIO] Nueva compilación")
+    print("   • [UPLOAD] Distribución") 
+    print("   • [PROCESO] Control de versiones")
 
 def calcular_tamano_proyecto():
     """Calcular tamaño total del proyecto en MB"""
@@ -112,6 +112,6 @@ if __name__ == "__main__":
         print("\n\n👋 Limpieza cancelada por el usuario")
         sys.exit(0)
     except Exception as e:
-        print(f"\n❌ Error inesperado: {e}")
+        print(f"\n[ERROR] Error inesperado: {e}")
         input("\n⏸️ Presiona Enter para continuar...")
         sys.exit(1)

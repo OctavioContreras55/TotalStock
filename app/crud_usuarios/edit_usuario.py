@@ -83,7 +83,7 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
             firebase_id = usuario_data.get('firebase_id')
             if firebase_id:
                 db.collection('usuarios').document(firebase_id).update(datos_actualizados)
-                print(f"✅ Usuario {firebase_id} actualizado en Firebase")
+                print(f"[OK] Usuario {firebase_id} actualizado en Firebase")
             else:
                 raise Exception("ID de usuario no encontrado")
 
@@ -95,9 +95,9 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
             from app.utils.cache_firebase import cache_firebase
             cache_firebase._cache_usuarios = []
             cache_firebase._ultimo_update_usuarios = None
-            print("🗑️ Cache de usuarios invalidado después de editar")
+            print("[ELIMINAR] Cache de usuarios invalidado después de editar")
             
-            print("🔄 Preparando actualización silenciosa")
+            print("[PROCESO] Preparando actualización silenciosa")
             
             # Registrar en historial
             gestor_historial = GestorHistorial()
@@ -120,14 +120,14 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
             
             # Actualizar tabla automáticamente después de editar
             if actualizar_callback:
-                print("⚡ Ejecutando actualización automática después de editar usuario")
+                print("[RAPIDO] Ejecutando actualización automática después de editar usuario")
                 try:
                     await actualizar_callback(forzar_refresh=True)  # Forzar refresh desde Firebase
                 except Exception as e:
                     print(f"Error en actualización automática: {e}")
                     page.update()
             else:
-                print("⚠️ No hay callback de actualización disponible")
+                print("[WARN] No hay callback de actualización disponible")
                 page.update()
                 
         except Exception as error:

@@ -5,7 +5,7 @@ import asyncio
 import json
 from pathlib import Path
 
-# 🚨 MODO ECONÓMICO: Deshabilitar escrituras a Firebase temporalmente
+# [ALERT] MODO ECONÓMICO: Deshabilitar escrituras a Firebase temporalmente
 MODO_ECONOMICO = True  # Cambiar a False cuando se recupere la cuota de Firebase
 
 class GestorHistorial:
@@ -39,14 +39,14 @@ class GestorHistorial:
             if MODO_ECONOMICO:
                 # Guardar en archivo local para no consumir Firebase
                 self._guardar_historial_local(actividad)
-                print(f"💾 [MODO ECONÓMICO] Actividad guardada localmente: {descripcion}")
+                print(f"[SAVE] [MODO ECONÓMICO] Actividad guardada localmente: {descripcion}")
             else:
                 # Guardar en Firebase (cuando no estemos en modo económico)
                 db.collection(self.coleccion).add(actividad)
-                print(f"✅ Actividad registrada en Firebase: {descripcion}")
+                print(f"[OK] Actividad registrada en Firebase: {descripcion}")
             
         except Exception as e:
-            print(f"❌ Error al registrar actividad: {e}")
+            print(f"[ERROR] Error al registrar actividad: {e}")
     
     def _guardar_historial_local(self, actividad):
         """Guardar actividad en archivo local JSON"""
@@ -117,7 +117,7 @@ class GestorHistorial:
             return actividades
             
         except Exception as e:
-            print(f"❌ Error al obtener historial: {e}")
+            print(f"[ERROR] Error al obtener historial: {e}")
             return []
     
     async def obtener_historial_por_usuario(self, usuario: str, limite: int = 30) -> list:
@@ -149,7 +149,7 @@ class GestorHistorial:
             return actividades
             
         except Exception as e:
-            print(f"❌ Error al obtener historial por usuario: {e}")
+            print(f"[ERROR] Error al obtener historial por usuario: {e}")
             return []
     
     async def obtener_historial_por_tipo(self, tipo: str, limite: int = 30) -> list:
@@ -180,7 +180,7 @@ class GestorHistorial:
             return actividades
             
         except Exception as e:
-            print(f"❌ Error al obtener historial por tipo: {e}")
+            print(f"[ERROR] Error al obtener historial por tipo: {e}")
             return []
     
     @staticmethod
@@ -277,20 +277,20 @@ class GestorHistorial:
                 estadisticas = {}
                 
                 # Comentar debug para limpiar terminal
-                # print(f"📊 [DEBUG] Fecha hoy: {fecha_hoy}")
-                # print(f"📊 [DEBUG] Total actividades leídas: {len(actividades)}")
+                # print(f"[CHART] [DEBUG] Fecha hoy: {fecha_hoy}")
+                # print(f"[CHART] [DEBUG] Total actividades leídas: {len(actividades)}")
                 
                 for actividad in actividades:
                     # Verificar si es del día actual (usando startswith para fechas ISO)
                     fecha_actividad = actividad.get('fecha', '')
                     tipo_actividad = actividad.get('tipo', 'otro')
-                    # print(f"📊 [DEBUG] Actividad: fecha={fecha_actividad}, tipo={tipo_actividad}")
+                    # print(f"[CHART] [DEBUG] Actividad: fecha={fecha_actividad}, tipo={tipo_actividad}")
                     
                     if fecha_actividad.startswith(fecha_hoy):
                         estadisticas[tipo_actividad] = estadisticas.get(tipo_actividad, 0) + 1
-                        # print(f"✅ [DEBUG] Contada: {tipo_actividad} = {estadisticas[tipo_actividad]}")
+                        # print(f"[OK] [DEBUG] Contada: {tipo_actividad} = {estadisticas[tipo_actividad]}")
                 
-                # print(f"📊 [DEBUG] Estadísticas finales: {estadisticas}")
+                # print(f"[CHART] [DEBUG] Estadísticas finales: {estadisticas}")
                 return estadisticas
             except Exception as error:
                 print(f"Error al obtener estadísticas locales: {error}")

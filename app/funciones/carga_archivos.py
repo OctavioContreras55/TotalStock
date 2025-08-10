@@ -28,7 +28,7 @@ def cargar_archivo_excel(ruta_archivo):
 async def guardar_productos_en_firebase(productos, page):
     tema = GestorTemas.obtener_tema()
     
-    print(f"🚨 DEBUG: Iniciando guardar_productos_en_firebase con {len(productos)} productos")
+    print(f"[ALERT] DEBUG: Iniciando guardar_productos_en_firebase con {len(productos)} productos")
     
     # Mostrar progreso INMEDIATAMENTE
     mensaje_cargando = ft.AlertDialog(
@@ -49,11 +49,11 @@ async def guardar_productos_en_firebase(productos, page):
         modal=True,
     )
     
-    print("🚨 DEBUG: AlertDialog creado, intentando abrir...")
+    print("[ALERT] DEBUG: AlertDialog creado, intentando abrir...")
     page.open(mensaje_cargando)
-    print("🚨 DEBUG: page.open() ejecutado")
+    print("[ALERT] DEBUG: page.open() ejecutado")
     page.update()
-    print("🚨 DEBUG: page.update() ejecutado - AlertDialog debería estar visible")
+    print("[ALERT] DEBUG: page.update() ejecutado - AlertDialog debería estar visible")
     
     # Delay mínimo para que el AlertDialog sea visible
     await asyncio.sleep(1.0)  # 1 segundo mínimo
@@ -109,7 +109,7 @@ async def guardar_productos_en_firebase(productos, page):
             usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
         )
         
-        # 🔄 SINCRONIZACIÓN AUTOMÁTICA después de importar productos
+        # [PROCESO] SINCRONIZACIÓN AUTOMÁTICA después de importar productos
         try:
             from app.utils.sincronizacion_inventario import sincronizar_inventario_completo
             resultado = await sincronizar_inventario_completo(mostrar_resultados=True)
@@ -119,28 +119,28 @@ async def guardar_productos_en_firebase(productos, page):
             cache_firebase.invalidar_cache_productos()
             
             # Crear mensaje detallado de importación
-            mensaje_detalle = f"✅ {productos_nuevos_count} productos nuevos\n✏️ {productos_actualizados_count} productos actualizados"
+            mensaje_detalle = f"[OK] {productos_nuevos_count} productos nuevos\n✏️ {productos_actualizados_count} productos actualizados"
             
             sync_mensaje = ""
             if resultado['productos_actualizados'] > 0:
-                sync_mensaje = f"\n🔄 {resultado['productos_actualizados']} cantidades sincronizadas desde ubicaciones"
+                sync_mensaje = f"\n[PROCESO] {resultado['productos_actualizados']} cantidades sincronizadas desde ubicaciones"
             
             mensaje_exito.title = ft.Text("Importación completada", color=tema.TEXT_COLOR)
             mensaje_exito.content = ft.Text(f"{mensaje_detalle}{sync_mensaje}", color=tema.TEXT_COLOR)
             
         except Exception as sync_error:
             # Si falla la sincronización, mostrar solo los datos de importación
-            mensaje_detalle = f"✅ {productos_nuevos_count} productos nuevos\n✏️ {productos_actualizados_count} productos actualizados"
+            mensaje_detalle = f"[OK] {productos_nuevos_count} productos nuevos\n✏️ {productos_actualizados_count} productos actualizados"
             mensaje_exito.title = ft.Text("Productos importados correctamente", color=tema.TEXT_COLOR)
             mensaje_exito.content = ft.Text(mensaje_detalle, color=tema.TEXT_COLOR)
         
-        print("🚨 DEBUG: Cerrando AlertDialog de carga y mostrando éxito...")
+        print("[ALERT] DEBUG: Cerrando AlertDialog de carga y mostrando éxito...")
         # Delay mínimo antes de cerrar para asegurar visibilidad
         await asyncio.sleep(0.5)  # Medio segundo adicional
         page.close(mensaje_cargando)
         page.open(mensaje_exito)
     except Exception as e:
-        print(f"🚨 DEBUG: Error en guardar_productos_en_firebase: {e}")
+        print(f"[ALERT] DEBUG: Error en guardar_productos_en_firebase: {e}")
         page.close(mensaje_cargando)
         return False
 
@@ -151,14 +151,14 @@ def on_click_importar_archivo(page, callback_actualizar_tabla=None):
     
     async def importar_productos_handler(e, page, ventana, productos_importados):
         """Handler para importar productos de forma asíncrona"""
-        print("🚨 DEBUG: importar_productos_handler iniciado")
+        print("[ALERT] DEBUG: importar_productos_handler iniciado")
         page.close(ventana)
-        print("🚨 DEBUG: Ventana de selección cerrada, llamando guardar_productos_en_firebase")
+        print("[ALERT] DEBUG: Ventana de selección cerrada, llamando guardar_productos_en_firebase")
         await guardar_productos_en_firebase(productos_importados, page)
         
         # Actualizar la tabla después de la importación
         if callback_actualizar_tabla:
-            print("🔄 DEBUG: Actualizando tabla después de importación...")
+            print("[PROCESO] DEBUG: Actualizando tabla después de importación...")
             await callback_actualizar_tabla(forzar_refresh=True)
     
     def picked_file(e: ft.FilePickerResultEvent):
@@ -349,7 +349,7 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
     """Guardar ubicaciones masivamente en Firebase"""
     tema = GestorTemas.obtener_tema()
     
-    print(f"🚨 DEBUG: Iniciando guardar_ubicaciones_en_firebase con {len(ubicaciones)} ubicaciones")
+    print(f"[ALERT] DEBUG: Iniciando guardar_ubicaciones_en_firebase con {len(ubicaciones)} ubicaciones")
     
     # Mostrar progreso INMEDIATAMENTE
     mensaje_cargando = ft.AlertDialog(
@@ -370,11 +370,11 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
         modal=True,
     )
     
-    print("🚨 DEBUG: AlertDialog ubicaciones creado, intentando abrir...")
+    print("[ALERT] DEBUG: AlertDialog ubicaciones creado, intentando abrir...")
     page.open(mensaje_cargando)
-    print("🚨 DEBUG: page.open() ejecutado para ubicaciones")
+    print("[ALERT] DEBUG: page.open() ejecutado para ubicaciones")
     page.update()
-    print("🚨 DEBUG: page.update() ejecutado para ubicaciones - AlertDialog debería estar visible")
+    print("[ALERT] DEBUG: page.update() ejecutado para ubicaciones - AlertDialog debería estar visible")
     
     # Delay mínimo para que el AlertDialog sea visible
     await asyncio.sleep(1.0)  # 1 segundo mínimo
@@ -420,7 +420,7 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
             usuario=usuario_actual.get('username', 'Usuario') if usuario_actual else 'Sistema'
         )
         
-        # 🔄 SINCRONIZACIÓN AUTOMÁTICA después de importar ubicaciones
+        # [PROCESO] SINCRONIZACIÓN AUTOMÁTICA después de importar ubicaciones
         if guardados > 0:
             try:
                 # Invalidar cache de ubicaciones
@@ -444,7 +444,7 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
             except Exception as sync_error:
                 pass
         
-        print("🚨 DEBUG: Cerrando AlertDialog de ubicaciones y mostrando éxito...")
+        print("[ALERT] DEBUG: Cerrando AlertDialog de ubicaciones y mostrando éxito...")
         # Delay mínimo antes de cerrar para asegurar visibilidad
         await asyncio.sleep(0.5)  # Medio segundo adicional
         page.close(mensaje_cargando)
@@ -453,7 +453,7 @@ async def guardar_ubicaciones_en_firebase(ubicaciones, page):
         return True
         
     except Exception as e:
-        print(f"🚨 DEBUG: Error en guardar_ubicaciones_en_firebase: {e}")
+        print(f"[ALERT] DEBUG: Error en guardar_ubicaciones_en_firebase: {e}")
         page.close(mensaje_cargando)
         page.open(ft.SnackBar(
             content=ft.Text(f"Error al importar ubicaciones: {e}"),
@@ -478,7 +478,7 @@ async def on_click_importar_archivo_ubicaciones(page, callback_actualizar=None):
     texto_archivo = ft.Text("No se ha seleccionado ningún archivo", color=tema.TEXT_COLOR)
 
     async def procesar_archivo_ubicaciones(e):
-        print("🚨 DEBUG: procesar_archivo_ubicaciones iniciado")
+        print("[ALERT] DEBUG: procesar_archivo_ubicaciones iniciado")
         if not archivo_seleccionado:
             page.open(ft.SnackBar(
                 content=ft.Text("Por favor selecciona un archivo", color=tema.TEXT_COLOR),
@@ -487,7 +487,7 @@ async def on_click_importar_archivo_ubicaciones(page, callback_actualizar=None):
             return
 
         try:
-            print("🚨 DEBUG: Procesando archivo de ubicaciones...")
+            print("[ALERT] DEBUG: Procesando archivo de ubicaciones...")
             # Usar directamente la ruta del archivo seleccionado
             ruta_archivo = archivo_seleccionado.path
             
@@ -495,7 +495,7 @@ async def on_click_importar_archivo_ubicaciones(page, callback_actualizar=None):
             ubicaciones = cargar_archivo_excel_ubicaciones(ruta_archivo)
             
             if ubicaciones:
-                print("🚨 DEBUG: Ubicaciones cargadas, cerrando ventana y llamando guardar...")
+                print("[ALERT] DEBUG: Ubicaciones cargadas, cerrando ventana y llamando guardar...")
                 page.close(ventana_ubicaciones)
                 exito = await guardar_ubicaciones_en_firebase(ubicaciones, page)
                 
@@ -509,7 +509,7 @@ async def on_click_importar_archivo_ubicaciones(page, callback_actualizar=None):
                 ))
                 
         except Exception as e:
-            print(f"🚨 DEBUG: Error al procesar archivo de ubicaciones: {e}")
+            print(f"[ALERT] DEBUG: Error al procesar archivo de ubicaciones: {e}")
             page.open(ft.SnackBar(
                 content=ft.Text(f"Error: {str(e)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR

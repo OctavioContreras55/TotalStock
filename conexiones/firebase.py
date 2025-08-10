@@ -19,10 +19,10 @@ ruta_credenciales = obtener_ruta_recurso("conexiones/credenciales_firebase.json"
 
 try:
     credenciales = credentials.Certificate(ruta_credenciales) # Credenciales de Firebase
-    print(f"✅ Credenciales Firebase cargadas desde: {ruta_credenciales}")
+    print(f"[OK] Credenciales Firebase cargadas desde: {ruta_credenciales}")
 except FileNotFoundError:
-    print(f"❌ Error: No se encontraron las credenciales en: {ruta_credenciales}")
-    print("💡 Asegúrate de que el archivo credenciales_firebase.json esté en la carpeta conexiones/")
+    print(f"[ERROR] Error: No se encontraron las credenciales en: {ruta_credenciales}")
+    print("[IDEA] Asegúrate de que el archivo credenciales_firebase.json esté en la carpeta conexiones/")
     raise
 
 if not firebase_admin._apps: # Verifica si ya se ha inicializado la app

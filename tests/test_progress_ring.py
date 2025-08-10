@@ -27,7 +27,7 @@ def main(page: ft.Page):
     )
     
     async def mostrar_progress_ring(e):
-        print("🔄 Mostrando progress ring...")
+        print("[PROCESO] Mostrando progress ring...")
         contenedor_test.content = progress_ring_pequeno("Verificando credenciales...", 12)
         btn_mostrar.disabled = True
         page.update()
@@ -35,7 +35,7 @@ def main(page: ft.Page):
         # Simular delay de validación
         await asyncio.sleep(2)
         
-        print("✅ Ocultando progress ring...")
+        print("[OK] Ocultando progress ring...")
         contenedor_test.content = None
         btn_mostrar.disabled = False
         page.update()

@@ -10,7 +10,7 @@ def vista_configuracion(nombre_seccion, contenido, page):
     def mostrar_mensaje_guardado():
         """Muestra un mensaje temporal de que se guardó la configuración"""
         snack = ft.SnackBar(
-            content=ft.Text("✅ Tema guardado correctamente para tu usuario", color="#FFFFFF"),
+            content=ft.Text("[OK] Tema guardado correctamente para tu usuario", color="#FFFFFF"),
             bgcolor=tema.SUCCESS_COLOR,
             duration=2000
         )
@@ -212,9 +212,9 @@ def vista_configuracion(nombre_seccion, contenido, page):
                             spacing=10
                         ),
                         ft.Container(height=10),
-                        ft.Text("📊 Monitoreo en tiempo real del uso de Firebase", 
+                        ft.Text("[CHART] Monitoreo en tiempo real del uso de Firebase", 
                                color=tema.TEXT_SECONDARY),
-                        ft.Text("🔍 Revisa la consola para ver las consultas en tiempo real", 
+                        ft.Text("[BUSCAR] Revisa la consola para ver las consultas en tiempo real", 
                                color=tema.TEXT_SECONDARY),
                         ft.Container(height=10),
                         ft.ElevatedButton(
@@ -253,12 +253,12 @@ def vista_configuracion(nombre_seccion, contenido, page):
                             spacing=10
                         ),
                         ft.Container(height=10),
-                        ft.Text("✅ Las configuraciones se guardan automáticamente", 
+                        ft.Text("[OK] Las configuraciones se guardan automáticamente", 
                                color=tema.SUCCESS_COLOR),
-                        ft.Text(f"📁 Archivo: data/configuracion.json", 
+                        ft.Text(f"[FOLDER] Archivo: data/configuracion.json", 
                                color=tema.TEXT_SECONDARY,
                                size=12),
-                        ft.Text(f"🎨 Tema actual: {GestorTemas.obtener_tema_actual().title()}", 
+                        ft.Text(f"[ART] Tema actual: {GestorTemas.obtener_tema_actual().title()}", 
                                color=tema.TEXT_SECONDARY),
                         ft.Container(height=10),
                         ft.ElevatedButton(
@@ -297,13 +297,13 @@ def vista_configuracion(nombre_seccion, contenido, page):
                             spacing=10
                         ),
                         ft.Container(height=10),
-                        ft.Text("🔔 Configuración de notificaciones", 
+                        ft.Text("[NOTIF] Configuración de notificaciones", 
                                color=tema.TEXT_SECONDARY),
                         ft.Text("🌐 Configuración de idioma", 
                                color=tema.TEXT_SECONDARY),
-                        ft.Text("💾 Configuración de respaldos automáticos", 
+                        ft.Text("[SAVE] Configuración de respaldos automáticos", 
                                color=tema.TEXT_SECONDARY),
-                        ft.Text("🔧 Configuraciones avanzadas del sistema", 
+                        ft.Text("[CONFIG] Configuraciones avanzadas del sistema", 
                                color=tema.TEXT_SECONDARY),
                     ]
                 ),
@@ -327,7 +327,7 @@ def vista_configuracion(nombre_seccion, contenido, page):
         
         # Mostrar también un snackbar para confirmar
         snack = ft.SnackBar(
-            content=ft.Text("📊 Reporte mostrado en consola", color="#FFFFFF"),
+            content=ft.Text("[CHART] Reporte mostrado en consola", color="#FFFFFF"),
             bgcolor=tema.SUCCESS_COLOR,
             duration=2000
         )
@@ -357,7 +357,7 @@ def vista_configuracion(nombre_seccion, contenido, page):
             
             # Mostrar mensaje y recargar
             snack = ft.SnackBar(
-                content=ft.Text("🔄 Configuración restablecida", color="#FFFFFF"),
+                content=ft.Text("[PROCESO] Configuración restablecida", color="#FFFFFF"),
                 bgcolor=tema.WARNING_COLOR,
                 duration=2000
             )

@@ -61,7 +61,7 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
 
     def validar_campos():
         """Validar todos los campos requeridos"""
-        print("🔍 DEBUG: Validando campos...")
+        print("[BUSCAR] DEBUG: Validando campos...")
         
         # Debug: mostrar valores de campos
         print(f"Modelo: '{campo_modelo.value}'")
@@ -81,7 +81,7 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
         
         for valor, nombre_campo in campos_requeridos:
             if not valor or not str(valor).strip():
-                print(f"❌ Campo {nombre_campo} está vacío")
+                print(f"[ERROR] Campo {nombre_campo} está vacío")
                 return False, f"El campo {nombre_campo} es requerido"
         
         # Verificar que precio y cantidad sean números válidos
@@ -99,7 +99,7 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
         except (ValueError, AttributeError):
             return False, "La cantidad debe ser un número entero válido"
         
-        print("✅ Validación exitosa")
+        print("[OK] Validación exitosa")
         return True, "OK"
     
     # Contenedor para mostrar indicador de carga
@@ -162,7 +162,7 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
             # from app.utils.actualizador_dashboard import actualizar_dashboard_sincrono
             # actualizar_dashboard_sincrono()
             
-            print("✅ Producto creado - actualización manual con botón refresh")
+            print("[OK] Producto creado - actualización manual con botón refresh")
             
             page.open(ft.SnackBar(
                 content=ft.Text(f"Producto '{nombre}' creado exitosamente con ID: {firebase_id}", color=tema.TEXT_COLOR),
@@ -173,7 +173,7 @@ async def vista_crear_producto(page, callback_actualizar_tabla=None):
             
             # Cerrar el diálogo automáticamente después de crear exitosamente
             page.close(dialogo_crear_producto)
-            print("✅ Diálogo cerrado automáticamente después de crear producto")
+            print("[OK] Diálogo cerrado automáticamente después de crear producto")
         except Exception as e:
             page.open(ft.SnackBar(
                 content=ft.Text(f"Error al crear producto: {str(e)}", color=tema.TEXT_COLOR),
@@ -220,15 +220,15 @@ async def crear_producto_firebase(modelo,tipo, nombre, precio, cantidad):
     from app.utils.cache_firebase import cache_firebase
     
     # Verificar si el modelo ya existe
-    print(f"🔍 Verificando si el modelo '{modelo}' ya existe...")
+    print(f"[BUSCAR] Verificando si el modelo '{modelo}' ya existe...")
     
     # Obtener productos existentes desde cache o Firebase
     productos_existentes = await cache_firebase.obtener_productos()
-    print(f"🔍 DEBUG: Obtenidos {len(productos_existentes)} productos para verificar duplicados")
+    print(f"[BUSCAR] DEBUG: Obtenidos {len(productos_existentes)} productos para verificar duplicados")
     
     # Buscar si el modelo ya existe (case insensitive)
     modelo_normalizado = modelo.strip().lower()
-    print(f"🔍 DEBUG: Buscando modelo normalizado: '{modelo_normalizado}'")
+    print(f"[BUSCAR] DEBUG: Buscando modelo normalizado: '{modelo_normalizado}'")
     
     for i, producto in enumerate(productos_existentes):
         try:
@@ -242,23 +242,23 @@ async def crear_producto_firebase(modelo,tipo, nombre, precio, cantidad):
             modelo_existente = modelo_producto.strip().lower()
             
             if modelo_existente == modelo_normalizado:
-                print(f"❌ DEBUG: Modelo duplicado encontrado en posición {i}: '{producto.get('modelo')}'")
-                raise Exception(f"❌ El modelo '{modelo}' ya existe en el inventario. No se permiten modelos duplicados.")
+                print(f"[ERROR] DEBUG: Modelo duplicado encontrado en posición {i}: '{producto.get('modelo')}'")
+                raise Exception(f"[ERROR] El modelo '{modelo}' ya existe en el inventario. No se permiten modelos duplicados.")
             
             # Debug solo para los primeros 3 productos
             if i < 3:
-                print(f"🔍 DEBUG: Producto {i}: '{producto.get('modelo')}' -> normalizado: '{modelo_existente}'")
+                print(f"[BUSCAR] DEBUG: Producto {i}: '{producto.get('modelo')}' -> normalizado: '{modelo_existente}'")
         except Exception as e:
             if "ya existe en el inventario" in str(e):
                 raise e  # Re-lanzar si es error de duplicado
             else:
                 # Error de procesamiento, saltear este producto
-                print(f"⚠️ DEBUG: Error procesando producto {i}: {str(e)} - Producto: {producto}")
+                print(f"[WARN] DEBUG: Error procesando producto {i}: {str(e)} - Producto: {producto}")
                 continue
     
-    print(f"✅ Modelo '{modelo}' disponible - procediendo con la creación...")
+    print(f"[OK] Modelo '{modelo}' disponible - procediendo con la creación...")
     
-    print(f"🔍 DEBUG: Iniciando creación en Firebase con datos:")
+    print(f"[BUSCAR] DEBUG: Iniciando creación en Firebase con datos:")
     print(f"   - Modelo: {modelo}")
     print(f"   - Tipo: {tipo}")
     print(f"   - Nombre: {nombre}")
@@ -275,9 +275,9 @@ async def crear_producto_firebase(modelo,tipo, nombre, precio, cantidad):
           "precio": precio,
           "cantidad": cantidad
         })
-        print(f"✅ DEBUG: Producto creado en Firebase con ID: {producto_ref.id}")
+        print(f"[OK] DEBUG: Producto creado en Firebase con ID: {producto_ref.id}")
     except Exception as e:
-        print(f"❌ DEBUG: Error al crear en Firebase: {str(e)}")
+        print(f"[ERROR] DEBUG: Error al crear en Firebase: {str(e)}")
         raise e
     
     # Registrar la escritura en el monitor
@@ -290,7 +290,7 @@ async def crear_producto_firebase(modelo,tipo, nombre, precio, cantidad):
     
     # IMPORTANTE: Invalidar cache para forzar refresh en próxima consulta
     cache_firebase.invalidar_cache_productos()
-    print("🔄 Cache invalidado después de crear producto")
+    print("[PROCESO] Cache invalidado después de crear producto")
     
     return producto_ref.id
 

@@ -51,7 +51,7 @@ def main(page: ft.Page):
         btn_probar.disabled = False
         page.update()
         
-        print("✅ Animación completada")
+        print("[OK] Animación completada")
     
     btn_probar = ft.ElevatedButton(
         "Probar Animación",

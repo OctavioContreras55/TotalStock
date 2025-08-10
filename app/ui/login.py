@@ -127,16 +127,16 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             
             # Precargar productos sin mostrar loading (background)
             productos = await cache_firebase.obtener_productos(forzar_refresh=False, mostrar_loading=False)
-            print(f"✅ PRECARGA: {len(productos)} productos cargados en cache")
+            print(f"[OK] PRECARGA: {len(productos)} productos cargados en cache")
             
             # Precargar usuarios si es necesario
             usuarios = await cache_firebase.obtener_usuarios(forzar_refresh=False)
-            print(f"✅ PRECARGA: {len(usuarios)} usuarios cargados en cache")
+            print(f"[OK] PRECARGA: {len(usuarios)} usuarios cargados en cache")
             
-            print("🎯 PRECARGA COMPLETA: Navegación será instantánea")
+            print("[DART] PRECARGA COMPLETA: Navegación será instantánea")
             
         except Exception as e:
-            print(f"⚠️ Error en precarga (no crítico): {e}")
+            print(f"[WARN] Error en precarga (no crítico): {e}")
 
     #Función para validar datos de inicio de sesión
     async def validar_login(e):
@@ -164,7 +164,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             return
         
         # Mostrar progress ring mientras se valida con animación
-        print("🔄 MOSTRANDO PROGRESS RING CON ANIMACIÓN...")
+        print("[PROCESO] MOSTRANDO PROGRESS RING CON ANIMACIÓN...")
         
         # Mostrar progress ring con animación suave
         contenedor_progreso.content = ft.Container(
@@ -175,7 +175,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         )
         boton_elevated.disabled = True  # Deshabilitar botón durante validación
         page.update()
-        print("✅ Progress ring animado mostrado y botón deshabilitado")
+        print("[OK] Progress ring animado mostrado y botón deshabilitado")
         
         # Pequeño delay para asegurar que la animación se complete
         await asyncio.sleep(0.4)
@@ -210,7 +210,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                     
                     # Mostrar diálogo de sesión existente
                     page.open(ft.AlertDialog(
-                        title=ft.Text("⚠️ Sesión ya activa", weight=ft.FontWeight.BOLD),
+                        title=ft.Text("[WARN] Sesión ya activa", weight=ft.FontWeight.BOLD),
                         content=ft.Text(resultado_sesion["mensaje"]),
                         actions=[
                             ft.TextButton("Cerrar", on_click=lambda e: page.close(e.control.parent))
@@ -236,7 +236,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                 import run
                 if hasattr(run, '_usuario_actual_global'):
                     run._usuario_actual_global = usuario_data.get('username', usuario)
-                    print(f"👤 Usuario global actualizado en login: {run._usuario_actual_global}")
+                    print(f"[USER] Usuario global actualizado en login: {run._usuario_actual_global}")
                 
                 print(f"Login exitoso para el usuario: {usuario}")
                 
@@ -268,7 +268,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
             else:
                 # Credenciales incorrectas - animar ambos campos simultáneamente
                 # Ocultar progress ring con animación primero
-                print("🔄 OCULTANDO PROGRESS RING (credenciales incorrectas)...")
+                print("[PROCESO] OCULTANDO PROGRESS RING (credenciales incorrectas)...")
                 contenedor_progreso.content = ft.Container(height=0)  # Volver a estado invisible
                 boton_elevated.disabled = False
                 page.update()
@@ -287,7 +287,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
         except Exception as error:
             print(f"Error al verificar las credenciales: {error}")
             # Ocultar progress ring con animación en caso de error
-            print("🔄 OCULTANDO PROGRESS RING (error de conexión)...")
+            print("[PROCESO] OCULTANDO PROGRESS RING (error de conexión)...")
             contenedor_progreso.content = ft.Container(height=0)  # Volver a estado invisible
             boton_elevated.disabled = False
             page.update()
@@ -393,7 +393,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                         color=tema.TEXT_COLOR
                     ),
                   alignment=ft.alignment.top_center,
-                  padding= ft.padding.only(top=20),
+                  padding= ft.padding.only(top=10),
                 ),
                 ft.Container(
                   content=ft.Image(obtener_ruta_recurso("assets/logo.png"),
@@ -401,7 +401,7 @@ def login_view(page: ft.Page, on_login_success): #Función para la vista del log
                       height=150,
                       fit=ft.ImageFit.CONTAIN
                   ),
-                  padding=ft.padding.only(bottom=20, top=20),
+                  padding=ft.padding.only(bottom=10, top=10),
                 ),
                 ft.Row(
                     controls=[

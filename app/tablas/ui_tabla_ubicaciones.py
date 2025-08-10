@@ -87,7 +87,7 @@ async def eliminar_ubicaciones_seleccionadas(page, actualizar_tabla_ubicaciones)
     
     if not ubicaciones_seleccionadas:
         page.open(ft.SnackBar(
-            content=ft.Text("⚠️ No hay ubicaciones seleccionadas", color=tema.TEXT_COLOR),
+            content=ft.Text("[WARN] No hay ubicaciones seleccionadas", color=tema.TEXT_COLOR),
             bgcolor=tema.WARNING_COLOR
         ))
         return
@@ -184,7 +184,7 @@ async def eliminar_ubicaciones_seleccionadas(page, actualizar_tabla_ubicaciones)
                 page.open(mensaje_exito)
             else:
                 page.open(ft.SnackBar(
-                    content=ft.Text("❌ No se pudieron eliminar las ubicaciones", color=tema.TEXT_COLOR),
+                    content=ft.Text("[ERROR] No se pudieron eliminar las ubicaciones", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 
@@ -243,7 +243,7 @@ def crear_boton_editar(ubicacion_id, page, actualizar_tabla_ubicaciones):
             
             if not doc.exists:
                 page.open(ft.SnackBar(
-                    content=ft.Text("❌ Ubicación no encontrada", color=tema.TEXT_COLOR),
+                    content=ft.Text("[ERROR] Ubicación no encontrada", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 return
@@ -303,7 +303,7 @@ def crear_boton_editar(ubicacion_id, page, actualizar_tabla_ubicaciones):
                     
                     page.close(dialogo_editar)
                     page.open(ft.SnackBar(
-                        content=ft.Text("✅ Observaciones actualizadas exitosamente", color=tema.TEXT_COLOR),
+                        content=ft.Text("[OK] Observaciones actualizadas exitosamente", color=tema.TEXT_COLOR),
                         bgcolor=tema.SUCCESS_COLOR
                     ))
                     
@@ -313,7 +313,7 @@ def crear_boton_editar(ubicacion_id, page, actualizar_tabla_ubicaciones):
                         
                 except Exception as error:
                     page.open(ft.SnackBar(
-                        content=ft.Text(f"❌ Error al guardar: {str(error)}", color=tema.TEXT_COLOR),
+                        content=ft.Text(f"[ERROR] Error al guardar: {str(error)}", color=tema.TEXT_COLOR),
                         bgcolor=tema.ERROR_COLOR
                     ))
             
@@ -330,7 +330,7 @@ def crear_boton_editar(ubicacion_id, page, actualizar_tabla_ubicaciones):
                                color=tema.TEXT_COLOR, weight=ft.FontWeight.BOLD, size=14),
                         campo_observaciones,
                         ft.Container(height=5),
-                        ft.Text("💡 Para cambiar ubicación o cantidad, use la función 'Mover'", 
+                        ft.Text("[IDEA] Para cambiar ubicación o cantidad, use la función 'Mover'", 
                                color=tema.TEXT_SECONDARY, size=11, italic=True),
                     ], spacing=10),
                     width=400,
@@ -362,7 +362,7 @@ def crear_boton_editar(ubicacion_id, page, actualizar_tabla_ubicaciones):
         except Exception as error:
             print(f"Error al editar ubicación: {error}")
             page.open(ft.SnackBar(
-                content=ft.Text(f"❌ Error: {str(error)}", color=tema.TEXT_COLOR),
+                content=ft.Text(f"[ERROR] Error: {str(error)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
     
@@ -449,7 +449,7 @@ def crear_boton_eliminar(ubicacion_id, page, actualizar_tabla_ubicaciones):
                 )
                 
                 page.open(ft.SnackBar(
-                    content=ft.Text("✅ Ubicación eliminada exitosamente", color=tema.TEXT_COLOR),
+                    content=ft.Text("[OK] Ubicación eliminada exitosamente", color=tema.TEXT_COLOR),
                     bgcolor=tema.SUCCESS_COLOR
                 ))
                 
@@ -458,14 +458,14 @@ def crear_boton_eliminar(ubicacion_id, page, actualizar_tabla_ubicaciones):
                     await actualizar_tabla_ubicaciones(forzar_refresh=True)
             else:
                 page.open(ft.SnackBar(
-                    content=ft.Text("❌ Ubicación no encontrada", color=tema.TEXT_COLOR),
+                    content=ft.Text("[ERROR] Ubicación no encontrada", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 
         except Exception as error:
             print(f"Error al eliminar ubicación: {error}")
             page.open(ft.SnackBar(
-                content=ft.Text(f"❌ Error al eliminar: {str(error)}", color=tema.TEXT_COLOR),
+                content=ft.Text(f"[ERROR] Error al eliminar: {str(error)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
     
@@ -511,7 +511,7 @@ def mostrar_tabla_ubicaciones(page, ubicaciones, actualizar_tabla_ubicaciones=No
         nonlocal ubicaciones_mostrar
         if orden_actual["columna"] == 1:  # Columna modelo/tipo
             ubicaciones_mostrar = sorted(ubicaciones, key=obtener_modelo_ubicacion_seguro, reverse=not orden_actual["ascendente"])
-            print(f"✅ Aplicando ordenamiento ubicaciones: {'ascendente' if orden_actual['ascendente'] else 'descendente'}")
+            print(f"[OK] Aplicando ordenamiento ubicaciones: {'ascendente' if orden_actual['ascendente'] else 'descendente'}")
             if actualizar_tabla_ubicaciones:
                 actualizar_tabla_ubicaciones()
     

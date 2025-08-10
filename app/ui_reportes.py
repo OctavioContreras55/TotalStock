@@ -798,10 +798,10 @@ async def vista_reportes(nombre_seccion, contenido, page):
         
         # Crear mensaje informativo
         if disponibilidad["disponible"]:
-            mensaje = f"✅ {info_reporte['nombre']}\n\n📊 Fuente: {disponibilidad['fuente_datos']}\n📋 {disponibilidad['descripcion']}"
+            mensaje = f"[OK] {info_reporte['nombre']}\n\n[CHART] Fuente: {disponibilidad['fuente_datos']}\n[LISTA] {disponibilidad['descripcion']}"
             color_bg = tema.SUCCESS_COLOR
         else:
-            mensaje = f"⚠️ {info_reporte['nombre']}\n\n🚧 {disponibilidad['descripcion']}\n📋 Fuente requerida: {disponibilidad['fuente_datos']}"
+            mensaje = f"[WARN] {info_reporte['nombre']}\n\n🚧 {disponibilidad['descripcion']}\n[LISTA] Fuente requerida: {disponibilidad['fuente_datos']}"
             color_bg = tema.WARNING_COLOR
         
         page.open(ft.SnackBar(
@@ -1141,7 +1141,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
         }
 
     async def exportar_reporte(e):
-        """Exportar reporte a JSON/Excel"""
+        """Exportar reporte con múltiples formatos (JSON, Excel, PDF)"""
         if not datos_reporte:
             page.open(ft.SnackBar(
                 content=ft.Text("No hay datos para exportar", color=tema.TEXT_COLOR),
@@ -1149,45 +1149,22 @@ async def vista_reportes(nombre_seccion, contenido, page):
             ))
             return
 
-        try:
-            # Crear directorio de exportación
-            export_dir = "exports"
-            if not os.path.exists(export_dir):
-                os.makedirs(export_dir)
-
-            # Nombre del archivo
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            nombre_archivo = f"reporte_{tipo_reporte_seleccionado}_{timestamp}.json"
-            ruta_archivo = os.path.join(export_dir, nombre_archivo)
-
-            # Datos del reporte con metadatos
-            datos_exportacion = {
-                "metadata": {
-                    "tipo_reporte": tipo_reporte_seleccionado,
-                    "nombre_reporte": tipos_reportes[tipo_reporte_seleccionado]["nombre"],
-                    "fecha_generacion": datetime.now().isoformat(),
-                    "fecha_inicio": campo_fecha_inicio.value,
-                    "fecha_fin": campo_fecha_fin.value,
-                    "usuario_filtro": dropdown_usuario.value,
-                    "total_registros": len(datos_reporte)
-                },
-                "datos": datos_reporte
-            }
-
-            # Guardar archivo
-            with open(ruta_archivo, 'w', encoding='utf-8') as f:
-                json.dump(datos_exportacion, f, indent=2, ensure_ascii=False, default=str)
-
-            page.open(ft.SnackBar(
-                content=ft.Text(f"✅ Reporte exportado: {nombre_archivo}", color=tema.TEXT_COLOR),
-                bgcolor=tema.SUCCESS_COLOR
-            ))
-
-        except Exception as ex:
-            page.open(ft.SnackBar(
-                content=ft.Text(f"Error al exportar: {str(ex)}", color=tema.TEXT_COLOR),
-                bgcolor=tema.ERROR_COLOR
-            ))
+        # Preparar metadatos del reporte
+        metadata_reporte = {
+            "tipo_reporte": tipo_reporte_seleccionado,
+            "nombre_reporte": tipos_reportes[tipo_reporte_seleccionado]["nombre"] if tipo_reporte_seleccionado in tipos_reportes else "Reporte",
+            "fecha_generacion": datetime.now().isoformat(),
+            "fecha_inicio": campo_fecha_inicio.value,
+            "fecha_fin": campo_fecha_fin.value,
+            "usuario_filtro": dropdown_usuario.value,
+            "total_registros": len(datos_reporte)
+        }
+        
+        # Importar la nueva función de exportación
+        from app.funciones.exportar_reportes import exportar_reporte_completo
+        
+        # Llamar a la función de exportación con múltiples formatos
+        await exportar_reporte_completo(datos_reporte, metadata_reporte, page)
 
     # Construir vista principal
     def construir_vista_reportes():
@@ -1212,7 +1189,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 # Selector de tipo de reporte
                 ft.Container(
                     content=ft.Column([
-                        ft.Text("📊 Selecciona el Tipo de Reporte", 
+                        ft.Text("Selecciona el Tipo de Reporte", 
                                size=18, weight=ft.FontWeight.BOLD, color=tema.TEXT_COLOR),
                         contenedor_selector
                     ]),
@@ -1225,14 +1202,14 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 # Controles de filtro
                 ft.Container(
                     content=ft.Column([
-                        ft.Text("🔍 Filtros de Búsqueda", 
+                        ft.Text("Filtros de Búsqueda", 
                                size=16, weight=ft.FontWeight.BOLD, color=tema.TEXT_COLOR),
                         ft.Row([
                             campo_fecha_inicio,
                             campo_fecha_fin,
                             dropdown_usuario,
                             ft.ElevatedButton(
-                                "📊 Generar Reporte",
+                                "Generar Reporte",
                                 style=ft.ButtonStyle(
                                     bgcolor=tema.BUTTON_SUCCESS_BG,
                                     color=tema.BUTTON_TEXT,
@@ -1241,7 +1218,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
                                 on_click=lambda e: page.run_task(generar_reporte, e)
                             ),
                             ft.ElevatedButton(
-                                "💾 Exportar",
+                                "📊 Exportar (PDF/Excel/JSON)",
                                 style=ft.ButtonStyle(
                                     bgcolor=tema.BUTTON_BG,
                                     color=tema.BUTTON_TEXT,
@@ -1260,7 +1237,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 # Contenedor del reporte
                 ft.Container(
                     content=ft.Column([
-                        ft.Text("📋 Resultados del Reporte", 
+                        ft.Text("[LISTA] Resultados del Reporte", 
                                size=16, weight=ft.FontWeight.BOLD, color=tema.TEXT_COLOR),
                         contenedor_reporte
                     ]),

@@ -12,9 +12,9 @@ from pathlib import Path
 import time
 
 def main():
-    print("⚡ TotalStock - Ejecutable OPTIMIZADO (Configuración Conservadora)")
+    print("[RAPIDO] TotalStock - Ejecutable OPTIMIZADO (Configuración Conservadora)")
     print("=" * 70)
-    print("🚀 Optimizando para velocidad de inicio...")
+    print("[INICIO] Optimizando para velocidad de inicio...")
     
     # Obtener la ruta correcta del directorio raíz
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,14 +22,14 @@ def main():
     os.chdir(root_dir)
     
     # Limpiar compilaciones anteriores
-    print("\n🧹 Limpiando compilaciones anteriores...")
+    print("\n[LIMPIEZA] Limpiando compilaciones anteriores...")
     for carpeta in ["dist", "build"]:
         if os.path.exists(carpeta):
             shutil.rmtree(carpeta)
-            print(f"✅ Limpiado: {carpeta}/")
+            print(f"[OK] Limpiado: {carpeta}/")
     
-    print("\n⚡ Creando versión ONEDIR (más rápida)...")
-    print("⏳ Construyendo ejecutable optimizado...")
+    print("\n[RAPIDO] Creando versión ONEDIR (más rápida)...")
+    print("[ESPERA] Construyendo ejecutable optimizado...")
     
     # Comando PyInstaller optimizado
     comando = [
@@ -85,32 +85,32 @@ def main():
             # Crear acceso directo
             crear_acceso_directo()
             
-            print(f"\n✅ ¡Ejecutable OPTIMIZADO creado!")
-            print(f"📁 Ubicación: {exe_path.absolute()}")
-            print(f"📊 Tamaño: {tamaño_mb:.1f} MB")
+            print(f"\n[OK] ¡Ejecutable OPTIMIZADO creado!")
+            print(f"[FOLDER] Ubicación: {exe_path.absolute()}")
+            print(f"[CHART] Tamaño: {tamaño_mb:.1f} MB")
             print(f"⏱️  Tiempo de compilación: {tiempo_compilacion:.1f} segundos")
-            print("✅ Acceso rápido creado: TotalStock_OPTIMIZADO.bat")
+            print("[OK] Acceso rápido creado: TotalStock_OPTIMIZADO.bat")
             
-            print(f"\n🎉 ¡OPTIMIZACIÓN EXITOSA!")
-            print("⚡ **VENTAJAS de esta versión:**")
-            print("   • 🚀 Inicio 3-5x más rápido")
-            print("   • 📦 Sin descompresión en cada uso")
-            print("   • ⚡ Carga casi inmediata")
-            print("   • 🔧 Configuración estable")
+            print(f"\n[SUCCESS] ¡OPTIMIZACIÓN EXITOSA!")
+            print("[RAPIDO] **VENTAJAS de esta versión:**")
+            print("   • [INICIO] Inicio 3-5x más rápido")
+            print("   • [PACKAGE] Sin descompresión en cada uso")
+            print("   • [RAPIDO] Carga casi inmediata")
+            print("   • [CONFIG] Configuración estable")
             
             mostrar_comparacion()
             mostrar_instrucciones(exe_path)
             
             return True
         else:
-            print("❌ Error: No se pudo crear el ejecutable")
+            print("[ERROR] Error: No se pudo crear el ejecutable")
             return False
             
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error en PyInstaller: {e}")
+        print(f"[ERROR] Error en PyInstaller: {e}")
         return False
     except Exception as e:
-        print(f"❌ Error inesperado: {e}")
+        print(f"[ERROR] Error inesperado: {e}")
         return False
 
 def crear_acceso_directo():
@@ -125,51 +125,51 @@ start "" "dist\\TotalStock\\TotalStock.exe"
 
 def mostrar_comparacion():
     """Mostrar comparación de rendimiento"""
-    print(f"\n📊 COMPARACIÓN DE RENDIMIENTO:")
+    print(f"\n[CHART] COMPARACIÓN DE RENDIMIENTO:")
     print("=" * 50)
     print("🐌 Versión --onefile (archivo único):")
-    print("   📁 Tamaño: ~179 MB (1 archivo)")
+    print("   [FOLDER] Tamaño: ~179 MB (1 archivo)")
     print("   ⏱️  Inicio: 8-15 segundos")
-    print("   🔄 Descompresión: En cada ejecución")
-    print("   📦 Distribución: Súper fácil (1 archivo)")
+    print("   [PROCESO] Descompresión: En cada ejecución")
+    print("   [PACKAGE] Distribución: Súper fácil (1 archivo)")
     print()
-    print("⚡ Versión --onedir (ESTA - carpeta):")
-    print("   📁 Tamaño: Similar (~180 MB en carpeta)")
+    print("[RAPIDO] Versión --onedir (ESTA - carpeta):")
+    print("   [FOLDER] Tamaño: Similar (~180 MB en carpeta)")
     print("   ⏱️  Inicio: 2-3 segundos")
-    print("   🔄 Descompresión: Solo al crear")
-    print("   📦 Distribución: Carpeta completa")
+    print("   [PROCESO] Descompresión: Solo al crear")
+    print("   [PACKAGE] Distribución: Carpeta completa")
     print()
-    print("🎯 **RECOMENDACIÓN:**")
+    print("[DART] **RECOMENDACIÓN:**")
     print("   💻 Uso personal/empresa: --onedir (RÁPIDO)")
-    print("   📤 Distribución masiva: --onefile (PORTÁTIL)")
+    print("   [UPLOAD] Distribución masiva: --onefile (PORTÁTIL)")
 
 def mostrar_instrucciones(exe_path):
     """Mostrar instrucciones de uso"""
     carpeta_dist = exe_path.parent
     
-    print(f"\n📋 INSTRUCCIONES DE USO:")
+    print(f"\n[LISTA] INSTRUCCIONES DE USO:")
     print("=" * 30)
     print("🏃‍♂️ **OPCIÓN 1 - Directo:**")
     print(f"   • Navega a: {carpeta_dist}")
     print("   • Ejecuta: TotalStock.exe")
     print()
-    print("🎯 **OPCIÓN 2 - Acceso rápido:**")
+    print("[DART] **OPCIÓN 2 - Acceso rápido:**")
     print("   • Doble clic en: TotalStock_OPTIMIZADO.bat")
     print()
-    print("📁 **PARA DISTRIBUIR:**")
+    print("[FOLDER] **PARA DISTRIBUIR:**")
     print(f"   • Comprime la carpeta: {carpeta_dist}")
     print("   • Envía el .zip completo")
     print("   • El usuario descomprime y ejecuta")
     print()
     print("🎊 ¡EJECUTABLE OPTIMIZADO LISTO!")
-    print("⚡ Ahora tendrás inicio súper rápido!")
+    print("[RAPIDO] Ahora tendrás inicio súper rápido!")
 
 if __name__ == "__main__":
     success = main()
     
     if success:
-        print("\n✅ Compilación completada exitosamente")
+        print("\n[OK] Compilación completada exitosamente")
     else:
-        print("\n❌ Hubo problemas en la compilación.")
+        print("\n[ERROR] Hubo problemas en la compilación.")
     
     input("\nPresiona Enter para continuar...")

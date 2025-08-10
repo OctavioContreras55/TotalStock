@@ -23,12 +23,12 @@ async def vista_inventario(nombre_seccion, contenido, page):
     productos_cache = cache_firebase.obtener_productos_inmediato()
     if productos_cache:
         # Mostrar datos inmediatamente sin loading screen
-        print("⚡ CARGA INSTANTÁNEA desde cache - Saltando loading screen")
+        print("[RAPIDO] CARGA INSTANTÁNEA desde cache - Saltando loading screen")
         productos_actuales = productos_cache
         # Continuar directamente sin mostrar barra de carga
     else:
         # Solo mostrar loading si no hay cache
-        print("📡 No hay cache - Mostrando loading y consultando Firebase")
+        print("[CONSULTA] No hay cache - Mostrando loading y consultando Firebase")
         contenido.content = vista_carga("Cargando inventario...", 18)
         page.update()
         
@@ -36,7 +36,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
         try:
             productos_iniciales = await obtener_productos_firebase()
             productos_actuales = productos_iniciales
-            print(f"📊 Vista inventario cargada con {len(productos_actuales)} productos")
+            print(f"[CHART] Vista inventario cargada con {len(productos_actuales)} productos")
         except Exception as e:
             print(f"Error al obtener productos iniciales: {e}")
             productos_iniciales = []
@@ -49,7 +49,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
         nonlocal productos_actuales
         try:
             if forzar_refresh:
-                print("🔄 ACTUALIZANDO TABLA - Refresh forzado (post-operación)")
+                print("[PROCESO] ACTUALIZANDO TABLA - Refresh forzado (post-operación)")
                 contenido.content = vista_carga("Actualizando datos...", 16)
                 page.update()
                 
@@ -60,10 +60,10 @@ async def vista_inventario(nombre_seccion, contenido, page):
                 # Carga optimizada normal
                 productos_cache_rapido = cache_firebase.obtener_productos_inmediato()
                 if productos_cache_rapido:
-                    print("⚡ ACTUALIZACIÓN INMEDIATA desde cache")
+                    print("[RAPIDO] ACTUALIZACIÓN INMEDIATA desde cache")
                     productos_actuales = productos_cache_rapido
                 else:
-                    print("📡 Cache expirado - Consultando Firebase")
+                    print("[CONSULTA] Cache expirado - Consultando Firebase")
                     contenido.content = vista_carga("Actualizando inventario...", 16)
                     page.update()
                     productos_actuales = await cache_firebase.obtener_productos()
@@ -112,9 +112,9 @@ async def vista_inventario(nombre_seccion, contenido, page):
             
             # Mostrar resultado al usuario
             if resultado['exito']:
-                mensaje = f"✅ Sincronización completada: {resultado['productos_actualizados']} productos actualizados"
+                mensaje = f"[OK] Sincronización completada: {resultado['productos_actualizados']} productos actualizados"
                 if resultado['productos_sin_ubicacion'] > 0:
-                    mensaje += f"\n⚠️ {resultado['productos_sin_ubicacion']} productos sin ubicaciones asignadas"
+                    mensaje += f"\n[WARN] {resultado['productos_sin_ubicacion']} productos sin ubicaciones asignadas"
                 if resultado['modelos_nuevos']:
                     mensaje += f"\n🆕 Modelos en ubicaciones no encontrados en inventario: {', '.join(resultado['modelos_nuevos'])}"
                 
@@ -125,7 +125,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
                 ))
             else:
                 page.open(ft.SnackBar(
-                    content=ft.Text(f"❌ Error en sincronización: {'; '.join(resultado['errores'])}", color=tema.TEXT_COLOR),
+                    content=ft.Text(f"[ERROR] Error en sincronización: {'; '.join(resultado['errores'])}", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR,
                     duration=5000
                 ))
@@ -136,7 +136,7 @@ async def vista_inventario(nombre_seccion, contenido, page):
         except Exception as e:
             tema = GestorTemas.obtener_tema()
             page.open(ft.SnackBar(
-                content=ft.Text(f"❌ Error al sincronizar: {str(e)}", color=tema.TEXT_COLOR),
+                content=ft.Text(f"[ERROR] Error al sincronizar: {str(e)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
             # Mostrar tabla actual aunque haya error

@@ -38,7 +38,7 @@ class CacheFirebase:
         NO hace consultas a Firebase. Útil para carga instantánea de UI.
         """
         if self.tiene_productos_en_cache():
-            print(f"⚡ CACHE INMEDIATO: {len(self._cache_productos)} productos (0ms)")
+            print(f"[RAPIDO] CACHE INMEDIATO: {len(self._cache_productos)} productos (0ms)")
             return self._cache_productos.copy()
         return []
     
@@ -54,14 +54,14 @@ class CacheFirebase:
         # CACHE HIT: Retorno inmediato sin delays
         if not forzar_refresh and self._cache_valido(self._ultimo_update_productos):
             if mostrar_loading:
-                print(f"⚡ CACHE HIT INMEDIATO: {len(self._cache_productos)} productos (0ms, 0 consultas Firebase)")
+                print(f"[CACHE] HIT INMEDIATO: {len(self._cache_productos)} productos (0ms, 0 consultas Firebase)")
             
             # Retorno inmediato sin awaits innecesarios
             return self._cache_productos.copy()
         
         # CACHE MISS: Consultar Firebase
         if mostrar_loading:
-            print("📡 CACHE MISS: Consultando Firebase para productos...")
+            print("[CACHE MISS] Consultando Firebase para productos...")
             
         try:
             referencia_productos = db.collection('productos')
@@ -93,14 +93,14 @@ class CacheFirebase:
             self._ultimo_update_productos = datetime.now()
             
             if mostrar_loading:
-                print(f"✅ Cache actualizado con {len(lista_productos)} productos")
+                print(f"[OK] Cache actualizado con {len(lista_productos)} productos")
             return lista_productos.copy()
             
         except Exception as e:
-            print(f"❌ Error al obtener productos: {str(e)}")
+            print(f"[ERROR] Error al obtener productos: {str(e)}")
             # Si hay error, devolver cache anterior si existe
             if self._cache_productos:
-                print("🔄 Devolviendo datos del cache anterior por error")
+                print("[RECUPERACION] Devolviendo datos del cache anterior por error")
                 return self._cache_productos.copy()
             return []
     
@@ -111,12 +111,12 @@ class CacheFirebase:
         # CACHE HIT: Retorno inmediato
         if not forzar_refresh and self._cache_valido(self._ultimo_update_usuarios):
             if mostrar_loading:
-                print(f"⚡ CACHE HIT INMEDIATO: {len(self._cache_usuarios)} usuarios (0ms, 0 consultas Firebase)")
+                print(f"[RAPIDO] CACHE HIT INMEDIATO: {len(self._cache_usuarios)} usuarios (0ms, 0 consultas Firebase)")
             return self._cache_usuarios.copy()
         
         # CACHE MISS: Consultar Firebase
         if mostrar_loading:
-            print("📡 CACHE MISS: Consultando usuarios en Firebase...")
+            print("[CONSULTA] CACHE MISS: Consultando usuarios en Firebase...")
         
         try:
             referencia_usuarios = db.collection('usuarios')
@@ -143,13 +143,13 @@ class CacheFirebase:
             self._ultimo_update_usuarios = datetime.now()
             
             if mostrar_loading:
-                print(f"✅ Cache de usuarios actualizado con {len(lista_usuarios)} usuarios")
+                print(f"[OK] Cache de usuarios actualizado con {len(lista_usuarios)} usuarios")
             else:
-                print(f"🔄 Cache usuarios actualizado silenciosamente: {len(lista_usuarios)} usuarios")
+                print(f"[PROCESO] Cache usuarios actualizado silenciosamente: {len(lista_usuarios)} usuarios")
             return lista_usuarios.copy()
             
         except Exception as e:
-            print(f"❌ Error al obtener usuarios: {str(e)}")
+            print(f"[ERROR] Error al obtener usuarios: {str(e)}")
             if self._cache_usuarios:
                 return self._cache_usuarios.copy()
             return []
@@ -157,12 +157,12 @@ class CacheFirebase:
     def invalidar_cache_productos(self):
         """Fuerza la actualización del cache de productos en la próxima consulta"""
         self._ultimo_update_productos = None
-        print("🔄 Cache de productos invalidado")
+        print("[PROCESO] Cache de productos invalidado")
     
     def invalidar_cache_usuarios(self):
         """Fuerza la actualización del cache de usuarios en la próxima consulta"""
         self._ultimo_update_usuarios = None
-        print("🔄 Cache de usuarios invalidado")
+        print("[PROCESO] Cache de usuarios invalidado")
     
     def tiene_ubicaciones_en_cache(self) -> bool:
         """Verifica si hay ubicaciones válidas en cache SIN hacer consultas"""
@@ -175,7 +175,7 @@ class CacheFirebase:
         NO hace consultas a Firebase. Útil para carga instantánea de UI.
         """
         if self.tiene_ubicaciones_en_cache():
-            print(f"⚡ CACHE INMEDIATO UBICACIONES: {len(self._cache_ubicaciones)} ubicaciones (0ms)")
+            print(f"[RAPIDO] CACHE INMEDIATO UBICACIONES: {len(self._cache_ubicaciones)} ubicaciones (0ms)")
             return self._cache_ubicaciones.copy()
         return []
     
@@ -191,14 +191,14 @@ class CacheFirebase:
         # CACHE HIT: Retorno inmediato sin delays
         if not forzar_refresh and self._cache_valido(self._ultimo_update_ubicaciones):
             if mostrar_loading:
-                print(f"⚡ CACHE HIT UBICACIONES INMEDIATO: {len(self._cache_ubicaciones)} ubicaciones (0ms, 0 consultas Firebase)")
+                print(f"[RAPIDO] CACHE HIT UBICACIONES INMEDIATO: {len(self._cache_ubicaciones)} ubicaciones (0ms, 0 consultas Firebase)")
             
             # Retorno inmediato sin awaits innecesarios
             return self._cache_ubicaciones.copy()
         
         # CACHE MISS: Consultar Firebase
         if mostrar_loading:
-            print("📡 CACHE MISS UBICACIONES: Consultando Firebase para ubicaciones...")
+            print("[CONSULTA] CACHE MISS UBICACIONES: Consultando Firebase para ubicaciones...")
             
         try:
             referencia_ubicaciones = db.collection('ubicaciones')
@@ -232,48 +232,48 @@ class CacheFirebase:
             self._ultimo_update_ubicaciones = datetime.now()
             
             if mostrar_loading:
-                print(f"✅ Cache ubicaciones actualizado con {len(lista_ubicaciones)} ubicaciones")
+                print(f"[OK] Cache ubicaciones actualizado con {len(lista_ubicaciones)} ubicaciones")
             return lista_ubicaciones.copy()
             
         except Exception as e:
-            print(f"❌ Error al obtener ubicaciones: {str(e)}")
+            print(f"[ERROR] Error al obtener ubicaciones: {str(e)}")
             # Si hay error, devolver cache anterior si existe
             if self._cache_ubicaciones:
-                print("🔄 Devolviendo datos del cache anterior por error")
+                print("[PROCESO] Devolviendo datos del cache anterior por error")
                 return self._cache_ubicaciones.copy()
             return []
     
     def invalidar_cache_ubicaciones(self):
         """Invalida el cache de ubicaciones para forzar actualización"""
         self._ultimo_update_ubicaciones = None
-        print("🔄 Cache de ubicaciones invalidado")
+        print("[PROCESO] Cache de ubicaciones invalidado")
     
     def invalidar_cache_movimientos(self):
         """Invalida el cache de movimientos para forzar actualización"""
         self._ultimo_update_movimientos = None
-        print("🔄 Cache de movimientos invalidado")
+        print("[PROCESO] Cache de movimientos invalidado")
     
     async def obtener_movimientos(self, forzar_refresh: bool = False) -> List[Dict]:
         """Obtiene movimientos con cache inteligente"""
         if not forzar_refresh and self._cache_valido(self._ultimo_update_movimientos):
-            print(f"⚡ CACHE MOVIMIENTOS: {len(self._cache_movimientos)} registros")
+            print(f"[RAPIDO] CACHE MOVIMIENTOS: {len(self._cache_movimientos)} registros")
             return self._cache_movimientos.copy()
         
-        print(f"📡 Consultando movimientos desde Firebase... (forzar_refresh={forzar_refresh})")
+        print(f"[CONSULTA] Consultando movimientos desde Firebase... (forzar_refresh={forzar_refresh})")
         from app.crud_movimientos.create_movimiento import obtener_movimientos_firebase
         
         try:
             self._cache_movimientos = await obtener_movimientos_firebase()
             self._ultimo_update_movimientos = datetime.now()
-            print(f"✅ MOVIMIENTOS ACTUALIZADOS: {len(self._cache_movimientos)} registros")
+            print(f"[OK] MOVIMIENTOS ACTUALIZADOS: {len(self._cache_movimientos)} registros")
             
             # Log detallado de los movimientos para debug
             if len(self._cache_movimientos) > 0:
-                print(f"   📋 Últimos movimientos: {[m.get('tipo', 'N/A') for m in self._cache_movimientos[:3]]}")
+                print(f"   [LISTA] Últimos movimientos: {[m.get('tipo', 'N/A') for m in self._cache_movimientos[:3]]}")
             
             return self._cache_movimientos.copy()
         except Exception as e:
-            print(f"❌ Error al obtener movimientos: {e}")
+            print(f"[ERROR] Error al obtener movimientos: {e}")
             return []
     
     def limpiar_cache(self):
@@ -286,7 +286,7 @@ class CacheFirebase:
         self._ultimo_update_usuarios = None
         self._ultimo_update_ubicaciones = None
         self._ultimo_update_movimientos = None
-        print("🧹 Cache completo limpiado")
+        print("[LIMPIEZA] Cache completo limpiado")
 
 # Instancia global del cache
 cache_firebase = CacheFirebase()

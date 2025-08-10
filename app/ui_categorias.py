@@ -85,13 +85,13 @@ async def vista_categorias(nombre_seccion, contenido, page):
                                     })
                         
                         if len(productos_inventario) > 0:
-                            print(f"✅ Usando caché local: {len(productos_inventario)} productos")
+                            print(f"[OK] Usando caché local: {len(productos_inventario)} productos")
                             return productos_inventario
             except (FileNotFoundError, json.JSONDecodeError) as e:
-                print(f"⚠️ Cache local no disponible: {e}")
+                print(f"[WARN] Cache local no disponible: {e}")
             
             # 2. RESPALDO: Si no hay cache válido, consultar Firebase
-            print("📡 Consultando Firebase como respaldo...")
+            print("[CONSULTA] Consultando Firebase como respaldo...")
             from app.crud_productos.create_producto import obtener_productos_firebase
             productos_firebase = await obtener_productos_firebase()
             
@@ -115,15 +115,15 @@ async def vista_categorias(nombre_seccion, contenido, page):
             try:
                 with open('data/inventario.json', 'w', encoding='utf-8') as f:
                     json.dump([p for p in productos_firebase], f, ensure_ascii=False, indent=2)
-                print("💾 Cache local actualizado desde Firebase")
+                print("[SAVE] Cache local actualizado desde Firebase")
             except Exception as e:
-                print(f"❌ Error guardando cache: {e}")
+                print(f"[ERROR] Error guardando cache: {e}")
             
-            print(f"📥 Productos cargados desde Firebase: {len(productos_inventario)}")
+            print(f"[DOWNLOAD] Productos cargados desde Firebase: {len(productos_inventario)}")
             return productos_inventario
             
         except Exception as e:
-            print(f"❌ Error al cargar productos de inventario: {e}")
+            print(f"[ERROR] Error al cargar productos de inventario: {e}")
             return []
 
     async def actualizar_categoria_producto(producto_id, nueva_categoria, nueva_subcategoria=None):
@@ -133,7 +133,7 @@ async def vista_categorias(nombre_seccion, contenido, page):
             if not producto_id or producto_id.strip() == "":
                 print(f"Error: ID de producto vacío o inválido: '{producto_id}'")
                 page.open(ft.SnackBar(
-                    content=ft.Text("❌ Error: ID de producto inválido", color=tema.TEXT_COLOR),
+                    content=ft.Text("[ERROR] Error: ID de producto inválido", color=tema.TEXT_COLOR),
                     bgcolor=tema.ERROR_COLOR
                 ))
                 return False
@@ -168,12 +168,12 @@ async def vista_categorias(nombre_seccion, contenido, page):
                     # Guardar cache actualizado
                     with open(cache_file, 'w', encoding='utf-8') as f:
                         json.dump(cache_data, f, ensure_ascii=False, indent=2)
-                    print("💾 Cache local actualizado con nueva categoría")
+                    print("[SAVE] Cache local actualizado con nueva categoría")
                 else:
-                    print("⚠️ Cache local no existe, se actualizará en próxima carga")
+                    print("[WARN] Cache local no existe, se actualizará en próxima carga")
                     
             except Exception as cache_error:
-                print(f"⚠️ No se pudo actualizar cache local: {cache_error}")
+                print(f"[WARN] No se pudo actualizar cache local: {cache_error}")
             
             # Actualizar en la lista local
             for producto in productos_inventario:
@@ -182,7 +182,7 @@ async def vista_categorias(nombre_seccion, contenido, page):
                     break
             
             page.open(ft.SnackBar(
-                content=ft.Text(f"✅ Categoría actualizada", color=tema.TEXT_COLOR),
+                content=ft.Text(f"[OK] Categoría actualizada", color=tema.TEXT_COLOR),
                 bgcolor=tema.SUCCESS_COLOR
             ))
             return True
@@ -260,7 +260,7 @@ async def vista_categorias(nombre_seccion, contenido, page):
                     campo_busqueda,
                     dropdown_categoria_filtro,
                     ft.ElevatedButton(
-                        "🔄 Refrescar desde Firebase",
+                        "[PROCESO] Refrescar desde Firebase",
                         style=ft.ButtonStyle(bgcolor=tema.WARNING_COLOR),
                         on_click=lambda e: page.run_task(forzar_recarga_firebase),
                         tooltip="Recargar datos directamente desde Firebase"
@@ -465,7 +465,7 @@ async def vista_categorias(nombre_seccion, contenido, page):
                 ft.Column([
                     ft.Row([dropdown_categoria, dropdown_subcategoria], spacing=5),
                     ft.ElevatedButton(
-                        "💾 Guardar",
+                        "[SAVE] Guardar",
                         style=ft.ButtonStyle(
                             bgcolor=tema.SUCCESS_COLOR,
                             color=tema.BUTTON_TEXT
@@ -515,14 +515,14 @@ async def vista_categorias(nombre_seccion, contenido, page):
             cache_file = 'data/inventario.json'
             if os.path.exists(cache_file):
                 os.remove(cache_file)
-                print("🗑️ Cache local eliminado")
+                print("[ELIMINAR] Cache local eliminado")
             
             # Recargar productos
             await cargar_productos_inventario()
             
             # Mostrar mensaje de éxito
             page.open(ft.SnackBar(
-                content=ft.Text("✅ Datos actualizados desde Firebase", color=tema.TEXT_COLOR),
+                content=ft.Text("[OK] Datos actualizados desde Firebase", color=tema.TEXT_COLOR),
                 bgcolor=tema.SUCCESS_COLOR
             ))
             
@@ -531,9 +531,9 @@ async def vista_categorias(nombre_seccion, contenido, page):
                 await mostrar_gestion_categorias_productos()
                 
         except Exception as e:
-            print(f"❌ Error al forzar recarga: {e}")
+            print(f"[ERROR] Error al forzar recarga: {e}")
             page.open(ft.SnackBar(
-                content=ft.Text(f"❌ Error al recargar: {str(e)}", color=tema.TEXT_COLOR),
+                content=ft.Text(f"[ERROR] Error al recargar: {str(e)}", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
 
@@ -724,7 +724,7 @@ async def vista_categorias(nombre_seccion, contenido, page):
             nonlocal categoria_seleccionada
             categoria_seleccionada = opcion
             
-            texto_estado.value = f"📦 {config['nombre']}: {opcion}"
+            texto_estado.value = f"[PACKAGE] {config['nombre']}: {opcion}"
             texto_estado.color = tema.PRIMARY_COLOR
             opciones_column.visible = False
             
@@ -772,7 +772,7 @@ async def vista_categorias(nombre_seccion, contenido, page):
                 
                 # Mostrar confirmación
                 page.open(ft.SnackBar(
-                    content=ft.Text(f"✅ Opción '{nueva}' agregada", color=tema.TEXT_COLOR),
+                    content=ft.Text(f"[OK] Opción '{nueva}' agregada", color=tema.TEXT_COLOR),
                     bgcolor=tema.SUCCESS_COLOR
                 ))
 
@@ -786,7 +786,7 @@ async def vista_categorias(nombre_seccion, contenido, page):
                 
                 # Mostrar confirmación
                 page.open(ft.SnackBar(
-                    content=ft.Text(f"🗑️ Opción '{borrar}' eliminada", color=tema.TEXT_COLOR),
+                    content=ft.Text(f"[ELIMINAR] Opción '{borrar}' eliminada", color=tema.TEXT_COLOR),
                     bgcolor=tema.WARNING_COLOR
                 ))
 

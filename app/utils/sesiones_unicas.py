@@ -27,7 +27,7 @@ class SesionManager:
                     result = subprocess.run(['tasklist', '/FI', f'PID eq {proceso_id}'], 
                                           capture_output=True, text=True)
                     if f'{proceso_id}' not in result.stdout:
-                        print(f"🧹 Proceso {proceso_id} no existe, eliminando sesión de {usuario}")
+                        print(f"[LIMPIEZA] Proceso {proceso_id} no existe, eliminando sesión de {usuario}")
                         continue  # No agregar esta sesión
                 except Exception as e:
                     print(f"Error verificando proceso {proceso_id}: {e}")
@@ -36,7 +36,7 @@ class SesionManager:
         
         if len(sesiones_limpias) != len(sesiones):
             self._guardar_sesiones(sesiones_limpias)
-            print(f"🧹 Limpiadas {len(sesiones) - len(sesiones_limpias)} sesiones zombie")
+            print(f"[LIMPIEZA] Limpiadas {len(sesiones) - len(sesiones_limpias)} sesiones zombie")
         
         return sesiones_limpias
         
@@ -169,7 +169,7 @@ class SesionManager:
         try:
             if os.path.exists(self.sesiones_file):
                 os.remove(self.sesiones_file)
-                print("🧹 Todas las sesiones han sido limpiadas")
+                print("[LIMPIEZA] Todas las sesiones han sido limpiadas")
                 return True
         except Exception as e:
             print(f"Error limpiando sesiones: {e}")

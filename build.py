@@ -5,14 +5,14 @@ import sys
 def menu_principal():
     """Menú principal para seleccionar el tipo de compilación"""
     print("=" * 50)
-    print("🚀 SISTEMA DE COMPILACIÓN TOTALSTOCK")
+    print("[INICIO] SISTEMA DE COMPILACIÓN TOTALSTOCK")
     print("=" * 50)
-    print("1. 🔧 Compilación Básica (rápida)")
-    print("2. ⚡ Compilación Optimizada (recomendada)")
-    print("3. 🎯 Compilación Debug (para desarrollo)")
-    print("4. 📦 Compilación Completa (producción)")
-    print("5. 🧹 Limpiar archivos temporales")
-    print("6. ❌ Salir")
+    print("1. [CONFIG] Compilación Básica (rápida)")
+    print("2. [RAPIDO] Compilación Optimizada (recomendada)")
+    print("3. [DART] Compilación Debug (para desarrollo)")
+    print("4. [PACKAGE] Compilación Completa (producción)")
+    print("5. [LIMPIEZA] Limpiar archivos temporales")
+    print("6. [ERROR] Salir")
     print("=" * 50)
     
     while True:
@@ -38,7 +38,7 @@ def menu_principal():
                 print("👋 Saliendo...")
                 sys.exit(0)
             else:
-                print("❌ Opción no válida. Por favor selecciona 1-6.")
+                print("[ERROR] Opción no válida. Por favor selecciona 1-6.")
                 
         except KeyboardInterrupt:
             print("\n👋 Saliendo...")
@@ -47,21 +47,21 @@ def menu_principal():
 def ejecutar_script(script_path):
     """Ejecutar script de compilación específico"""
     if not os.path.exists(script_path):
-        print(f"❌ Error: No se encontró el script {script_path}")
+        print(f"[ERROR] Error: No se encontró el script {script_path}")
         return
     
     try:
-        print(f"🔄 Ejecutando {script_path}...")
+        print(f"[PROCESO] Ejecutando {script_path}...")
         subprocess.run([sys.executable, script_path], check=True)
-        print("✅ Compilación completada exitosamente")
+        print("[OK] Compilación completada exitosamente")
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error durante la compilación: {e}")
+        print(f"[ERROR] Error durante la compilación: {e}")
     except Exception as e:
-        print(f"❌ Error inesperado: {e}")
+        print(f"[ERROR] Error inesperado: {e}")
 
 def limpiar_archivos():
     """Limpiar archivos temporales y de compilación"""
-    print("🧹 Limpiando archivos temporales...")
+    print("[LIMPIEZA] Limpiando archivos temporales...")
     
     directorios_limpiar = ["build", "dist", "__pycache__"]
     archivos_limpiar = ["*.pyc", "*.pyo"]
@@ -71,11 +71,11 @@ def limpiar_archivos():
             try:
                 import shutil
                 shutil.rmtree(directorio)
-                print(f"✅ Eliminado: {directorio}/")
+                print(f"[OK] Eliminado: {directorio}/")
             except Exception as e:
-                print(f"❌ Error al eliminar {directorio}: {e}")
+                print(f"[ERROR] Error al eliminar {directorio}: {e}")
     
-    print("✅ Limpieza completada")
+    print("[OK] Limpieza completada")
 
 if __name__ == "__main__":
     menu_principal()

@@ -50,14 +50,14 @@ class SincronizadorInventario:
                         else:
                             cantidades_por_modelo[modelo] = cantidad_int
                     except (ValueError, TypeError):
-                        self.log(f"⚠️ Cantidad inválida para modelo {modelo}: {cantidad}")
+                        self.log(f"[WARN] Cantidad inválida para modelo {modelo}: {cantidad}")
                         continue
             
             self.log(f"Cantidades calculadas para {len(cantidades_por_modelo)} modelos")
             return cantidades_por_modelo
             
         except Exception as e:
-            self.log(f"❌ Error al calcular cantidades: {e}")
+            self.log(f"[ERROR] Error al calcular cantidades: {e}")
             return {}
     
     async def sincronizar_inventario_completo(self, mostrar_resultados: bool = True) -> Dict:
@@ -118,7 +118,7 @@ class SincronizadorInventario:
                         
                     except Exception as e:
                         errores.append(f"Error actualizando {modelo}: {e}")
-                        self.log(f"❌ Error actualizando {modelo}: {e}")
+                        self.log(f"[ERROR] Error actualizando {modelo}: {e}")
                 
                 # Remover de cantidades_ubicaciones para detectar modelos nuevos
                 if modelo in cantidades_ubicaciones:
@@ -144,18 +144,18 @@ class SincronizadorInventario:
             if mostrar_resultados:
                 self.log("=" * 50)
                 self.log("RESULTADOS DE SINCRONIZACIÓN:")
-                self.log(f"  📊 Productos actualizados: {productos_actualizados}")
-                self.log(f"  ⚠️ Productos sin ubicación: {productos_sin_ubicacion}")
+                self.log(f"  [CHART] Productos actualizados: {productos_actualizados}")
+                self.log(f"  [WARN] Productos sin ubicación: {productos_sin_ubicacion}")
                 if modelos_nuevos_en_ubicaciones:
                     self.log(f"  🆕 Modelos en ubicaciones no en inventario: {modelos_nuevos_en_ubicaciones}")
                 if errores:
-                    self.log(f"  ❌ Errores: {len(errores)}")
+                    self.log(f"  [ERROR] Errores: {len(errores)}")
                 self.log("=" * 50)
             
             return resultado
             
         except Exception as e:
-            self.log(f"❌ Error en sincronización completa: {e}")
+            self.log(f"[ERROR] Error en sincronización completa: {e}")
             return {
                 'productos_actualizados': 0,
                 'productos_sin_ubicacion': 0,
@@ -216,11 +216,11 @@ class SincronizadorInventario:
                     print(f"Error procesando producto en sincronización: {ex}")
                     continue
             
-            self.log(f"⚠️ Modelo {modelo} no encontrado en inventario")
+            self.log(f"[WARN] Modelo {modelo} no encontrado en inventario")
             return False
             
         except Exception as e:
-            self.log(f"❌ Error sincronizando {modelo}: {e}")
+            self.log(f"[ERROR] Error sincronizando {modelo}: {e}")
             return False
 
 # Instancia global del sincronizador

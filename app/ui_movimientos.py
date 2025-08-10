@@ -160,7 +160,7 @@ async def vista_movimientos(nombre_seccion, contenido, page):
         for mov in movimientos:
             tipo = mov.get('tipo', 'sin_tipo')
             tipos_debug[tipo] = tipos_debug.get(tipo, 0) + 1
-        print(f"🔍 DEBUG TIPOS EN UI: {tipos_debug}")
+        print(f"[BUSCAR] DEBUG TIPOS EN UI: {tipos_debug}")
         
         # Contadores específicos
         entradas = len([m for m in movimientos if m.get('tipo') == 'entrada_inventario'])

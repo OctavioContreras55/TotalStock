@@ -43,12 +43,12 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
     async def actualizar_estadisticas_dinamicas():
         """Actualiza las estadísticas y la gráfica en tiempo real"""
         try:
-            print("🔄 Iniciando actualización de estadísticas...")
+            print("[PROCESO] Iniciando actualización de estadísticas...")
             # Obtener nuevas estadísticas
             nuevas_stats = await obtener_estadisticas()
             stats_actuales.update(nuevas_stats)
             
-            print(f"📊 Nuevas estadísticas: {stats_actuales}")
+            print(f"[CHART] Nuevas estadísticas: {stats_actuales}")
             
             # Actualizar textos de estadísticas
             if texto_total_productos_ref.current:
@@ -69,19 +69,19 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                 nueva_grafica = crear_grafico_estadisticas_dinamico(stats_actuales)
                 grafico_estadisticas_ref.current.sections = nueva_grafica.sections
                 grafico_estadisticas_ref.current.sections_space = nueva_grafica.sections_space
-                print("📈 Gráfica actualizada con nuevas secciones")
+                print("[UP] Gráfica actualizada con nuevas secciones")
             else:
-                print("⚠️ Referencia de gráfica no disponible")
+                print("[WARN] Referencia de gráfica no disponible")
             
             # Actualizar historial
             await actualizar_historial_dinamico()
             
-            print("✅ Actualizando página...")
+            print("[OK] Actualizando página...")
             page.update()
-            print("📊 Estadísticas actualizadas dinámicamente")
+            print("[CHART] Estadísticas actualizadas dinámicamente")
             
         except Exception as e:
-            print(f"❌ Error al actualizar estadísticas: {e}")
+            print(f"[ERROR] Error al actualizar estadísticas: {e}")
             import traceback
             traceback.print_exc()
     
@@ -89,21 +89,21 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
     async def actualizar_historial_dinamico():
         """Actualiza el historial de actividades en tiempo real"""
         try:
-            print("🔄 Actualizando historial...")
+            print("[PROCESO] Actualizando historial...")
             actividades_recientes = await obtener_actividades_recientes()
-            print(f"📋 Actividades obtenidas: {len(actividades_recientes)}")
+            print(f"[LISTA] Actividades obtenidas: {len(actividades_recientes)}")
             if historial_column_ref.current:
                 historial_column_ref.current.controls = crear_elementos_historial(actividades_recientes)
-                print("📋 Historial actualizado dinámicamente")
+                print("[LISTA] Historial actualizado dinámicamente")
         except Exception as e:
-            print(f"❌ Error al actualizar historial: {e}")
+            print(f"[ERROR] Error al actualizar historial: {e}")
     
     # Función para crear gráfica dinámica
     def crear_grafico_estadisticas_dinamico(stats):
         """Crea una gráfica de estadísticas que puede ser actualizada"""
         data_sections = []
         
-        print(f"🎨 Creando gráfica con datos: {stats}")
+        print(f"[ART] Creando gráfica con datos: {stats}")
         
         # Solo agregar secciones si hay datos reales
         if stats.get('creados_hoy', 0) > 0:
@@ -115,7 +115,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                     title=str(stats['creados_hoy'])
                 )
             )
-            print(f"✅ Agregada sección 'creados_hoy': {stats['creados_hoy']}")
+            print(f"[OK] Agregada sección 'creados_hoy': {stats['creados_hoy']}")
         
         if stats.get('editados_hoy', 0) > 0:
             data_sections.append(
@@ -126,7 +126,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                     title=str(stats['editados_hoy'])
                 )
             )
-            print(f"✅ Agregada sección 'editados_hoy': {stats['editados_hoy']}")
+            print(f"[OK] Agregada sección 'editados_hoy': {stats['editados_hoy']}")
         
         if stats.get('eliminados_hoy', 0) > 0:
             data_sections.append(
@@ -137,7 +137,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                     title=str(stats['eliminados_hoy'])
                 )
             )
-            print(f"✅ Agregada sección 'eliminados_hoy': {stats['eliminados_hoy']}")
+            print(f"[OK] Agregada sección 'eliminados_hoy': {stats['eliminados_hoy']}")
         
         if stats.get('importados_hoy', 0) > 0:
             data_sections.append(
@@ -148,7 +148,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                     title=str(stats['importados_hoy'])
                 )
             )
-            print(f"✅ Agregada sección 'importados_hoy': {stats['importados_hoy']}")
+            print(f"[OK] Agregada sección 'importados_hoy': {stats['importados_hoy']}")
         
         # Si no hay datos reales, mostrar gráfica indicando "Sin actividad hoy"
         if not data_sections:
@@ -160,9 +160,9 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                     title="Sin actividad"
                 )
             )
-            print("📊 Mostrando gráfica 'Sin actividad'")
+            print("[CHART] Mostrando gráfica 'Sin actividad'")
         
-        print(f"📈 Gráfica creada con {len(data_sections)} secciones")
+        print(f"[UP] Gráfica creada con {len(data_sections)} secciones")
         
         return ft.PieChart(
             sections=data_sections,
@@ -244,7 +244,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
             productos_data.sort(key=lambda x: x['stock'])
             resultado = productos_data[:5]
             
-            print(f"📦 Productos bajo stock encontrados: {len(resultado)}")
+            print(f"[PACKAGE] Productos bajo stock encontrados: {len(resultado)}")
             return resultado
             return productos_data[:5]
             
@@ -325,7 +325,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
     # Registrar función de actualización dinámica
     from app.utils.actualizador_dashboard import registrar_actualizador
     registrar_actualizador(actualizar_estadisticas_dinamicas, page)
-    print("🔗 Actualizador del dashboard registrado")
+    print("[LINK] Actualizador del dashboard registrado")
     
     # NOTA: Los pendientes son INDIVIDUALES - específicos de cada usuario
     # Se cargan y guardan en archivos separados por usuario_id
@@ -389,7 +389,7 @@ async def vista_inicio(page, nombre_seccion, contenido, fecha_actual):
                         on_change=lambda e, idx=i: toggle_pendiente(idx)
                     ),
                     ft.Text(
-                        ("✓ " if tarea.get('completada', False) else "") + tarea['texto'],
+                        ("[CHECK] " if tarea.get('completada', False) else "") + tarea['texto'],
                         expand=True,
                         size=12,
                         color=tema.SECONDARY_TEXT_COLOR if tarea.get('completada', False) else tema.TEXT_COLOR,

@@ -70,7 +70,7 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
             
             # Mostrar mensaje de recarga
             page.open(ft.SnackBar(
-                content=ft.Text("🔄 Recargando tabla completa...", color=tema.TEXT_COLOR),
+                content=ft.Text("[PROCESO] Recargando tabla completa...", color=tema.TEXT_COLOR),
                 bgcolor=tema.PRIMARY_COLOR,
                 duration=2000
             ))
@@ -83,12 +83,12 @@ def mostrar_dialogo_busqueda(page, mostrar_productos_filtrados):
             if callback_actualizar_tabla:
                 await callback_actualizar_tabla(todos_productos)
                 
-            print(f"✅ Tabla recargada con {len(todos_productos)} productos")
+            print(f"[OK] Tabla recargada con {len(todos_productos)} productos")
             
         except Exception as error:
             print(f"Error al recargar tabla: {error}")
             page.open(ft.SnackBar(
-                content=ft.Text("❌ Error al recargar tabla", color=tema.TEXT_COLOR),
+                content=ft.Text("[ERROR] Error al recargar tabla", color=tema.TEXT_COLOR),
                 bgcolor=tema.ERROR_COLOR
             ))
 
@@ -131,7 +131,7 @@ async def buscar_en_firebase(page, busqueda, actualizar_tabla=None, dialogo_busq
         from app.utils.cache_firebase import cache_firebase
         from app.utils.monitor_firebase import monitor_firebase
         
-        print(f"🔍 BÚSQUEDA INICIADA: '{busqueda}' - usando cache local (0 consultas Firebase)")
+        print(f"[BUSCAR] BÚSQUEDA INICIADA: '{busqueda}' - usando cache local (0 consultas Firebase)")
         todos_productos = await cache_firebase.obtener_productos()
         
         # Filtrar localmente (sin consulta a Firebase)
@@ -150,7 +150,7 @@ async def buscar_en_firebase(page, busqueda, actualizar_tabla=None, dialogo_busq
                 busqueda_lower in tipo):
                 productos_encontrados.append(producto)
 
-        print(f"🎯 BÚSQUEDA COMPLETADA: {len(productos_encontrados)} productos encontrados (filtrado local)")
+        print(f"[DART] BÚSQUEDA COMPLETADA: {len(productos_encontrados)} productos encontrados (filtrado local)")
 
         if productos_encontrados:
             page.close(dialogo_busqueda)  # Cerrar el dialog
