@@ -1,5 +1,21 @@
 [
   {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: Octavio2",
+    "usuario": "Octavio",
+    "fecha": "2025-08-10T15:56:10.393440",
+    "timestamp": "2025-08-10T15:56:10.393450",
+    "detalles": {}
+  },
+  {
+    "tipo": "editar_usuario",
+    "descripcion": "Editó el usuario: admin",
+    "usuario": "Octavio",
+    "fecha": "2025-08-10T15:53:21.883893",
+    "timestamp": "2025-08-10T15:53:21.883903",
+    "detalles": {}
+  },
+  {
     "tipo": "exportar_reporte",
     "descripcion": "Exportó reporte 'inventario' con 3 registros a PDF: reporte_inventario_20250807_202139.pdf",
     "usuario": "Sistema",
@@ -781,22 +797,6 @@
     "usuario": "Octavio",
     "fecha": "2025-08-05T14:59:21.142119",
     "timestamp": "2025-08-05T14:59:21.142128",
-    "detalles": {}
-  },
-  {
-    "tipo": "asignar_ubicacion",
-    "descripcion": "Asignó ubicación: 100B19 → Almacén 2, Estantería 2B",
-    "usuario": "Octavio",
-    "fecha": "2025-08-05T14:48:17.736124",
-    "timestamp": "2025-08-05T14:48:17.736140",
-    "detalles": {}
-  },
-  {
-    "tipo": "asignar_ubicacion",
-    "descripcion": "Asignó ubicación: 100B21 → Almacén 1, Estantería 12C",
-    "usuario": "Octavio",
-    "fecha": "2025-08-05T14:36:00.283772",
-    "timestamp": "2025-08-05T14:36:00.283781",
     "detalles": {}
   }
 ]

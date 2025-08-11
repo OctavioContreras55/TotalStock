@@ -162,21 +162,59 @@ def on_click_importar_archivo(page, callback_actualizar_tabla=None):
             await callback_actualizar_tabla(forzar_refresh=True)
     
     def picked_file(e: ft.FilePickerResultEvent):
-
-        if e.files:
-            ruta = e.files[0].path
-            productos = cargar_archivo_excel(ruta)
-            # Aquí puedes actualizar la tabla con los nuevos productos
-            productos_importados.clear()
-            productos_importados.extend(productos)
-            selected_file.value = e.files[0].name
+        """Manejar selección de archivo - CORREGIDO para ejecutables"""
+        print(f"[DEBUG] picked_file llamado - e.files: {e.files}")
+        
+        if e.files and len(e.files) > 0:
+            try:
+                archivo_seleccionado = e.files[0]
+                ruta = archivo_seleccionado.path
+                nombre = archivo_seleccionado.name
+                
+                print(f"[DEBUG] Archivo seleccionado: {nombre}")
+                print(f"[DEBUG] Ruta: {ruta}")
+                
+                # Verificar que el archivo existe
+                import os
+                if not os.path.exists(ruta):
+                    print(f"[ERROR] Archivo no existe: {ruta}")
+                    selected_file.value = "Error: Archivo no encontrado"
+                    selected_file.update()
+                    return
+                
+                # Cargar productos del Excel
+                productos = cargar_archivo_excel(ruta)
+                print(f"[DEBUG] Productos cargados: {len(productos)}")
+                
+                # Actualizar lista global y UI
+                productos_importados.clear()
+                productos_importados.extend(productos)
+                selected_file.value = f"{nombre} ({len(productos)} productos)"
+                
+                print(f"[SUCCESS] Archivo cargado exitosamente: {nombre}")
+                
+            except Exception as e:
+                print(f"[ERROR] Error al procesar archivo: {e}")
+                selected_file.value = f"Error: {str(e)}"
         else:
+            print("[DEBUG] No se seleccionó ningún archivo")
             selected_file.value = "No se ha seleccionado ningun archivo"
+        
+        # Actualizar UI
         selected_file.update()
         
-    pick_files_window = ft.FilePicker(on_result=picked_file)
+    # FilePicker mejorado para ejecutables - MÁXIMA COMPATIBILIDAD
+    try:
+        pick_files_window = ft.FilePicker(on_result=picked_file)
+    except TypeError as e:
+        print(f"[ERROR] Error creando FilePicker: {e}")
+        # Fallback más simple
+        pick_files_window = ft.FilePicker()
+        pick_files_window.on_result = picked_file
+    
     selected_file = ft.TextField(
         label="Archivo seleccionado", 
+        value="Ningún archivo seleccionado",  # Valor inicial claro
         width=250, 
         read_only=True,
         bgcolor=tema.INPUT_BG,
@@ -184,7 +222,24 @@ def on_click_importar_archivo(page, callback_actualizar_tabla=None):
         border_color=tema.INPUT_BORDER,
         label_style=ft.TextStyle(color=tema.TEXT_SECONDARY)
     )
+    
+    # IMPORTANTE: Agregar FilePicker a overlay ANTES de usar
     page.overlay.append(pick_files_window)
+    page.update()  # Actualizar para asegurar que el overlay esté listo
+    
+    def abrir_selector_archivo():
+        """Función específica para abrir selector de archivos - Compatible con ejecutables"""
+        try:
+            print("[DEBUG] Iniciando selector de archivos...")
+            pick_files_window.pick_files(
+                allow_multiple=False,
+                allowed_extensions=["xlsx", "xls"]  # Solo archivos Excel
+            )
+            print("[DEBUG] Selector de archivos abierto")
+        except Exception as e:
+            print(f"[ERROR] Error al abrir selector: {e}")
+            selected_file.value = f"Error al abrir selector: {str(e)}"
+            selected_file.update()
     
     ventana = ft.AlertDialog(
         bgcolor=tema.CARD_COLOR,
@@ -201,7 +256,8 @@ def on_click_importar_archivo(page, callback_actualizar_tabla=None):
                                     color=tema.BUTTON_TEXT,
                                     shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
                                 ),
-                                on_click=lambda e: pick_files_window.pick_files(allow_multiple=False),
+                                # CORREGIDO: Usar función específica para ejecutables
+                                on_click=lambda e: abrir_selector_archivo(),
                             ),
                             selected_file,
                         ],

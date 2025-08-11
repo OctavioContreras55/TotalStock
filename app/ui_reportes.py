@@ -35,49 +35,57 @@ async def vista_reportes(nombre_seccion, contenido, page):
             "nombre": "Movimientos de Productos",
             "icono": ft.Icons.SWAP_HORIZ,
             "color": tema.PRIMARY_COLOR,
-            "descripcion": "Reporte detallado de todos los movimientos de productos entre ubicaciones"
+            "descripcion": "Reporte de los movimientos de productos",
+            "requiere_fechas": True
         },
         "ubicaciones": {
             "nombre": "Estado de Ubicaciones",
             "icono": ft.Icons.LOCATION_ON,
             "color": tema.SUCCESS_COLOR,
-            "descripcion": "Inventario actual por ubicaciones y almacenes"
+            "descripcion": "Inventario actual por ubicaciones y almacenes",
+            "requiere_fechas": False
         },
         "productos": {
             "nombre": "Inventario de Productos",
             "icono": ft.Icons.INVENTORY,
             "color": tema.PRIMARY_COLOR,
-            "descripcion": "Estado completo del inventario de productos"
+            "descripcion": "Estado completo del inventario de productos",
+            "requiere_fechas": False
         },
         "altas": {
             "nombre": "Altas de Productos",
             "icono": ft.Icons.ADD_BOX,
             "color": tema.SUCCESS_COLOR,
-            "descripcion": "Productos dados de alta en el sistema"
+            "descripcion": "Productos dados de alta en el sistema",
+            "requiere_fechas": True
         },
         "bajas": {
             "nombre": "Bajas de Productos",
             "icono": ft.Icons.REMOVE_CIRCLE,
             "color": tema.ERROR_COLOR,
-            "descripcion": "Productos dados de baja del sistema"
+            "descripcion": "Productos dados de baja del sistema",
+            "requiere_fechas": True
         },
         "usuarios": {
             "nombre": "Actividad de Usuarios",
             "icono": ft.Icons.PEOPLE,
             "color": tema.WARNING_COLOR,
-            "descripcion": "Actividades realizadas por usuarios del sistema"
+            "descripcion": "Actividades realizadas por usuarios del sistema",
+            "requiere_fechas": True
         },
         "stock_critico": {
             "nombre": "Stock Crítico",
             "icono": ft.Icons.WARNING,
             "color": tema.ERROR_COLOR,
-            "descripcion": "Productos con stock bajo o crítico"
+            "descripcion": "Productos con stock bajo o crítico",
+            "requiere_fechas": False
         },
         "rotacion": {
             "nombre": "Rotación de Inventario",
             "icono": ft.Icons.AUTORENEW,
             "color": tema.PRIMARY_COLOR,
-            "descripcion": "Análisis de rotación y movimiento de productos"
+            "descripcion": "Análisis de rotación y movimiento de productos",
+            "requiere_fechas": False
         }
     }
 
@@ -129,31 +137,78 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 if not isinstance(mov, dict):
                     print(f"Elemento no es diccionario: {type(mov)} -> {mov}")
                     continue
+                
+                # Obtener información del usuario de forma más limpia
+                usuario = mov.get('usuario', 'Sistema')
+                if isinstance(usuario, dict):
+                    # Si el usuario es un objeto complejo, extraer solo el nombre
+                    usuario = usuario.get('nombre', usuario.get('username', usuario.get('email', 'Usuario')))
+                
+                # Obtener información del producto
+                producto_info = "N/A"
+                if mov.get('modelo'):
+                    producto_info = mov.get('modelo')
+                elif mov.get('producto_modelo'):
+                    producto_info = mov.get('producto_modelo')
+                elif mov.get('nombre_producto'):
+                    producto_info = mov.get('nombre_producto')
+                
+                # Determinar origen y destino según el tipo de movimiento
+                tipo_movimiento = mov.get('tipo', mov.get('tipo_movimiento', 'Transferencia'))
+                origen_str = "N/A"
+                destino_str = "N/A"
+                motivo_str = "Movimiento de inventario"
+                
+                if tipo_movimiento == 'entrada_inventario':
+                    origen_str = "Entrada Externa"
+                    if mov.get('almacen_destino') and mov.get('estanteria_destino'):
+                        destino_str = f"Almacén {mov.get('almacen_destino')}/{mov.get('estanteria_destino')}"
+                    motivo_str = "Entrada de inventario"
+                
+                elif tipo_movimiento == 'salida_inventario':
+                    if mov.get('almacen_origen') and mov.get('estanteria_origen'):
+                        origen_str = f"Almacén {mov.get('almacen_origen')}/{mov.get('estanteria_origen')}"
+                    destino_str = "Salida Externa"
+                    motivo_str = "Salida de inventario"
+                
+                elif tipo_movimiento == 'ajuste_inventario':
+                    if mov.get('almacen_destino') and mov.get('estanteria_destino'):
+                        origen_str = f"Almacén {mov.get('almacen_destino')}/{mov.get('estanteria_destino')}"
+                        destino_str = f"Almacén {mov.get('almacen_destino')}/{mov.get('estanteria_destino')}"
+                    motivo_str = "Ajuste de inventario"
+                
+                elif tipo_movimiento == 'movimiento_ubicacion':
+                    # Manejar ubicaciones origen y destino de forma segura
+                    ubicacion_origen = mov.get('ubicacion_origen', {})
+                    ubicacion_destino = mov.get('ubicacion_destino', {})
                     
-                # Manejar ubicaciones origen y destino de forma segura
-                ubicacion_origen = mov.get('ubicacion_origen', {})
-                ubicacion_destino = mov.get('ubicacion_destino', {})
+                    if isinstance(ubicacion_origen, dict):
+                        origen_str = f"Almacén {ubicacion_origen.get('almacen', 'N/A')}/{ubicacion_origen.get('ubicacion', 'N/A')}"
+                    else:
+                        origen_str = str(ubicacion_origen) if ubicacion_origen else "N/A"
+                    
+                    if isinstance(ubicacion_destino, dict):
+                        destino_str = f"Almacén {ubicacion_destino.get('almacen', 'N/A')}/{ubicacion_destino.get('ubicacion', 'N/A')}"
+                    else:
+                        destino_str = str(ubicacion_destino) if ubicacion_destino else "N/A"
+                    
+                    motivo_str = "Traslado entre ubicaciones"
                 
-                if isinstance(ubicacion_origen, dict):
-                    origen_str = f"{ubicacion_origen.get('almacen', 'N/A')} → {ubicacion_origen.get('ubicacion', 'N/A')}"
-                else:
-                    origen_str = str(ubicacion_origen) if ubicacion_origen else "N/A"
-                
-                if isinstance(ubicacion_destino, dict):
-                    destino_str = f"{ubicacion_destino.get('almacen', 'N/A')} → {ubicacion_destino.get('ubicacion', 'N/A')}"
-                else:
-                    destino_str = str(ubicacion_destino) if ubicacion_destino else "N/A"
+                # Usar comentarios si están disponibles para un motivo más específico
+                if mov.get('comentarios'):
+                    motivo_str = mov.get('comentarios')
+                elif mov.get('motivo'):
+                    motivo_str = mov.get('motivo')
                 
                 reporte_movimientos.append({
                     "fecha": mov.get("fecha_movimiento", mov.get("fecha", "N/A")),
-                    "usuario": mov.get("usuario", "Sistema"),
-                    "producto": f"{mov.get('producto_modelo', 'N/A')} - {mov.get('nombre_producto', 'Producto')}",
-                    "modelo": mov.get("producto_modelo", "N/A"),
+                    "usuario": usuario,
+                    "producto": producto_info,
                     "cantidad": mov.get("cantidad", 0),
                     "origen": origen_str,
                     "destino": destino_str,
-                    "motivo": mov.get("motivo", "Movimiento de inventario"),
-                    "tipo": mov.get("tipo_movimiento", "Transferencia")
+                    "motivo": motivo_str,
+                    "tipo": tipo_movimiento
                 })
             
             # Procesar movimientos del historial local
@@ -169,7 +224,6 @@ async def vista_reportes(nombre_seccion, contenido, page):
                         "fecha": actividad.get("fecha", "N/A"),
                         "usuario": actividad.get("usuario", "Sistema"),
                         "producto": desc,
-                        "modelo": "Ver descripción",
                         "cantidad": "Ver descripción",
                         "origen": "Ver descripción",
                         "destino": "Ver descripción", 
@@ -197,59 +251,72 @@ async def vista_reportes(nombre_seccion, contenido, page):
             ]
 
     async def generar_reporte_ubicaciones():
-        """Generar reporte de ubicaciones desde datos reales"""
+        """Generar reporte de ubicaciones agrupado por almacén y estantería"""
         try:
             from app.utils.cache_firebase import cache_firebase
             
-            # Obtener ubicaciones reales desde Firebase
+            # Obtener ubicaciones directamente desde Firebase (tabla ubicaciones)
             ubicaciones_firebase = await cache_firebase.obtener_ubicaciones()
             
             reporte_ubicaciones = []
+            
             for ubicacion in ubicaciones_firebase:
                 # Verificar que ubicacion sea un diccionario
                 if not isinstance(ubicacion, dict):
                     print(f"Ubicación no es diccionario: {type(ubicacion)} -> {ubicacion}")
                     continue
-                    
+                
+                almacen = ubicacion.get("almacen", "Sin almacén")
+                estanteria = ubicacion.get("estanteria", "Sin estantería") 
+                cantidad = ubicacion.get("cantidad", 0)
+                modelo = ubicacion.get("modelo", "Sin modelo")
+                fecha_asignacion = ubicacion.get("fecha_asignacion", "N/A")
+                
+                # Mostrar cada ubicación individual (sin agrupar)
                 reporte_ubicaciones.append({
-                    "almacen": ubicacion.get("almacen", "Sin almacén"),
-                    "ubicacion": f"{ubicacion.get('estanteria', 'Sin estantería')}",
-                    "productos_total": 1,  # Cada ubicación tiene un producto asignado
-                    "productos": [
-                        {
-                            "modelo": ubicacion.get("modelo", "Sin modelo"),
-                            "cantidad": ubicacion.get("cantidad", 0)
-                        }
-                    ],
-                    "capacidad_utilizada": f"{min(100, ubicacion.get('cantidad', 0) * 10)}%",
-                    "ultima_actualizacion": ubicacion.get("fecha_asignacion", "N/A"),
-                    "usuario_actualizacion": "Sistema"
+                    "almacen": f"Almacén {almacen}" if str(almacen).isdigit() else str(almacen),
+                    "estanteria": str(estanteria),
+                    "cantidad": int(cantidad) if cantidad else 0,
+                    "modelo": str(modelo),
+                    "fecha_asignacion": str(fecha_asignacion),
+                    "estado": "Ocupado" if cantidad > 0 else "Disponible"
                 })
+            
+            # Ordenar por almacén y luego por estantería
+            reporte_ubicaciones.sort(key=lambda x: (x['almacen'], x['estanteria']))
             
             return reporte_ubicaciones
             
         except Exception as e:
             print(f"Error al generar reporte de ubicaciones: {e}")
-            # Fallback a datos de ejemplo
-            return [
-                {
-                    "almacen": "Almacén Principal",
-                    "ubicacion": "Estante A-3, Nivel 2",
-                    "productos_total": 3,
-                    "productos": [
-                        {"modelo": "LAP001", "nombre": "Laptop Dell Inspiron", "cantidad": 10}
-                    ],
-                    "capacidad_utilizada": "75%",
-                    "ultima_actualizacion": "2024-01-15 14:30:25",
-                    "usuario_actualizacion": "Admin"
-                }
-            ]
+            return []
 
     async def generar_reporte_productos():
         """Generar reporte completo de productos desde Firebase"""
         try:
             from app.crud_productos.create_producto import obtener_productos_firebase
+            from app.funciones.sesiones import GestorHistorial
+            
             productos_firebase = await obtener_productos_firebase()
+            
+            # Obtener historial para identificar quién dio de alta cada producto
+            historial_manager = GestorHistorial()
+            historial_actividades = await historial_manager.obtener_historial_reciente(limite=1000)
+            
+            # Crear diccionario de quién creó cada producto
+            usuarios_creadores = {}
+            for actividad in historial_actividades:
+                if isinstance(actividad, dict) and actividad.get("tipo") == "crear_producto":
+                    desc = actividad.get("descripcion", "")
+                    usuario = actividad.get("usuario", "Sistema")
+                    
+                    # Extraer modelo de la descripción
+                    if "(Modelo:" in desc:
+                        try:
+                            modelo = desc.split("(Modelo: ")[1].split(")")[0]
+                            usuarios_creadores[modelo] = usuario
+                        except:
+                            pass
             
             reporte_productos = []
             for producto in productos_firebase:
@@ -257,16 +324,17 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 if not isinstance(producto, dict):
                     print(f"Producto no es diccionario: {type(producto)} -> {producto}")
                     continue
-                    
+                
+                modelo = producto.get("modelo", "N/A")
+                usuario_alta = usuarios_creadores.get(modelo, "Importación/Sistema")
+                
                 reporte_productos.append({
-                    "modelo": producto.get("modelo", "N/A"),
+                    "modelo": modelo,
                     "nombre": producto.get("nombre", "N/A"),
                     "categoria": producto.get("categoria", "Sin categoría"),
                     "stock_actual": producto.get("cantidad", 0),
-                    "stock_minimo": producto.get("stock_min", 0),
-                    "precio_unitario": producto.get("precio", 0.0),
-                    "valor_total": producto.get("cantidad", 0) * producto.get("precio", 0.0),
                     "fecha_ingreso": producto.get("fecha_registro", "N/A"),
+                    "usuario_alta": usuario_alta,
                     "estado": producto.get("estado", "Activo")
                 })
             
@@ -274,20 +342,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
             
         except Exception as e:
             print(f"Error al generar reporte de productos: {e}")
-            # Datos de ejemplo como fallback
-            return [
-                {
-                    "modelo": "LAP001",
-                    "nombre": "Laptop Dell Inspiron",
-                    "categoria": "Equipos de Cómputo",
-                    "stock_actual": 23,
-                    "stock_minimo": 5,
-                    "precio_unitario": 15000.00,
-                    "valor_total": 345000.00,
-                    "fecha_ingreso": "2024-01-10 09:00:00",
-                    "estado": "Activo"
-                }
-            ]
+            return []
 
     async def generar_reporte_altas():
         """Generar reporte de productos dados de alta desde historial real"""
@@ -562,35 +617,114 @@ async def vista_reportes(nombre_seccion, contenido, page):
             ]
 
     async def generar_reporte_rotacion():
-        """Generar reporte de rotación de inventario"""
-        return [
-            {
-                "modelo": "LAP001",
-                "nombre": "Laptop Dell Inspiron",
-                "categoria": "Equipos de Cómputo",
-                "entradas_mes": 15,
-                "salidas_mes": 12,
-                "rotacion_mensual": 0.52,  # 52% del stock se movió
-                "dias_inventario": 30,
-                "frecuencia_movimientos": 8,  # 8 movimientos en el mes
-                "tendencia": "ESTABLE",
-                "valor_rotado": 180000.00,
-                "clasificacion": "ROTACIÓN NORMAL"
-            },
-            {
-                "modelo": "MOU002",
-                "nombre": "Mouse Logitech MX",
-                "categoria": "Periféricos",
-                "entradas_mes": 50,
-                "salidas_mes": 45,
-                "rotacion_mensual": 0.60,
-                "dias_inventario": 25,
-                "frecuencia_movimientos": 12,
-                "tendencia": "ALTA ROTACIÓN",
-                "valor_rotado": 42500.00,
-                "clasificacion": "PRODUCTO ESTRELLA"
-            }
-        ]
+        """Generar reporte de rotación de inventario - productos más activos"""
+        try:
+            from app.utils.cache_firebase import cache_firebase
+            from app.funciones.sesiones import GestorHistorial
+            
+            # Obtener movimientos y historial para analizar actividad
+            movimientos_firebase = await cache_firebase.obtener_movimientos()
+            historial_manager = GestorHistorial()
+            historial_actividades = await historial_manager.obtener_historial_reciente(limite=1000)
+            
+            # Contabilizar actividad por producto
+            actividad_productos = {}
+            
+            # Procesar movimientos de Firebase
+            for mov in movimientos_firebase:
+                if isinstance(mov, dict):
+                    modelo = mov.get('modelo', mov.get('producto_modelo', 'N/A'))
+                    if modelo != 'N/A':
+                        if modelo not in actividad_productos:
+                            actividad_productos[modelo] = {
+                                "modelo": modelo,
+                                "entradas": 0,
+                                "salidas": 0,
+                                "movimientos_ubicacion": 0,
+                                "total_movimientos": 0,
+                                "nombre": mov.get('nombre_producto', 'Producto')
+                            }
+                        
+                        tipo_mov = mov.get('tipo', mov.get('tipo_movimiento', ''))
+                        cantidad = mov.get('cantidad', 0)
+                        
+                        if 'entrada' in tipo_mov:
+                            actividad_productos[modelo]["entradas"] += cantidad
+                        elif 'salida' in tipo_mov:
+                            actividad_productos[modelo]["salidas"] += cantidad
+                        elif 'movimiento' in tipo_mov:
+                            actividad_productos[modelo]["movimientos_ubicacion"] += 1
+                        
+                        actividad_productos[modelo]["total_movimientos"] += 1
+            
+            # Procesar historial de actividades
+            for actividad in historial_actividades:
+                if isinstance(actividad, dict):
+                    desc = actividad.get("descripcion", "")
+                    tipo = actividad.get("tipo", "")
+                    
+                    # Buscar menciones de productos en las descripciones
+                    if "producto" in tipo.lower() or "movimiento" in tipo.lower():
+                        # Intentar extraer modelo de la descripción
+                        palabras = desc.split()
+                        for palabra in palabras:
+                            if len(palabra) > 3 and palabra.isalnum():
+                                # Considerar como posible modelo de producto
+                                if palabra not in actividad_productos:
+                                    actividad_productos[palabra] = {
+                                        "modelo": palabra,
+                                        "entradas": 0,
+                                        "salidas": 0,
+                                        "movimientos_ubicacion": 0,
+                                        "total_movimientos": 0,
+                                        "nombre": "Producto"
+                                    }
+                                
+                                if "crear" in tipo:
+                                    actividad_productos[palabra]["entradas"] += 1
+                                elif "eliminar" in tipo:
+                                    actividad_productos[palabra]["salidas"] += 1
+                                elif "movimiento" in tipo:
+                                    actividad_productos[palabra]["movimientos_ubicacion"] += 1
+                                
+                                actividad_productos[palabra]["total_movimientos"] += 1
+                                break  # Solo procesar el primer modelo encontrado
+            
+            # Convertir a lista y calcular métricas de rotación
+            reporte_rotacion = []
+            for datos in actividad_productos.values():
+                total_actividad = datos["total_movimientos"]
+                if total_actividad > 0:  # Solo incluir productos con actividad
+                    # Calcular clasificación según la actividad
+                    if total_actividad >= 10:
+                        clasificacion = "MUY ACTIVO"
+                        tendencia = "ALTA ROTACIÓN"
+                    elif total_actividad >= 5:
+                        clasificacion = "ACTIVO"
+                        tendencia = "ROTACIÓN MEDIA"
+                    else:
+                        clasificacion = "POCO ACTIVO"
+                        tendencia = "BAJA ROTACIÓN"
+                    
+                    reporte_rotacion.append({
+                        "modelo": datos["modelo"],
+                        "nombre": datos["nombre"],
+                        "entradas": datos["entradas"],
+                        "salidas": datos["salidas"],
+                        "movimientos_ubicacion": datos["movimientos_ubicacion"],
+                        "total_movimientos": total_actividad,
+                        "tendencia": tendencia,
+                        "clasificacion": clasificacion
+                    })
+            
+            # Ordenar por total de movimientos (más activos primero)
+            reporte_rotacion.sort(key=lambda x: x["total_movimientos"], reverse=True)
+            
+            return reporte_rotacion[:50]  # Top 50 productos más activos
+            
+        except Exception as e:
+            print(f"Error al generar reporte de rotación: {e}")
+            return []
 
     # Componentes de la interfaz
     def crear_selector_tipo_reporte():
@@ -615,8 +749,8 @@ async def vista_reportes(nombre_seccion, contenido, page):
                     tipo_reporte_seleccionado = tipo
                     actualizar_selector_visual()
                     
-                    # Mostrar información automáticamente
-                    await mostrar_info_reporte_seleccionado()
+                    # Actualizar visibilidad de filtros según el tipo de reporte
+                    actualizar_visibilidad_filtros()
                     
                 return handler
 
@@ -742,73 +876,11 @@ async def vista_reportes(nombre_seccion, contenido, page):
     # Inicializar el contenedor selector
     contenedor_selector.content = crear_selector_tipo_reporte()
 
-    # Función para analizar disponibilidad de datos
-    def analizar_disponibilidad_reportes():
-        """Analiza qué reportes pueden generarse con datos reales del sistema"""
-        return {
-            "productos": {
-                "disponible": True,
-                "fuente_datos": "Firebase collection 'productos'",
-                "descripcion": "~266 productos en inventario con precios, cantidades, modelos"
-            },
-            "ubicaciones": {
-                "disponible": True,
-                "fuente_datos": "Firebase collection 'ubicaciones'",
-                "descripcion": "~262 ubicaciones con almacenes y estanterías asignadas"
-            },
-            "movimientos": {
-                "disponible": True,
-                "fuente_datos": "Firebase collection 'movimientos' + historial local",
-                "descripcion": "Historial completo de movimientos entre ubicaciones"
-            },
-            "usuarios": {
-                "disponible": True,
-                "fuente_datos": "Firebase collection 'usuarios' + historial local",
-                "descripcion": "Actividades de usuarios con timestamps y detalles"
-            },
-            "stock_critico": {
-                "disponible": True,
-                "fuente_datos": "Análisis de productos vs stock mínimo",
-                "descripcion": "Detección automática de productos con stock bajo"
-            },
-            "altas": {
-                "disponible": True,
-                "fuente_datos": "Historial local - actividades tipo 'crear_producto'",
-                "descripcion": "Productos dados de alta según historial del sistema"
-            },
-            "bajas": {
-                "disponible": True,
-                "fuente_datos": "Historial local - actividades tipo 'eliminar_producto'",
-                "descripcion": "Productos eliminados según historial del sistema"
-            },
-            "rotacion": {
-                "disponible": False,
-                "fuente_datos": "Requiere datos de entradas/salidas temporales",
-                "descripcion": "Necesita implementar tracking de movimientos temporales"
-            }
-        }
+    # FUNCIÓN REMOVIDA: analizar_disponibilidad_reportes()
+    # Ya no se necesita analizar disponibilidad para snackbar
 
-    async def mostrar_info_reporte_seleccionado():
-        """Mostrar información sobre el reporte seleccionado"""
-        if not tipo_reporte_seleccionado:
-            return
-        
-        info_reporte = tipos_reportes[tipo_reporte_seleccionado]
-        disponibilidad = analizar_disponibilidad_reportes()[tipo_reporte_seleccionado]
-        
-        # Crear mensaje informativo
-        if disponibilidad["disponible"]:
-            mensaje = f"[OK] {info_reporte['nombre']}\n\n[CHART] Fuente: {disponibilidad['fuente_datos']}\n[LISTA] {disponibilidad['descripcion']}"
-            color_bg = tema.SUCCESS_COLOR
-        else:
-            mensaje = f"[WARN] {info_reporte['nombre']}\n\n🚧 {disponibilidad['descripcion']}\n[LISTA] Fuente requerida: {disponibilidad['fuente_datos']}"
-            color_bg = tema.WARNING_COLOR
-        
-        page.open(ft.SnackBar(
-            content=ft.Text(mensaje, color=tema.TEXT_COLOR, size=13),
-            bgcolor=color_bg,
-            duration=3000
-        ))
+    # FUNCIÓN REMOVIDA: mostrar_info_reporte_seleccionado() 
+    # Ya no se necesita mostrar snackbar al seleccionar reporte
 
     # Controles de filtro de fechas
     campo_fecha_inicio = ft.TextField(
@@ -859,6 +931,91 @@ async def vista_reportes(nombre_seccion, contenido, page):
             border_radius=tema.BORDER_RADIUS,
             padding=20,
     )
+
+    # Contenedor de filtros dinámico
+    contenedor_filtros = ft.Container(
+        visible=False,  # Inicialmente oculto
+        content=ft.Column([
+            ft.Text("Filtros de Búsqueda", 
+                   size=16, weight=ft.FontWeight.BOLD, color=tema.TEXT_COLOR),
+            ft.Row([
+                campo_fecha_inicio,
+                campo_fecha_fin,
+                dropdown_usuario,
+                ft.ElevatedButton(
+                    "Generar Reporte",
+                    style=ft.ButtonStyle(
+                        bgcolor=tema.BUTTON_SUCCESS_BG,
+                        color=tema.BUTTON_TEXT,
+                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                    ),
+                    on_click=lambda e: page.run_task(generar_reporte, e)
+                ),
+                ft.ElevatedButton(
+                    "📊 Exportar (PDF/Excel/JSON)",
+                    style=ft.ButtonStyle(
+                        bgcolor=tema.BUTTON_BG,
+                        color=tema.BUTTON_TEXT,
+                        shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                    ),
+                    on_click=lambda e: page.run_task(exportar_reporte, e)
+                )
+            ], spacing=15, alignment=ft.MainAxisAlignment.CENTER)
+        ]),
+        bgcolor=tema.CARD_COLOR,
+        padding=20,
+        border_radius=tema.BORDER_RADIUS,
+        margin=ft.margin.only(bottom=20)
+    )
+
+    # Contenedor de botones para reportes que no requieren fechas
+    contenedor_botones_simple = ft.Container(
+        visible=False,  # Inicialmente oculto
+        content=ft.Row([
+            ft.ElevatedButton(
+                "Generar Reporte",
+                style=ft.ButtonStyle(
+                    bgcolor=tema.BUTTON_SUCCESS_BG,
+                    color=tema.BUTTON_TEXT,
+                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                ),
+                on_click=lambda e: page.run_task(generar_reporte, e)
+            ),
+            ft.ElevatedButton(
+                "📊 Exportar (PDF/Excel/JSON)",
+                style=ft.ButtonStyle(
+                    bgcolor=tema.BUTTON_BG,
+                    color=tema.BUTTON_TEXT,
+                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
+                ),
+                on_click=lambda e: page.run_task(exportar_reporte, e)
+            )
+        ], spacing=15, alignment=ft.MainAxisAlignment.CENTER),
+        bgcolor=tema.CARD_COLOR,
+        padding=20,
+        border_radius=tema.BORDER_RADIUS,
+        margin=ft.margin.only(bottom=20)
+    )
+
+    def actualizar_visibilidad_filtros():
+        """Actualizar la visibilidad de filtros según el tipo de reporte seleccionado"""
+        if tipo_reporte_seleccionado and tipo_reporte_seleccionado in tipos_reportes:
+            requiere_fechas = tipos_reportes[tipo_reporte_seleccionado]["requiere_fechas"]
+            
+            if requiere_fechas:
+                # Mostrar filtros completos con fechas
+                contenedor_filtros.visible = True
+                contenedor_botones_simple.visible = False
+            else:
+                # Mostrar solo botones sin filtros de fecha
+                contenedor_filtros.visible = False
+                contenedor_botones_simple.visible = True
+        else:
+            # Ocultar ambos si no hay selección
+            contenedor_filtros.visible = False
+            contenedor_botones_simple.visible = False
+        
+        page.update()
 
     async def generar_reporte(e):
         """Generar el reporte seleccionado"""
@@ -914,14 +1071,16 @@ async def vista_reportes(nombre_seccion, contenido, page):
             heading_row_color=tema.PRIMARY_COLOR,
             heading_row_height=50,
             data_row_min_height=40,
-            column_spacing=20
+            column_spacing=15,  # Reducido para mejor ajuste
+            horizontal_margin=10,  # Márgenes laterales
+            show_checkbox_column=False  # Ocultar checkboxes si aparecen
         )
 
         # Estadísticas del reporte
         stats = obtener_estadisticas_reporte()
         
         contenedor_reporte.content = ft.Column([
-            # Estadísticas
+            # Estadísticas centradas
             ft.Container(
                 content=ft.Row([
                     ft.Container(
@@ -932,7 +1091,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
                         bgcolor=tema.CARD_COLOR,
                         padding=15,
                         border_radius=8,
-                        expand=True
+                        width=200  # Ancho fijo para consistencia
                     ),
                     ft.Container(
                         content=ft.Column([
@@ -942,7 +1101,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
                         bgcolor=tema.CARD_COLOR,
                         padding=15,
                         border_radius=8,
-                        expand=True
+                        width=300  # Ancho fijo para fechas
                     ),
                     ft.Container(
                         content=ft.Column([
@@ -953,18 +1112,24 @@ async def vista_reportes(nombre_seccion, contenido, page):
                         bgcolor=tema.CARD_COLOR,
                         padding=15,
                         border_radius=8,
-                        expand=True
+                        width=200  # Ancho fijo para fecha/hora
                     )
-                ], spacing=10),
+                ], alignment=ft.MainAxisAlignment.CENTER, spacing=15),  # Centrar estadísticas
                 margin=ft.margin.only(bottom=20)
             ),
             
-            # Tabla del reporte
+            # Tabla del reporte centrada
             ft.Container(
-                content=tabla,
-                border=ft.border.all(1, tema.DIVIDER_COLOR),
-                border_radius=tema.BORDER_RADIUS,
-                padding=10
+                content=ft.Row([
+                    ft.Container(
+                        content=tabla,
+                        border=ft.border.all(1, tema.DIVIDER_COLOR),
+                        border_radius=tema.BORDER_RADIUS,
+                        padding=10,
+                        width=min(1200, ancho_ventana * 0.9)  # Ancho responsivo, máximo 1200px
+                    )
+                ], alignment=ft.MainAxisAlignment.CENTER),  # Centrar horizontalmente
+                margin=ft.margin.only(top=10)
             )
         ], 
         scroll=ft.ScrollMode.AUTO,
@@ -987,19 +1152,20 @@ async def vista_reportes(nombre_seccion, contenido, page):
         elif tipo_reporte_seleccionado == "ubicaciones":
             return [
                 ft.DataColumn(ft.Text("Almacén", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Ubicación", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Productos", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Capacidad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Última Act.", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
+                ft.DataColumn(ft.Text("Estantería", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Modelo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Fecha Asignación", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Estado", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "productos":
             return [
                 ft.DataColumn(ft.Text("Modelo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Nombre", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Categoría", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Stock Actual", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Stock Min/Max", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Valor Total", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Fecha Ingreso", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Usuario Alta", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Estado", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "altas":
@@ -1007,8 +1173,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 ft.DataColumn(ft.Text("Fecha", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Valor Total", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Categoría", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Motivo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "bajas":
@@ -1017,7 +1182,6 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Cantidad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Valor Perdido", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Motivo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "usuarios":
@@ -1026,15 +1190,12 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 ft.DataColumn(ft.Text("Usuario", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Acción", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Detalle", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Módulo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("IP", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
+                ft.DataColumn(ft.Text("Módulo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
         elif tipo_reporte_seleccionado == "stock_critico":
             return [
                 ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Stock Actual", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Stock Mínimo", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Déficit", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Prioridad", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Acción", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
@@ -1043,7 +1204,8 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 ft.DataColumn(ft.Text("Producto", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Entradas", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Salidas", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
-                ft.DataColumn(ft.Text("Rotación", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Mov. Ubicación", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
+                ft.DataColumn(ft.Text("Total Movimientos", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Tendencia", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR)),
                 ft.DataColumn(ft.Text("Clasificación", weight=ft.FontWeight.BOLD, color=tema.CARD_COLOR))
             ]
@@ -1059,7 +1221,7 @@ async def vista_reportes(nombre_seccion, contenido, page):
                 filas.append(ft.DataRow(cells=[
                     ft.DataCell(ft.Text(item["fecha"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["usuario"], size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(f"{item['modelo']} - {item['producto']}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["producto"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(str(item["cantidad"]), size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["origen"], size=10, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["destino"], size=10, color=tema.TEXT_COLOR)),
@@ -1068,75 +1230,85 @@ async def vista_reportes(nombre_seccion, contenido, page):
             elif tipo_reporte_seleccionado == "ubicaciones":
                 filas.append(ft.DataRow(cells=[
                     ft.DataCell(ft.Text(item["almacen"], size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(item["ubicacion"], size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(str(item["productos_total"]), size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(item["capacidad_utilizada"], size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(item["ultima_actualizacion"], size=10, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(item["usuario_actualizacion"], size=11, color=tema.TEXT_COLOR))
+                    ft.DataCell(ft.Text(item["estanteria"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["cantidad"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["modelo"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["fecha_asignacion"], size=10, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["estado"], size=11, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "productos":
                 filas.append(ft.DataRow(cells=[
                     ft.DataCell(ft.Text(item["modelo"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["nombre"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["categoria"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(str(item["stock_actual"]), size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(f"{item.get('stock_minimo', 0)}/N/A", size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(f"${item['valor_total']:,.2f}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["fecha_ingreso"], size=10, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["usuario_alta"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["estado"], size=11, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "altas":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["fecha"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["fecha"][:16] if len(item["fecha"]) > 16 else item["fecha"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["usuario"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(str(item["cantidad_inicial"]), size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(f"${item['valor_total']:,.2f}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["categoria"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["motivo"], size=10, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "bajas":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["fecha"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["fecha"][:16] if len(item["fecha"]) > 16 else item["fecha"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["usuario"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(str(item["cantidad_baja"]), size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(f"${item['valor_perdido']:,.2f}", size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["motivo"], size=10, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "usuarios":
                 filas.append(ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(item["fecha"], size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(item["fecha"][:16] if len(item["fecha"]) > 16 else item["fecha"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["usuario"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["accion"], size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["detalle"], size=10, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(item["modulo"], size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(item["ip_origen"], size=11, color=tema.TEXT_COLOR))
+                    ft.DataCell(ft.Text(item["modulo"], size=11, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "stock_critico":
                 color_prioridad = tema.ERROR_COLOR if item["prioridad"] == "CRÍTICA" else tema.WARNING_COLOR
                 filas.append(ft.DataRow(cells=[
                     ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(str(item["stock_actual"]), size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(str(item["stock_minimo"]), size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(str(item["deficit"]), size=11, color=tema.TEXT_COLOR)),
                     ft.DataCell(ft.Text(item["prioridad"], size=11, color=color_prioridad, weight=ft.FontWeight.BOLD)),
                     ft.DataCell(ft.Text(item["accion_sugerida"], size=10, color=tema.TEXT_COLOR))
                 ]))
             elif tipo_reporte_seleccionado == "rotacion":
+                # Color según clasificación
+                color_clasificacion = tema.SUCCESS_COLOR if "MUY ACTIVO" in item["clasificacion"] else tema.WARNING_COLOR if "ACTIVO" in item["clasificacion"] else tema.TEXT_COLOR
                 filas.append(ft.DataRow(cells=[
                     ft.DataCell(ft.Text(f"{item['modelo']} - {item['nombre']}", size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(str(item["entradas_mes"]), size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(str(item["salidas_mes"]), size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(f"{item['rotacion_mensual']:.1%}", size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["entradas"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["salidas"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["movimientos_ubicacion"]), size=11, color=tema.TEXT_COLOR)),
+                    ft.DataCell(ft.Text(str(item["total_movimientos"]), size=11, color=tema.PRIMARY_COLOR, weight=ft.FontWeight.BOLD)),
                     ft.DataCell(ft.Text(item["tendencia"], size=11, color=tema.TEXT_COLOR)),
-                    ft.DataCell(ft.Text(item["clasificacion"], size=10, color=tema.TEXT_COLOR))
+                    ft.DataCell(ft.Text(item["clasificacion"], size=10, color=color_clasificacion, weight=ft.FontWeight.BOLD))
                 ]))
         
         return filas
 
     def obtener_estadisticas_reporte():
         """Obtener estadísticas del reporte"""
+        # Verificar si el reporte requiere fechas
+        requiere_fechas = False
+        if tipo_reporte_seleccionado and tipo_reporte_seleccionado in tipos_reportes:
+            requiere_fechas = tipos_reportes[tipo_reporte_seleccionado]["requiere_fechas"]
+        
+        # Construir período según el tipo de reporte
+        if requiere_fechas:
+            periodo = f"{campo_fecha_inicio.value} al {campo_fecha_fin.value}"
+        else:
+            periodo = "Estado actual del sistema"
+        
         return {
             "total": len(datos_reporte),
-            "periodo": f"{campo_fecha_inicio.value} al {campo_fecha_fin.value}",
+            "periodo": periodo,
             "tipo": tipos_reportes[tipo_reporte_seleccionado]["nombre"] if tipo_reporte_seleccionado else ""
         }
 
@@ -1199,40 +1371,9 @@ async def vista_reportes(nombre_seccion, contenido, page):
                     margin=ft.margin.only(bottom=20)
                 ),
 
-                # Controles de filtro
-                ft.Container(
-                    content=ft.Column([
-                        ft.Text("Filtros de Búsqueda", 
-                               size=16, weight=ft.FontWeight.BOLD, color=tema.TEXT_COLOR),
-                        ft.Row([
-                            campo_fecha_inicio,
-                            campo_fecha_fin,
-                            dropdown_usuario,
-                            ft.ElevatedButton(
-                                "Generar Reporte",
-                                style=ft.ButtonStyle(
-                                    bgcolor=tema.BUTTON_SUCCESS_BG,
-                                    color=tema.BUTTON_TEXT,
-                                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-                                ),
-                                on_click=lambda e: page.run_task(generar_reporte, e)
-                            ),
-                            ft.ElevatedButton(
-                                "📊 Exportar (PDF/Excel/JSON)",
-                                style=ft.ButtonStyle(
-                                    bgcolor=tema.BUTTON_BG,
-                                    color=tema.BUTTON_TEXT,
-                                    shape=ft.RoundedRectangleBorder(radius=tema.BORDER_RADIUS)
-                                ),
-                                on_click=lambda e: page.run_task(exportar_reporte, e)
-                            )
-                        ], spacing=15, alignment=ft.MainAxisAlignment.CENTER)
-                    ]),
-                    bgcolor=tema.CARD_COLOR,
-                    padding=20,
-                    border_radius=tema.BORDER_RADIUS,
-                    margin=ft.margin.only(bottom=20)
-                ),
+                # Controles de filtro dinámicos
+                contenedor_filtros,
+                contenedor_botones_simple,
 
                 # Contenedor del reporte
                 ft.Container(

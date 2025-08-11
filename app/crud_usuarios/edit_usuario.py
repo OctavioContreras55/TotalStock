@@ -75,9 +75,10 @@ def mostrar_dialogo_editar_usuario(page, usuario_data, actualizar_callback=None)
                 'fecha_modificacion': datetime.now().isoformat()
             }
             
-            # Agregar contraseña si se proporcionó
+            # Agregar contraseña si se proporcionó - CORREGIDO: usar 'contrasena'
             if campo_password.value.strip():
-                datos_actualizados['password'] = campo_password.value.strip()
+                datos_actualizados['contrasena'] = campo_password.value.strip()
+                print(f"[DEBUG] Nueva contraseña establecida: {campo_password.value.strip()}")
             
             # Actualizar en Firebase usando el firebase_id del usuario
             firebase_id = usuario_data.get('firebase_id')

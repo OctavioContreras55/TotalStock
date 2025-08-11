@@ -10,4 +10,7 @@ xlsxwriter>=3.1.0
 # Para exportación a PDF
 reportlab>=4.0.0
 
+# Para crear ejecutables
+pyinstaller>=6.0.0
+
 # Nota: asyncio y datetime son módulos estándar de Python
